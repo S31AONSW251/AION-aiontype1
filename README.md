@@ -1,3 +1,11 @@
+# AION - Type 1 Interface
+
+This is the **frontend React interface** for the AION project.  
+It provides the user dashboard, journaling, spiritual guidance, and visualization modules.
+
+## Related Repositories
+- [AION-backend](https://github.com/S31AONSW251/AION-backend) → Core server & API
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
