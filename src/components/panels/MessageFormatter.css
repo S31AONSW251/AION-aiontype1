@@ -1,0 +1,170 @@
+.markdown-content {
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+/* Code blocks */
+.code-block-wrapper {
+  margin: 1em 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--code-bg);
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: var(--code-header-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.language-tag {
+  font-size: 0.85em;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.copy-button {
+  padding: 4px 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.copy-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+/* Inline code */
+:not(pre) > code {
+  padding: 2px 6px;
+  background: var(--inline-code-bg);
+  border-radius: 4px;
+  font-size: 0.9em;
+  color: var(--inline-code-color);
+}
+
+/* Tables */
+.table-wrapper {
+  overflow-x: auto;
+  margin: 1em 0;
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+th, td {
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+}
+
+th {
+  background: var(--bg-muted);
+  font-weight: 600;
+}
+
+tr:nth-child(even) {
+  background: var(--bg-card);
+}
+
+/* Links */
+.enhanced-link {
+  color: var(--accent-color);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.enhanced-link:hover {
+  text-decoration: underline;
+}
+
+.icon-external-link {
+  font-size: 0.85em;
+}
+
+/* Images */
+.image-wrapper {
+  margin: 1em 0;
+}
+
+.image-wrapper img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  cursor: zoom-in;
+}
+
+/* Blockquotes */
+.enhanced-quote {
+  margin: 1em 0;
+  padding: 12px 20px;
+  border-left: 4px solid var(--accent-color);
+  background: var(--bg-card);
+  border-radius: 0 8px 8px 0;
+}
+
+/* Lists */
+ul, ol {
+  padding-left: 1.5em;
+}
+
+li {
+  margin: 0.5em 0;
+}
+
+/* Math equations */
+.katex-display {
+  margin: 1em 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* AI response specific styling */
+.ai-response .markdown-content {
+  font-size: 1.02em;
+}
+
+.ai-response .enhanced-quote {
+  border-left-color: var(--ai-accent-color);
+  background: var(--ai-quote-bg);
+}
+
+/* Dark theme syntax highlighting overrides */
+.hljs {
+  background: var(--code-bg) !important;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-title,
+.hljs-section,
+.hljs-doctag,
+.hljs-name,
+.hljs-strong {
+  color: var(--code-keyword) !important;
+}
+
+.hljs-string,
+.hljs-title,
+.hljs-section,
+.hljs-built_in,
+.hljs-literal,
+.hljs-type,
+.hljs-addition,
+.hljs-tag,
+.hljs-quote,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: var(--code-string) !important;
+}

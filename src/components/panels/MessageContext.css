@@ -1,0 +1,122 @@
+.message-context {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.85em;
+  color: var(--text-secondary);
+}
+
+.context-indicators {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Status indicators */
+.status-indicators {
+  display: flex;
+  align-items: center;
+}
+
+.delivered-indicator,
+.read-indicator {
+  display: flex;
+  align-items: center;
+}
+
+.delivered-indicator i {
+  color: var(--text-secondary);
+}
+
+.read-indicator i {
+  color: var(--accent-color);
+}
+
+/* Timestamp */
+.timestamp {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.edited-indicator {
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Read receipts */
+.read-receipts {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.read-by-count {
+  cursor: help;
+}
+
+/* Typing indicator */
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  background: var(--bg-muted);
+  border-radius: 12px;
+  max-width: fit-content;
+}
+
+.typing-avatar-group {
+  display: flex;
+  align-items: center;
+}
+
+.typing-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  border: 2px solid var(--bg-surface);
+  margin-left: -8px;
+}
+
+.typing-avatar:first-child {
+  margin-left: 0;
+}
+
+.typing-text {
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.typing-animation {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.typing-animation .dot {
+  width: 4px;
+  height: 4px;
+  background: var(--text-secondary);
+  border-radius: 50%;
+  animation: typingBounce 1.4s infinite;
+}
+
+.typing-animation .dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-animation .dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes typingBounce {
+  0%, 60%, 100% {
+    transform: translateY(0);
+  }
+  30% {
+    transform: translateY(-4px);
+  }
+}

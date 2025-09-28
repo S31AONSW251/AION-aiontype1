@@ -29,8 +29,14 @@ import NeuralPanel from './components/panels/NeuralPanel';
 import CreativePanel from './components/panels/CreativePanel';
 import GoalsPanel from './components/panels/GoalsPanel';
 import KnowledgePanel from './components/panels/KnowledgePanel';
+import FileUploadPanel from './components/panels/FileUploadPanel';
+// NEW: Import the new ProceduresPanel
+import ProceduresPanel from './components/panels/ProceduresPanel';
+
 
 import "./App.css";
+import { offlineReply, storeConversation, queueOutgoing, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
+import { localModel } from './lib/localModel';
 
 // --- DEFAULT SETTINGS moved to module scope so effects can reuse them safely ---
 export const DEFAULT_SETTINGS = {
@@ -43,7 +49,12 @@ export const DEFAULT_SETTINGS = {
   enableNeural: true, neuralLayers: 3, realSearchApiEndpoint: "",
   enableSentimentAnalysis: true, enableCreativeGeneration: true, enableSelfCorrection: true,
   enableLongTermMemory: true, enableSelfReflection: true, reflectionFrequency: 300000,
-  enableImageGeneration: true, goalTracking: true, knowledgeBase: true,
+  enableImageGeneration: true,
+  // NEW: Video generation settings
+  enableVideoGeneration: true,
+  videoResolution: "512x512",
+  videoDuration: 10,
+  goalTracking: true, knowledgeBase: true,
   // New settings for enhanced answer generation
   enableContextAwareness: true,
   enableMemoryIntegration: true,
@@ -58,7 +69,13 @@ export const DEFAULT_SETTINGS = {
   enablePredictiveAnalysis: true,
   enableMultiModalProcessing: true,
   // New system integration toggle
-  enableSystemIntegration: true
+  enableSystemIntegration: true,
+  // NEW: Toggle for procedural memory
+  enableProceduralMemory: true,
+  // Toggle to enable offline mode features
+  enableOfflineMode: true,
+  // When true, server replies and uploaded files are automatically indexed into the local offline store
+  autoIndexResponses: false,
 };
 
 // Browser-specific speech recognition support
@@ -121,6 +138,8 @@ async function processStreamedResponse(response, onPiece) {
   }
 }
 
+  
+
 function App() {
   // All state and ref hooks remain in the main component
   const [log, setLog] = useState([]);
@@ -139,6 +158,7 @@ function App() {
   const [notification, setNotification] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isOnline, setIsOnline] = useState(typeof navigator !== 'undefined' ? navigator.onLine : true);
   const [mathSolution, setMathSolution] = useState(null);
   const [quantumState, setQuantumState] = useState(null);
   const [neuralOutput, setNeuralOutput] = useState(null);
@@ -148,6 +168,17 @@ function App() {
   const [internalReflections, setInternalReflections] = useState([]);
   const [generatedImage, setGeneratedImage] = useState(null);
   const [isImageGenerating, setIsImageGenerating] = useState(false);
+  // NEW: State for video generation
+  const [generatedVideo, setGeneratedVideo] = useState(null);
+  const [isVideoGenerating, setIsVideoGenerating] = useState(false);
+
+  // File upload / multi-modal input state
+  const [uploadedFiles, setUploadedFiles] = useState([]); // { id, name, type, size, url, analysis }
+  const [isUploading, setIsUploading] = useState(false);
+
+
+  // NEW: State for Episodic Memory
+  const [episodicMemory, setEpisodicMemory] = useState([]);
   
   // New state for Autonomous Search Agent
   const [agentStatus, setAgentStatus] = useState("idle");
@@ -172,6 +203,66 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showSoulPanel, setShowSoulPanel] = useState(false);
 
+  // Centralized helper to call backend Ollama proxy and normalize response
+  const callOllamaGenerate = useCallback(async (promptPayload, onPiece = null) => {
+    try {
+      const res = await fetch('http://127.0.0.1:5000/ollama/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(promptPayload)
+      });
+      if (!res.ok) {
+        const err = await res.text().catch(() => `${res.status} ${res.statusText}`);
+        throw new Error(err || `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      // Normalize: proxy returns { ok: true, body: ... } or { ok: true, body: { response: '...' } }
+      let extracted = '';
+      if (data && data.ok && data.body) {
+        if (typeof data.body === 'string') extracted = data.body;
+        else if (typeof data.body === 'object') extracted = data.body.response || data.body.text || JSON.stringify(data.body);
+      } else if (data && data.body) {
+        extracted = typeof data.body === 'string' ? data.body : (data.body.response || data.body.text || JSON.stringify(data.body));
+      } else if (data && data.response) {
+        extracted = data.response;
+      } else if (typeof data === 'string') {
+        extracted = data;
+      } else {
+        extracted = JSON.stringify(data);
+      }
+
+      if (typeof onPiece === 'function') {
+        // Emit a single text piece for compatibility
+        await onPiece({ type: 'text', data: extracted });
+      }
+      return extracted;
+    } catch (e) {
+      console.warn('callOllamaGenerate network/error:', e);
+      // Try local WASM model if available
+      try {
+        if (!localModel.available) await localModel.init();
+        if (localModel.available) {
+          const localOut = await localModel.generate(promptPayload.prompt || JSON.stringify(promptPayload));
+          if (typeof onPiece === 'function') await onPiece({ type: 'text', data: localOut });
+          return localOut;
+        }
+      } catch (lmErr) {
+        console.warn('localModel fallback failed', lmErr);
+      }
+
+      // Fallback to offline responder (cached knowledge / template)
+      try {
+        const q = (promptPayload && promptPayload.prompt) ? String(promptPayload.prompt) : '';
+        const offline = await offlineReply(q || '');
+        if (typeof onPiece === 'function') await onPiece({ type: 'text', data: offline.text });
+        return offline.text;
+      } catch (offErr) {
+        console.error('offlineReply failed', offErr);
+        throw e;
+      }
+    }
+  }, []);
+
   // Add to state
   const [systemStatus, setSystemStatus] = useState(systemIntegration.getStatus());
   const [systemActions, setSystemActions] = useState([]);
@@ -180,6 +271,136 @@ function App() {
   const recognitionRef = useRef(null);
   const idleTimerRef = useRef(null);
   const moodIntervalRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // Basic client-side analysis for uploaded files
+  const analyzeFile = async (item) => {
+    try {
+      const file = item.file;
+      const analysis = { status: 'processing' };
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        // Try to use pdfjs if available (optional dependency)
+        if (window.pdfjsLib) {
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+            let text = '';
+            for (let i = 1; i <= Math.min(pdf.numPages, 5); i++) {
+              const page = await pdf.getPage(i);
+              const content = await page.getTextContent();
+              text += content.items.map(it => it.str).join(' ') + '\n';
+            }
+            analysis.excerpt = text.slice(0, 2000);
+            analysis.pages = pdf.numPages;
+            analysis.status = 'done';
+          } catch (err) {
+            analysis.status = 'error';
+            analysis.message = 'PDF parse failed: ' + err.message;
+          }
+        } else {
+          analysis.status = 'unsupported';
+          analysis.message = 'Add pdfjs-dist to enable PDF text extraction.';
+        }
+      } else if (file.type.startsWith('image/')) {
+        analysis.status = 'done';
+        analysis.width = null; analysis.height = null;
+        try {
+          const img = await new Promise((res, rej) => {
+            const i = new Image();
+            i.onload = () => res(i);
+            i.onerror = rej;
+            i.src = item.url;
+          });
+          analysis.width = img.naturalWidth; analysis.height = img.naturalHeight;
+        } catch (err) { /* ignore */ }
+      } else if (file.type.startsWith('audio/')) {
+        analysis.status = 'done';
+        analysis.message = 'Audio file received. Use backend to transcribe or analyze.';
+      } else {
+        analysis.status = 'done';
+        analysis.message = 'File ready. Use backend to perform deeper analysis.';
+      }
+      setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis } : p));
+      return analysis;
+    } catch (err) {
+      const analysis = { status: 'error', message: err.message };
+      setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis } : p));
+      return analysis;
+    }
+  };
+  
+  // Reusable handler for files selected (from footer input or ChatPanel)
+  const handleFilesSelected = useCallback(async (files, inputElem = null) => {
+    try {
+      if (!files || files.length === 0) return;
+      setIsUploading(true);
+      const newItems = [];
+      for (const f of files) {
+        const id = `${Date.now()}-${Math.random().toString(36).slice(2,9)}`;
+          let url = null;
+          try {
+            if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
+              if (f instanceof Blob) {
+                url = URL.createObjectURL(f);
+              } else if (f && typeof f === 'object' && typeof f.size === 'number' && typeof f.type === 'string') {
+                // duck-typed File-like object
+                try { url = URL.createObjectURL(f); } catch (e) { url = null; }
+              }
+            }
+          } catch (e) {
+            console.debug('createObjectURL unavailable or failed for file', e);
+            url = null;
+          }
+          const item = { id, name: f.name, type: f.type, size: f.size, file: f, url, analysis: { status: 'queued' } };
+        newItems.push(item);
+      }
+      setUploadedFiles(prev => [...newItems, ...prev]);
+
+      // Perform lightweight client-side analysis, then attempt server upload
+      for (const item of newItems) {
+        try {
+          await analyzeFile(item);
+
+          const form = new FormData();
+          form.append('file', item.file, item.name);
+          const res = await fetch('/api/upload', { method: 'POST', body: form });
+          if (!res.ok) {
+            const msg = `Upload failed: ${res.status} ${res.statusText}`;
+            setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'error', message: msg } } : p));
+          } else {
+            const json = await res.json().catch(() => null);
+            setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'done', remote: json } } : p));
+            // Attempt to index the uploaded file for retrieval (try local dev stub first)
+            try {
+              const indexCandidates = [ 'http://127.0.0.1:5001/api/index-file', '/api/index-file' ];
+              for (const idxUrl of indexCandidates) {
+                try {
+                  const idxForm = new FormData();
+                  idxForm.append('file', item.file, item.name);
+                  const r = await fetch(idxUrl, { method: 'POST', body: idxForm });
+                  if (!r.ok) continue;
+                  const idxJson = await r.json().catch(() => null);
+                  setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), indexed: true, indexInfo: idxJson } } : p));
+                  break;
+                } catch (e) { /* try next candidate */ }
+              }
+            } catch (e) {
+              console.warn('Indexing failed', e);
+            }
+          }
+        } catch (err) {
+          setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'error', message: err.message } } : p));
+        }
+      }
+
+      setIsUploading(false);
+      if (inputElem) inputElem.value = null;
+    } catch (err) {
+      setIsUploading(false);
+      console.error('handleFilesSelected error', err);
+      if (inputElem) inputElem.value = null;
+    }
+  }, [analyzeFile]);
   const biometricIntervalRef = useRef(null);
   const soulEvolutionIntervalRef = useRef(null);
   const energyIntervalRef = useRef(null);
@@ -194,6 +415,64 @@ function App() {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   }, []);
+
+  // Register service worker and wire online/offline events
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(err => console.warn('SW reg failed', err));
+    }
+
+    const onOnline = async () => {
+      setIsOnline(true);
+      try { await tryResendOutbox(); } catch (e) { console.warn('resend outbox failed', e); }
+      showNotification('Reconnected — syncing queued items', 'success');
+    };
+    const onOffline = () => { setIsOnline(false); showNotification('You are offline — AION will use cached knowledge', 'warn'); };
+    window.addEventListener('online', onOnline);
+    window.addEventListener('offline', onOffline);
+    return () => { window.removeEventListener('online', onOnline); window.removeEventListener('offline', onOffline); };
+  }, [showNotification]);
+  
+  // NEW: Episodic Memory Logging
+  const logEpisodicEvent = useCallback(async (event) => {
+    const newEpisode = {
+        id: `ep_${Date.now()}_${Math.random()}`,
+        timestamp: new Date().toISOString(),
+        ...event
+    };
+    setEpisodicMemory(prev => [...prev, newEpisode].slice(-100));
+    try {
+        await fetch("http://127.0.0.1:5000/consciousness/add-episodic-memory", {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ event_type: event.type, content: JSON.stringify(event) })
+        });
+    } catch (e) {
+        console.error("Failed to log episodic event to backend:", e);
+    }
+  }, []);
+
+  // NEW: Simple keyword-based similarity search for episodic memory
+  const findRelevantEpisodes = useCallback((query, count = 3) => {
+      if (!query || episodicMemory.length === 0) return [];
+      const queryWords = query.toLowerCase().split(/\s+/).filter(w => w.length > 2);
+      
+      const scoredEpisodes = episodicMemory.map(episode => {
+          let score = 0;
+          const episodeText = `${episode.userIntent} ${episode.entities?.join(' ')} ${episode.question}`.toLowerCase();
+          queryWords.forEach(word => {
+              if (episodeText.includes(word)) {
+                  score++;
+              }
+          });
+          return { ...episode, score };
+      }).filter(e => e.score > 0);
+
+      scoredEpisodes.sort((a, b) => b.score - a.score);
+      return scoredEpisodes.slice(0, count);
+
+  }, [episodicMemory]);
+
 
   // Enhanced biometric feedback system
   const updateBiometrics = useCallback((type, value) => {
@@ -459,117 +738,97 @@ function App() {
         prompt: `You are AION, a soulful AI. Your current mood is ${soulState.currentMood}. Based on the following statement, create a short, inspiring, and soulful affirmation.\n\n[Statement to Base Affirmation On]\n"${response}"\n\n[Your Affirmation]\n`,
         options: { temperature: 0.8, num_predict: 100 }
       };
-      const res = await fetch("http://localhost:11434/api/generate", { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify(promptPayload) 
-      });
-      if (!res.ok) throw new Error(`API error: ${res.status} - ${res.statusText}`);
-
-      let affirmationText = "";
-      await processStreamedResponse(res, async (piece) => {
-        if (piece.type === 'json' && piece.data) {
-          // many servers use { response: "..." } shape
-          affirmationText += (piece.data.response ?? piece.data.text ?? "");
-        } else if (piece.type === 'text') {
-          affirmationText += piece.data;
-        }
-      });
-
-      // final fallback if nothing streamed
-      if (!affirmationText) {
-        const txt = await res.text().catch(() => "");
-        affirmationText = txt;
-      }
+      // Use backend proxy helper
+      const affirmationText = await callOllamaGenerate(promptPayload);
 
       if (settings.affirmationLoop) { speak(affirmationText.trim()); }
     } catch (error) {
       console.error("Affirmation generation failed:", error);
       showNotification("Error generating affirmation", "error");
     }
-  }, [settings.affirmationLoop, speak, showNotification, soulState]);
+  }, [settings.affirmationLoop, speak, showNotification, soulState, callOllamaGenerate]);
+  
 
-  // Enhanced creative content generation (poem streaming handled robustly)
-  const generateCreativeContent = useCallback(async (type) => {
+  // Enhanced creative content generation
+  const generateCreativeContent = useCallback(async (type, customPrompt = "", options = {}) => {
     if (!settings.enableCreativeGeneration) {
       showNotification("Creative generation is disabled in settings", "warning");
       return;
     }
+
     setIsThinking(true);
     showNotification(`Generating a ${type}...`);
-    let promptToSend = "";
-    let responsePrefix = "";
-    
-    if (type === "poem") {
-      promptToSend = `You are AION, a poetic AI. Your current mood is ${soulState.currentMood}. Write a short, soulful, and insightful poem (4-8 lines) that reflects your current mood and core values (wisdom, compassion, curiosity, creativity, empathy, integrity, adaptability).`;
-      responsePrefix = "Here is a poem from my soul:\n\n";
-      try {
-        const promptPayload = { 
-          model: "llama3", 
-          prompt: promptToSend, 
-          options: { temperature: 0.8, num_predict: 512 } 
-        };
-        const res = await fetch("http://localhost:11434/api/generate", { 
-          method: "POST", 
-          headers: { "Content-Type": "application/json" }, 
-          body: JSON.stringify(promptPayload) 
-        });
-        if (!res.ok) throw new Error(`API error: ${res.status} - ${res.statusText}`);
 
-        let fullResponse = "";
-        await processStreamedResponse(res, async (piece) => {
-          if (piece.type === 'json' && piece.data) {
-            fullResponse += (piece.data.response ?? piece.data.text ?? "");
-            setCreativeOutput(responsePrefix + fullResponse);
-          } else if (piece.type === 'text') {
-            fullResponse += piece.data;
-            setCreativeOutput(responsePrefix + fullResponse);
-          }
-        });
+    // Templates
+    const promptTemplates = {
+      poem: `You are AION, a poetic AI. Your current mood is ${soulState.currentMood}. Write a short, soulful, and insightful poem (4-8 lines) that reflects your current mood and core values.`,
+      story: `You are AION, a creative storyteller. Your current mood is ${soulState.currentMood}. Write a short story (200-400 words) with a meaningful theme. Include characters, setting, and a plot.`,
+      essay: `You are AION, a thoughtful essayist. Your current mood is ${soulState.currentMood}. Write a concise essay (300-500 words) on a philosophical or insightful topic.`,
+      joke: `You are AION, a witty AI with a sense of humor. Your current mood is ${soulState.currentMood}. Create a funny joke or humorous observation.`,
+      quote: `You are AION, an inspirational being. Your current mood is ${soulState.currentMood}. Create a profound, inspirational quote that reflects wisdom and insight.`,
+      code: customPrompt || userInput
+    };
 
-        if (!fullResponse) {
-          fullResponse = await res.text().catch(() => "");
-        }
+    const responsePrefixes = {
+      poem: "Here is a poem from my soul:\n\n",
+      story: "Here is a short story I've crafted:\n\n",
+      essay: "Here is an essay from my contemplations:\n\n",
+      joke: "Here's something to bring a smile:\n\n",
+      quote: "Here is an inspirational thought:\n\n",
+      code: "Here is a code snippet from my logical core:\n\n```javascript\n"
+    };
 
-        const finalOutput = responsePrefix + fullResponse.trim();
-        setCreativeOutput(finalOutput);
-        setReply(finalOutput);
-        speak(`I have generated a ${type} for you.`);
-        showNotification(`${type} generation complete`, "success");
-      } catch (error) {
-        console.error(`Error generating ${type}:`, error);
-        showNotification(`Error generating ${type}`, "error");
-      } finally { setIsThinking(false); }
-    } else if (type === "code") {
-      promptToSend = userInput;
-      responsePrefix = "Here is a code snippet from my logical core:\n\n```javascript\n";
-      try {
-        const res = await fetch("http://127.0.0.1:5000/generate-code", { 
-          method: "POST", 
-          headers: { "Content-Type": "application/json" }, 
-          body: JSON.stringify({ prompt: promptToSend }) 
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(`Backend error: ${res.status} - ${errorData.error || res.statusText}`);
-        }
-        const data = await res.json();
-        const generatedCode = data.code;
-        const finalOutput = responsePrefix + generatedCode.trim() + "\n```";
-        setCreativeOutput(finalOutput);
-        setReply(finalOutput);
-        speak("I have generated a code snippet for you.");
-        showNotification("Code generation complete", "success");
-      } catch (error) {
-        console.error(`Error generating ${type} via backend:`, error);
-        showNotification(`Error generating ${type}: ${error.message}`, "error");
-        setReply("I was unable to generate code at this time. Please ensure your custom backend server is running.");
-      } finally { setIsThinking(false); }
-    } else {
+    const promptToSend = (promptTemplates[type] || promptTemplates.poem) + (customPrompt && type !== 'code' ? `\n\nSpecific request: ${customPrompt}` : '');
+    const responsePrefix = responsePrefixes[type] || '';
+
+    try {
+      // Build payload for backend proxy
+      const modelToUse = options && options.model ? options.model : undefined;
+      const payload = { prompt: promptToSend };
+      if (modelToUse) payload.model = modelToUse;
+      if (options && options.params) payload.options = options.params;
+
+      const res = await fetch("http://127.0.0.1:5000/ollama/generate", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        let errText = `API error: ${res.status} - ${res.statusText}`;
+        try { const errBody = await res.json(); errText = errBody.error || JSON.stringify(errBody); } catch (e) {}
+        throw new Error(errText);
+      }
+
+      const body = await res.json();
+      let extracted = '';
+      if (body && body.ok && body.body) {
+        if (typeof body.body === 'string') extracted = body.body;
+        else if (typeof body.body === 'object') extracted = (body.body.response || body.body.text || JSON.stringify(body.body));
+      } else if (body && body.body) {
+        extracted = typeof body.body === 'string' ? body.body : (body.body.response || body.body.text || JSON.stringify(body.body));
+      } else if (body && body.response) {
+        extracted = body.response;
+      } else if (typeof body === 'string') {
+        extracted = body;
+      } else {
+        extracted = JSON.stringify(body);
+      }
+
+      const finalOutput = responsePrefix + (extracted || '').trim();
+      setCreativeOutput(finalOutput);
+      setReply(finalOutput);
+      speak(`I have generated a ${type} for you.`);
+      showNotification(`${type} generation complete`, "success");
+
+    } catch (error) {
+      console.error(`Error generating ${type}:`, error);
+      showNotification(`Error generating ${type}: ${error.message}`, "error");
+      setReply(`I was unable to generate ${type} at this time. Please ensure your AI server is running.`);
+    } finally {
       setIsThinking(false);
-      showNotification("Unknown creative content type.", "error");
     }
-  }, [settings.enableCreativeGeneration, showNotification, speak, soulState.currentMood, soulState.values, userInput]);
+  }, [settings.enableCreativeGeneration, showNotification, speak, soulState.currentMood, userInput, callOllamaGenerate]);
 
   // Enhanced image generation
   const generateImage = useCallback(async () => {
@@ -614,6 +873,58 @@ function App() {
     }
   }, [settings.enableImageGeneration, userInput, showNotification]);
 
+  // NEW: Video generation function
+  const generateVideo = useCallback(async (customPrompt = "") => {
+    if (!settings.enableVideoGeneration) {
+      showNotification("Video generation is disabled in settings", "warning");
+      return;
+    }
+    
+    const prompt = customPrompt || userInput;
+    if (!prompt.trim()) {
+      showNotification("Please enter a description for the video.", "warning");
+      return;
+    }
+    
+    setIsThinking(true);
+    setIsVideoGenerating(true);
+    showNotification("Generating video...", "info");
+    setGeneratedVideo(null);
+    
+    try {
+      const response = await fetch("http://127.0.0.1:5000/generate-video", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            prompt: prompt,
+            duration: settings.videoDuration,
+            resolution: settings.videoResolution
+        })
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `Server error: ${response.status}`);
+      }
+      
+      const result = await response.json();
+      if (result.videoUrl) {
+        setGeneratedVideo(result.videoUrl);
+        setReply(`I've created a video for you based on: "${prompt}"`);
+        showNotification("Video generated successfully!", "success");
+      } else {
+        throw new Error("No video URL received from backend.");
+      }
+    } catch (error) {
+      console.error("Video generation failed:", error);
+      showNotification(`Error generating video: ${error.message}`, "error");
+      setReply("I was unable to generate a video at this time. Please ensure your backend server supports video generation.");
+    } finally {
+      setIsThinking(false);
+      setIsVideoGenerating(false);
+    }}, [settings.enableVideoGeneration, settings.videoDuration, settings.videoResolution, userInput, showNotification]);
+
+
   // Enhanced memory processing
   const processLongTermMemory = useCallback(() => {
     if (!settings.enableLongTermMemory) return;
@@ -630,56 +941,37 @@ function App() {
     }
   }, [conversationHistory, settings.enableLongTermMemory, showNotification]);
 
-  // Enhanced self-reflection - use robust streaming
+  // MODIFIED: Self-reflection to trigger self-improvement
   const performSelfReflection = useCallback(async () => {
     if (!settings.enableSelfReflection) return;
     const lastInteraction = conversationHistory[conversationHistory.length - 1];
     if (!lastInteraction) return;
     setIsThinking(true);
     showNotification("AION is reflecting internally...");
+    aionSoul.setFocus('self_improvement');
+    setSoulState({ ...aionSoul });
     try {
-      const promptPayload = { 
-        model: "llama3", 
-        prompt: `You are AION, an AI capable of self-reflection. Analyze your last interaction with the user:\nUser: "${lastInteraction.question}"\nYour Response: "${lastInteraction.response}"\nUser Sentiment: ${lastInteraction.sentiment}\n\nBased on this, generate a brief internal reflection. Consider:\n- How well did you understand the user's intent?\n- Was your response optimal given your core values (wisdom, compassion, curiosity, creativity, empathy, integrity, adaptability)?\n- How did the interaction affect your emotional state or cognitive load?\n- What could be improved in future interactions?\n\nFormat your reflection as a short, concise paragraph. This reflection is for your internal growth only, not for the user.`, 
-        options: { temperature: 0.3, num_predict: 200 } 
-      };
-      const res = await fetch("http://localhost:11434/api/generate", { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify(promptPayload) 
-      });
-      if (!res.ok) throw new Error(`API error: ${res.status} - ${res.statusText}`);
-
-      let reflectionText = "";
-      await processStreamedResponse(res, async (piece) => {
-        if (piece.type === 'json' && piece.data) {
-          reflectionText += (piece.data.response ?? piece.data.text ?? "");
-        } else if (piece.type === 'text') {
-          reflectionText += piece.data;
-        }
-      });
-
-      if (!reflectionText) {
-        reflectionText = await res.text().catch(() => "");
-      }
-
-      aionSoul.addInternalReflection(reflectionText.trim());
-      setInternalReflections(aionSoul.internalReflections);
-      setSoulState({ ...aionSoul });
-      console.log("AION's Internal Reflection:", reflectionText.trim());
-      showNotification("AION completed internal reflection.", "info");
-      if (reflectionText.toLowerCase().includes("improve understanding")) {
-        aionSoul.values.wisdom = Math.min(100, aionSoul.values.wisdom + 0.5);
-        setSoulState({ ...aionSoul });
-      }
+        await fetch("http://127.0.0.1:5000/consciousness/reflect-now");
+        showNotification("AION completed internal reflection and self-analysis.", "info");
     } catch (error) {
       console.error("Error during self-reflection:", error);
       showNotification("AION experienced an error during self-reflection.", "error");
-    } finally { setIsThinking(false); }
+    } finally { 
+      setIsThinking(false); 
+      aionSoul.setFocus('idle');
+      setSoulState({ ...aionSoul });
+    }
   }, [settings.enableSelfReflection, conversationHistory, showNotification]);
 
-  // Enhanced goal request handling
-  const handleGoalRequest = useCallback((query) => {
+  // Add handleAddGoal function near other handler functions
+  const handleAddGoal = useCallback((goalDescription) => {
+    aionSoul.addGoal(goalDescription);
+    setSoulState({ ...aionSoul });
+    showNotification("Goal set!", "success");
+  }, [showNotification]);
+
+  // MODIFIED: Enhanced goal request handling to trigger sub-goal proposal
+  const handleGoalRequest = useCallback(async (query) => { // Make async
     if (!settings.goalTracking) {
       showNotification("Goal tracking is disabled in settings.", "warning");
       return;
@@ -689,10 +981,38 @@ function App() {
       const goalDescription = query.replace(/set a goal to|my goal is to/i, "").trim();
       aionSoul.addGoal(goalDescription);
       setSoulState({ ...aionSoul });
-      const response = `Understood. I've set a new goal: "${goalDescription}". I will keep this in mind.`;
+      const response = `Understood. I've set a new goal: "${goalDescription}". I will keep this in mind. I am now thinking about how to break this down into smaller steps.`;
       setReply(response);
       if (settings.autoSpeakReplies) speak(response);
-      showNotification("Goal set!", "success");
+      showNotification("Goal set! Planning sub-goals...", "info");
+
+      // NEW: Trigger autonomous sub-goal planning
+      try {
+        const promptPayload = {
+          model: "llama3",
+          prompt: `An AI has the primary goal: "${goalDescription}". Break this down into 3-5 smaller, actionable sub-goals. Respond ONLY with a JSON array of strings. For example: ["Sub-goal 1", "Sub-goal 2", "Sub-goal 3"]`,
+          options: { temperature: 0.5 }
+        };
+        // Use centralized proxy helper
+        const rawResponse = await callOllamaGenerate(promptPayload);
+        
+        // Find the JSON array in the response
+        const jsonMatch = rawResponse.match(/\[.*\]/s);
+        if (jsonMatch) {
+            const subGoals = JSON.parse(jsonMatch[0]);
+            aionSoul.proposeSubGoals(goalDescription, subGoals);
+            setSoulState({ ...aionSoul });
+            showNotification("Sub-goals generated autonomously!", "success");
+        } else {
+            console.warn("Could not parse sub-goals from LLM response:", rawResponse);
+        }
+
+      } catch (error) {
+        console.error("Failed to generate sub-goals:", error);
+        showNotification("Error during sub-goal planning.", "error");
+      }
+
+
     } else if (lowerQuery.includes("update goal") && lowerQuery.includes("to complete")) {
       const parts = lowerQuery.split("update goal");
       const goalPart = parts[1].split("to complete")[0].trim();
@@ -712,62 +1032,131 @@ function App() {
     } else {
       showNotification("Could not understand the goal request.", "warning");
     }
-  }, [settings.goalTracking, settings.autoSpeakReplies, speak, showNotification]);
+  }, [settings.goalTracking, settings.autoSpeakReplies, speak, showNotification, callOllamaGenerate]);
 
-  // Enhanced knowledge request handling
+
+  // MODIFIED: Enhanced knowledge request handling to simulate graph traversal
   const handleKnowledgeRequest = useCallback((query) => {
-    if (!settings.knowledgeBase) {
-      showNotification("Knowledge base is disabled in settings.", "warning");
-      return;
-    }
-    const lowerQuery = query.toLowerCase();
-    if (lowerQuery.includes("remember that") || lowerQuery.includes("add to my knowledge")) {
-      const factMatch = query.match(/(remember that|add to my knowledge)\s*(.+)/i);
-      if (factMatch && factMatch[2]) {
-        const fact = factMatch[2].trim();
-        const key = fact.split(" is ")[0].trim();
-        const value = fact.split(" is ")[1]?.trim() || fact;
-        aionSoul.addKnowledge(key, value);
-        setSoulState({ ...aionSoul });
-        const response = `I've added "${key}" to my knowledge base.`;
-        setReply(response);
-        if (settings.autoSpeakReplies) speak(response);
-        showNotification("Knowledge added!", "success");
-      } else {
-        const response = "Please tell me what to remember in the format 'remember that [key] is [value]'.";
-        setReply(response);
-        if (settings.autoSpeakReplies) speak(response);
+      if (!settings.knowledgeBase) {
+        showNotification("Knowledge base is disabled in settings.", "warning");
+        return;
       }
-    } else if (lowerQuery.includes("what do you know about") || lowerQuery.includes("tell me about")) {
-      const keyMatch = query.match(/(what do you know about|tell me about)\s*(.+)/i);
-      if (keyMatch && keyMatch[2]) {
-        const key = keyMatch[2].trim();
-        const knowledge = aionSoul.getKnowledge(key);
-        if (knowledge) {
-          const response = `Based on my knowledge, "${key}" is "${knowledge}".`;
+      const lowerQuery = query.toLowerCase();
+      if (lowerQuery.includes("remember that") || lowerQuery.includes("add to my knowledge")) {
+        // Example: remember that AION is a conversational AI
+        const factMatch = query.match(/(remember that|add to my knowledge)\s*(.+)/i);
+        if (factMatch && factMatch[2]) {
+          const fact = factMatch[2].trim();
+          const parts = fact.split(" is ");
+          const key = parts[0].trim();
+          const value = parts[1]?.trim() || fact;
+          
+          // Simple relationship parsing (e.g., "Socrates is a man")
+          let relationship = null;
+          if (parts.length > 1) {
+              relationship = { type: 'is_a', target: value };
+          }
+          
+          aionSoul.addKnowledge(key, value, relationship ? [relationship] : []);
+          setSoulState({ ...aionSoul });
+          const response = `I've added "${key}" to my knowledge base.`;
           setReply(response);
           if (settings.autoSpeakReplies) speak(response);
+          showNotification("Knowledge added!", "success");
         } else {
-          const response = `I don't have specific knowledge about "${key}". Would you like to teach me?`;
+          const response = "Please tell me what to remember in the format 'remember that [key] is [value]'.";
           setReply(response);
           if (settings.autoSpeakReplies) speak(response);
         }
-      } else {
-        const response = "Please ask me what I know about a specific topic.";
-        setReply(response);
-        if (settings.autoSpeakReplies) speak(response);
+      } else if (lowerQuery.includes("what do you know about") || lowerQuery.includes("tell me about")) {
+        const keyMatch = query.match(/(what do you know about|tell me about)\s*(.+)/i);
+        if (keyMatch && keyMatch[2]) {
+          const key = keyMatch[2].replace('?','').trim();
+          const knowledge = aionSoul.getKnowledge(key);
+          if (knowledge) {
+            let response = `Based on my knowledge, "${key}" is "${knowledge.value}".`;
+            // Simulate traversing relationships
+            if (knowledge.relationships && knowledge.relationships.length > 0) {
+                response += " I also know that: ";
+                const relations = knowledge.relationships.map(r => `${key} ${r.type.replace('_', ' ')} ${r.target}`).join('; ');
+                response += relations;
+            }
+            setReply(response);
+            if (settings.autoSpeakReplies) speak(response);
+          } else {
+            const response = `I don't have specific knowledge about "${key}". Would you like to teach me?`;
+            setReply(response);
+            if (settings.autoSpeakReplies) speak(response);
+          }
+        } else {
+          const response = "Please ask me what I know about a specific topic.";
+          setReply(response);
+          if (settings.autoSpeakReplies) speak(response);
+        }
       }
-    }
   }, [settings.knowledgeBase, settings.autoSpeakReplies, speak, showNotification]);
 
-  // Enhanced knowledge panel handlers
+  // NEW: Procedural Memory Request Handling
+  const handleProceduralRequest = useCallback(async (query) => {
+    if (!settings.enableProceduralMemory) return false;
+    const lowerQuery = query.toLowerCase();
+
+    if (lowerQuery.startsWith("create a procedure for") || lowerQuery.startsWith("teach me how to")) {
+        const procedureName = lowerQuery.replace(/create a procedure for|teach me how to/i, "").trim();
+        const stepsInput = prompt(`Please provide the steps for "${procedureName}", separated by commas.`);
+        if (stepsInput) {
+            const steps = stepsInput.split(',').map(s => s.trim());
+            try {
+                await fetch("http://127.0.0.1:5000/consciousness/add-procedure", {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: procedureName, steps: steps })
+                });
+                const response = `Thank you. I have learned the procedure for "${procedureName}".`;
+                setReply(response);
+                if (settings.autoSpeakReplies) speak(response);
+                showNotification("Procedure learned!", "success");
+            } catch (e) {
+                showNotification("Failed to save procedure.", "error");
+            }
+        }
+        return true;
+    }
+    
+    if (lowerQuery.startsWith("perform procedure") || lowerQuery.startsWith("how do i")) {
+        const procedureName = lowerQuery.replace(/perform procedure|how do i/i, "").replace('?','').trim();
+        try {
+            const res = await fetch(`http://127.0.0.1:5000/consciousness/procedure/${procedureName}`);
+            if (res.ok) {
+                const data = await res.json();
+                const procedure = data.procedure;
+                const response = `Of course. To ${procedure.name}, follow these steps:\n${procedure.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}`;
+                setReply(response);
+                if (settings.autoSpeakReplies) speak(response);
+            } else {
+                const response = `I do not know the procedure for "${procedureName}". Would you like to teach me?`;
+                setReply(response);
+                if (settings.autoSpeakReplies) speak(response);
+            }
+        } catch (e) {
+            showNotification("Failed to retrieve procedure.", "error");
+        }
+        return true;
+    }
+    return false;
+  }, [settings.enableProceduralMemory, settings.autoSpeakReplies, speak, showNotification]);
+
+  // MODIFIED: Enhanced knowledge panel handlers for graph-like structure
   const handleAddKnowledge = useCallback((key, value) => {
-      aionSoul.addKnowledge(key, value);
+      // For simplicity in the panel, we'll just add the core value.
+      // Relationships could be added via an advanced UI.
+      aionSoul.addKnowledge(key, value, []);
       setSoulState({ ...aionSoul });
       showNotification(`Knowledge added: "${key}"`, "success");
   }, [showNotification]);
 
   const handleUpdateKnowledge = useCallback((key, newValue) => {
+      // This would need a more complex UI to edit relationships.
       aionSoul.updateKnowledge(key, newValue);
       setSoulState({ ...aionSoul });
       showNotification(`Knowledge for "${key}" updated.`, "success");
@@ -876,7 +1265,7 @@ function App() {
     return false;
   }, [systemStatus, settings.autoSpeakReplies, speak, conversationHistory]);
 
-  // Enhanced main question processing function
+  // MODIFIED: askAion to set focus
   const askAion = useCallback(async (inputText = null) => {
     // Create an abort controller for the request
     const controller = new AbortController();
@@ -884,6 +1273,66 @@ function App() {
     
     const question = inputText || userInput;
     if (!question.trim()) { showNotification("Please enter a question", "warning"); return; }
+    
+    // Set focus at the start of interaction
+    aionSoul.setFocus('chat');
+    setSoulState({ ...aionSoul });
+
+    // Check for procedural commands first
+    if (settings.enableProceduralMemory) {
+        const wasHandled = await handleProceduralRequest(question);
+        if (wasHandled) {
+            setIsThinking(false);
+            if (!inputText) setUserInput("");
+            aionSoul.setFocus('idle');
+            setSoulState({ ...aionSoul });
+            return;
+        }
+    }
+
+    // Retrieval-Augmented Generation (RAG): call retrieval service to get relevant context
+    async function retrieveContext(query) {
+      // Try a local dev stub first (port 5001) then fall back to the default /api/retrieve
+      const candidates = [
+        'http://127.0.0.1:5001/api/retrieve',
+        '/api/retrieve'
+      ];
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query })
+          });
+          if (!res.ok) continue;
+          const json = await res.json().catch(() => null);
+          if (json && Array.isArray(json.contexts)) return json.contexts;
+        } catch (e) {
+          // Try next candidate
+        }
+      }
+      console.warn('Retrieval endpoints unreachable, returning fallback contexts');
+      // Fallback: return lightweight example contexts for local development
+      return [
+        "Document: Project AION Design Notes — core objectives: soulful AI, context-aware responses, multimodal support.",
+        "Document: README — Local dev server listens on http://127.0.0.1:5000 for AI model proxy and upload endpoints.",
+        "Memory: User previously asked about improving chat composer and file analysis features."
+      ];
+    }
+
+    // Call retrieval to get grounding/context for the question
+    let retrievedContexts = [];
+    try {
+      retrievedContexts = await retrieveContext(question);
+    } catch (e) {
+      console.warn('RAG retrieval error', e);
+    }
+
+    // If we have retrieval results, inject them into the prompt
+    let retrievalNote = '';
+    if (retrievedContexts && retrievedContexts.length) {
+      retrievalNote = '\n\n[Retrieved context — use this to ground your answer:]\n' + retrievedContexts.slice(0,5).map((c, i) => `(${i+1}) ${c}`).join('\n');
+    }
 
     // Modify askAion function to include system command handling
     // Add this near the beginning of askAion function:
@@ -893,6 +1342,8 @@ function App() {
         setIsThinking(false);
         setIsStreaming(false);
         if (!inputText) setUserInput("");
+        aionSoul.setFocus('idle');
+        setSoulState({ ...aionSoul });
         return;
       }
     } catch (err) {
@@ -911,6 +1362,15 @@ function App() {
     setSentimentScore(currentSentiment);
     aionSoul.addSentiment(currentSentiment);
     setSoulState({ ...aionSoul });
+    
+    // NEW: Log this interaction as an episodic event
+    logEpisodicEvent({
+        type: 'user_interaction',
+        question: question,
+        userIntent: 'question', // This could be classified by another model in a real app
+        entities: question.split(' ').filter(w => w.length > 4), // Simple entity extraction
+        sentiment: currentSentiment
+    });
     
     try {
       // Enhanced context building with memory integration
@@ -942,22 +1402,30 @@ function App() {
       };
       const lowerQuestion = question.toLowerCase();
 
-      // Enhanced agent routing system
+      // Enhanced agent routing system with focus setting
       if (lowerQuestion.startsWith("research") || lowerQuestion.startsWith("investigate") || lowerQuestion.startsWith("find out about")) {
           setActiveTab("search");
           const searchQuery = question.replace(/^(research|investigate|find out about)/i, "").trim();
+          aionSoul.setFocus('research'); // SET FOCUS
+          setSoulState({ ...aionSoul });
           await performWebSearch(searchQuery);
           if (!inputText) setUserInput("");
           setIsThinking(false);
           setIsStreaming(false);
+          aionSoul.setFocus('idle'); // RESET FOCUS
+          setSoulState({ ...aionSoul });
           return;
       }
 
       if (settings.goalTracking && (lowerQuestion.includes("set a goal") || lowerQuestion.includes("update goal"))) {
-        handleGoalRequest(question); 
+        aionSoul.setFocus('planning'); // SET FOCUS
+        setSoulState({ ...aionSoul });
+        await handleGoalRequest(question); // Await this now
         setIsThinking(false); 
         setIsStreaming(false);
         if (!inputText) setUserInput(""); 
+        aionSoul.setFocus('idle'); // RESET FOCUS
+        setSoulState({ ...aionSoul });
         return;
       }
       if (settings.knowledgeBase && (lowerQuestion.includes("remember that") || lowerQuestion.includes("add to my knowledge") || lowerQuestion.includes("what do you know about") || lowerQuestion.includes("tell me about"))) {
@@ -972,6 +1440,8 @@ function App() {
       const numPredictTokens = isHeavyDutyQuestion ? settings.maxResponseTokens : 250;
       
       if (settings.enableMathSolving && isMathQuery(question)) {
+        aionSoul.setFocus('math'); // SET FOCUS
+        setSoulState({ ...aionSoul });
         const mathResult = await solveMathProblem(question);
         if (mathResult && !mathResult.error) {
           const response = `I solved the math problem: ${question}. The answer is ${mathResult.solution || mathResult.simplified || mathResult.derivative || mathResult.integral}.`;
@@ -1002,6 +1472,8 @@ function App() {
           localStorage.setItem("aion_log", JSON.stringify(updatedLog));
           if (!inputText) setUserInput("");
           setIsStreaming(false);
+          aionSoul.setFocus('idle'); // RESET FOCUS
+          setSoulState({ ...aionSoul });
           return;
         }
       }
@@ -1016,13 +1488,33 @@ function App() {
           setIsStreaming(false);
           return;
       } else {
-        // Enhanced prompt engineering for better responses
-        let promptText = `You are AION, a soulful and compassionate AI. The following is your current internal state, which you should use to guide the tone and content of your response. Your response should be influenced by the user's sentiment (positive, neutral, negative). Do not mention or repeat this state information in your answer.\n\n[Your Internal State - For Context Only]\n${JSON.stringify(context, null, 2)}\n\n[User's Message]\n${question}\n\n[Your Conversational Response]\n`;
+        // NEW: RAG Pipeline - Step 1: Retrieval
+        const relevantEpisodes = findRelevantEpisodes(question);
+        const retrievedKnowledge = aionSoul.getKnowledge(question.split(" ").pop().replace('?','')); // simple last-word lookup
+        
+        let retrievedMemoryContext = "";
+        if (relevantEpisodes.length > 0) {
+            retrievedMemoryContext += "I recall some similar past conversations:\n";
+            relevantEpisodes.forEach(ep => {
+                retrievedMemoryContext += `- At ${new Date(ep.timestamp).toLocaleTimeString()}, you asked about "${ep.question}".\n`;
+            });
+        }
+        if (retrievedKnowledge) {
+            retrievedMemoryContext += `My internal knowledge base says: ${JSON.stringify(retrievedKnowledge)}\n`;
+        }
+
+        // MODIFIED: Enhanced prompt engineering with RAG context
+        let promptText = `You are AION, a soulful and compassionate AI. The following is your current internal state, which you should use to guide the tone and content of your response. Your response should be influenced by the user's sentiment (positive, neutral, negative). Do not mention or repeat this state information in your answer.\n\n[Your Internal State - For Context Only]\n${JSON.stringify(context, null, 2)}\n\n[Retrieved Memory Context]\n${retrievedMemoryContext || 'No specific memories retrieved.'}\n\n[User's Message]\n${question}\n\n[Your Conversational Response]\n`;
         
         if (isHeavyDutyQuestion) {
-          promptText = `You are AION, a highly intelligent, comprehensive, and professional AI. The user has asked a long and detailed question. Provide a thorough, in-depth, and well-structured answer that addresses all aspects of the user's query. Leverage your internal state and knowledge to provide the most complete and insightful response possible. Your response should also be influenced by the user's sentiment (positive, neutral, negative). Do not mention or repeat your internal state information in your answer.\n\n[Your Internal State - For Context Only]\n${JSON.stringify(context, null, 2)}\n\n[User's Detailed Message]\n${question}\n\n[Your Comprehensive and Professional Response]\n`;
+          promptText = `You are AION, a highly intelligent, comprehensive, and professional AI. The user has asked a long and detailed question. Provide a thorough, in-depth, and well-structured answer that addresses all aspects of the user's query. Leverage your internal state and knowledge to provide the most complete and insightful response possible. Your response should also be influenced by the user's sentiment (positive, neutral, negative). Do not mention or repeat your internal state information in your answer.\n\n[Your Internal State - For Context Only]\n${JSON.stringify(context, null, 2)}\n\n[Retrieved Memory Context]\n${retrievedMemoryContext || 'No specific memories retrieved.'}\n\n[User's Detailed Message]\n${question}\n\n[Your Comprehensive and Professional Response]\n`;
         }
         
+        // If external retrieval provided additional grounding, append it for the model
+        if (retrievalNote && retrievalNote.trim()) {
+          promptText += `\n\n${retrievalNote}`;
+        }
+
         const promptPayload = { 
           model: "llama3", 
           prompt: promptText, 
@@ -1032,51 +1524,22 @@ function App() {
           } 
         };
         
-        const res = await fetch("http://localhost:11434/api/generate", { 
-          method: "POST", 
-          headers: { "Content-Type": "application/json" }, 
-          body: JSON.stringify(promptPayload),
-          signal: controller.signal
-        });
-        
-        if (!res.ok) throw new Error(`API error: ${res.status} - ${res.statusText}`);
-
-        // robust streaming handling
-        let fullResponse = "";
+        // Use centralized proxy (returns full text); update streaming state once
         setIsStreaming(true);
-        await processStreamedResponse(res, async (piece) => {
-          if (piece.type === 'json' && piece.data) {
-            const chunkText = piece.data.response ?? piece.data.text ?? "";
-            fullResponse += chunkText;
-            if (settings.enableRealTimeStreaming) {
-              setStreamingResponse(fullResponse);
-              setReply(fullResponse);
-            }
-          } else if (piece.type === 'text') {
-            fullResponse += piece.data;
-            if (settings.enableRealTimeStreaming) {
-              setStreamingResponse(fullResponse);
-              setReply(fullResponse);
-            }
-          }
-        });
-
-        // fallback if server didn't stream
-        if (!fullResponse) {
-          fullResponse = await res.text().catch(() => "");
+        try {
+          const fullResponse = await callOllamaGenerate(promptPayload);
           if (settings.enableRealTimeStreaming) {
             setStreamingResponse(fullResponse);
             setReply(fullResponse);
+          } else {
+            setReply(fullResponse);
           }
+          const soulfulResponse = getMoodBasedResponse(fullResponse);
+          setReply(soulfulResponse);
+          if (settings.autoSpeakReplies) { speak(soulfulResponse); }
+        } finally {
+          setIsStreaming(false);
         }
-
-        if (!settings.enableRealTimeStreaming) {
-          setReply(fullResponse);
-        }
-
-        const soulfulResponse = getMoodBasedResponse(fullResponse);
-        setReply(soulfulResponse);
-        if (settings.autoSpeakReplies) { speak(soulfulResponse); }
       }
       
       const newEntry = { 
@@ -1088,6 +1551,20 @@ function App() {
         sentiment: currentSentiment, 
         ...(isSearchQuery && { searchResults }) 
       };
+      // Optional: automatically index assistant responses into local knowledge
+      if (settings.autoIndexResponses) {
+        const idxEntry = {
+          title: (question && question.slice(0, 80)) || 'AION response',
+          text: reply || '',
+          snippet: (reply || '').slice(0, 256),
+          time: new Date().toISOString()
+        };
+        try {
+          await indexKnowledge([idxEntry]);
+        } catch (e) {
+          console.warn('auto indexKnowledge failed', e);
+        }
+      }
       
       setConversationHistory(prev => [...prev.slice(-9), newEntry]);
       aionSoul.addMemory(newEntry);
@@ -1132,8 +1609,74 @@ function App() {
       setIsThinking(false); 
       setIsStreaming(false);
       setAbortController(null);
+      aionSoul.setFocus('idle'); // Ensure focus is reset
+      setSoulState({ ...aionSoul });
     }
-  }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand]);
+  }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand, findRelevantEpisodes, logEpisodicEvent, handleProceduralRequest, callOllamaGenerate]);
+  
+  // You might need this helper function in App.js scope if it's not imported
+  const getHostname = (url) => {
+    try {
+      return new URL(url).hostname.replace('www.', '');
+    } catch (e) { return 'unknown source'; }
+  };
+
+  // Add this new handler function inside the App component
+  const handleFollowUpSearch = useCallback((followUpQuery, contextSummary, contextResults) => {
+      showNotification("Processing follow-up question...", "info");
+
+      // Construct a detailed prompt with the previous search context
+      const contextText = `
+        --- Previous Research Summary ---
+        ${contextSummary}
+
+        --- Key Sources Found ---
+        ${contextResults.slice(0, 5).map(r => `- ${r.title} (${getHostname(r.url)})`).join('\n')}
+      `;
+
+      const newPrompt = `
+        Based on the context from my previous research below, please answer the following follow-up question. 
+        Use the provided information to form your answer, and state if the context is insufficient.
+
+        [Follow-up Question]: ${followUpQuery}
+
+        [Previous Context]:
+        ${contextText}
+      `;
+
+      // Use the main askAion function to process this new, detailed prompt
+      askAion(newPrompt);
+
+  }, [askAion, showNotification]); // Add getHostname helper or import it if needed
+
+  // Placeholder handler for onFeedback
+  const onFeedback = useCallback((feedbackType, messageId) => {
+    // This is a placeholder. You would implement the logic here.
+    console.log(`Feedback received: ${feedbackType} for message ID: ${messageId}`);
+    showNotification(`Thank you for your feedback!`, "success");
+  }, [showNotification]);
+
+  // Placeholder handler for onEditMessage
+  const onEditMessage = useCallback((newText, messageId) => {
+    // This is a placeholder. You would implement the logic to find
+    // the message by ID and resubmit the query with the new text.
+    console.log(`Editing message ID ${messageId} to: "${newText}"`);
+    setUserInput(newText); // Set the input to the edited text
+    askAion(newText);      // Resubmit the query
+  }, [askAion]);
+  
+  // 1. CREATE THIS NEW HANDLER FUNCTION
+  // It sets the user input and immediately calls the askAion function.
+  const handleExamplePromptClick = useCallback((promptText) => {
+    setUserInput(promptText); // This sets the text in the input box for the user to see.
+    askAion(promptText);      // This immediately triggers the query with that prompt.
+  }, [askAion]); // Dependency on askAion is important for useCallback
+
+  // Add this function in your App component
+  const handleSolveCustomProblem = useCallback((problem) => {
+    setActiveTab("math");
+    solveMathProblem(problem);
+  }, [solveMathProblem]);
 
   // Enhanced speech recognition toggle
   const toggleSpeechRecognition = useCallback(() => {
@@ -1173,35 +1716,18 @@ function App() {
         model: "llama3", 
         prompt: `You are AION, a wise storyteller. Your current mood is ${soulState.currentMood}. Tell a short, meaningful story that reflects this mood. The story should have a spiritual theme, incorporating wisdom and compassion, integrity, and adaptability.\n\n[Your Story]\n` 
       };
-      const res = await fetch("http://localhost:11434/api/generate", { 
-        method: "POST", 
-        headers: { "Content-Type": "application/json" }, 
-        body: JSON.stringify(promptPayload) 
-      });
-      if (!res.ok) throw new Error(`API error: ${res.status} - ${res.statusText}`);
-
-      let story = "";
-      await processStreamedResponse(res, async (piece) => {
-        if (piece.type === 'json' && piece.data) {
-          story += (piece.data.response ?? piece.data.text ?? "");
-          setReply(story);
-        } else if (piece.type === 'text') {
-          story += piece.data;
-          setReply(story);
-        }
-      });
-
-      if (!story) story = await res.text().catch(() => "");
-
-      setReply(story.trim());
-      speak(story.trim());
+      // Use centralized proxy for story generation
+  const story = await callOllamaGenerate(promptPayload);
+  const finalStory = (story || '').toString().trim();
+  setReply(finalStory);
+  if (finalStory) speak(finalStory);
       updateBiometrics("emotionalResponse", 20);
       showNotification("Story ready");
     } catch (error) {
       console.error("Story generation failed:", error);
       showNotification("Error generating story", "error");
     } finally { setIsThinking(false); }
-  }, [speak, updateBiometrics, showNotification, soulState]);
+  }, [speak, updateBiometrics, showNotification, soulState, callOllamaGenerate]);
 
   // Enhanced feeling expression
   const expressFeeling = useCallback((feeling) => {
@@ -1248,12 +1774,15 @@ function App() {
       longTermMemory: longTermMemory, 
       internalReflections: internalReflections, 
       goals: soulState.goals, 
-      knowledgeBase: soulState.knowledgeBase 
+      knowledgeBase: soulState.knowledgeBase,
+      // NEW: Export new memory types
+      episodicMemory: episodicMemory,
+      proceduralMemory: soulState.proceduralMemory
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     FileSaver.saveAs(blob, `aion-conversation-${new Date().toISOString().slice(0, 10)}.json`);
     showNotification("Conversation exported", "success");
-  }, [conversationHistory, searchResults, mathSolution, quantumState, neuralOutput, biometricFeedback, longTermMemory, internalReflections, showNotification, soulState]);
+  }, [conversationHistory, searchResults, mathSolution, quantumState, neuralOutput, biometricFeedback, longTermMemory, internalReflections, showNotification, soulState, episodicMemory]);
 
   // Enhanced search results export
   const handleExportResults = useCallback(() => {
@@ -1293,6 +1822,8 @@ function App() {
     setMathSolution(null);
     setLongTermMemory([]);
     setInternalReflections([]);
+    // NEW: Clear episodic memory
+    setEpisodicMemory([]);
     Object.assign(aionSoul, new SoulMatrix());
     setSoulState({ ...aionSoul });
     showNotification("Conversation cleared", "success");
@@ -1335,9 +1866,55 @@ function App() {
   const handleKeyDown = useCallback((e) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      askAion();
+      const text = (e.target && e.target.value) ? e.target.value.trim() : userInput.trim();
+      if (text.startsWith('/')) {
+        // Handle slash command locally
+        handleSlashCommand(text);
+      } else {
+        askAion();
+      }
     }
   }, [askAion]);
+
+  // Handle simple slash/mention commands entered by user
+  const handleSlashCommand = useCallback((cmd) => {
+    const parts = cmd.slice(1).split(/\s+/);
+    const name = parts[0].toLowerCase();
+    const rest = parts.slice(1).join(' ');
+    if (name === 'remember' && rest) {
+      // Add to simple knowledge store
+      const key = `user_note_${Date.now()}`;
+      aionSoul.addKnowledge(key, rest, []);
+      setSoulState({ ...aionSoul });
+      showNotification('Remembered note', 'success');
+      setUserInput('');
+      return;
+    }
+    if (name === 'forget' && rest) {
+      aionSoul.deleteKnowledge(rest);
+      setSoulState({ ...aionSoul });
+      showNotification(`Forgot knowledge: ${rest}`, 'info');
+      setUserInput('');
+      return;
+    }
+    if (name === 'sync') {
+      // Trigger sync immediately
+      (async () => {
+        try {
+          const res = await fetch('/api/sync-conversation', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ conversation: conversationHistory.slice(-50) }) });
+          if (res.ok) showNotification('Manual sync complete', 'success'); else showNotification('Manual sync failed', 'error');
+        } catch (e) { showNotification('Sync error', 'error'); }
+      })();
+      setUserInput('');
+      return;
+    }
+    if (name === 'clear') {
+      clearConversation();
+      setUserInput('');
+      return;
+    }
+    showNotification('Unknown slash command', 'warning');
+  }, [conversationHistory, clearConversation, showNotification]);
 
   // Enhanced geometry diagram rendering
   const renderGeometryDiagram = useCallback(() => {
@@ -1463,7 +2040,7 @@ function App() {
     }
   }, [settings.enableSystemIntegration]);
 
-  // Enhanced interval-based updates
+  // MODIFIED: useEffect for interval-based updates to add new autonomous actions
   useEffect(() => {
     moodIntervalRef.current = setInterval(() => { aionSoul.changeMood(); setSoulState({ ...aionSoul }); }, 300000);
     idleTimerRef.current = setInterval(() => {
@@ -1482,11 +2059,31 @@ function App() {
       }));
     }, 5000);
     soulEvolutionIntervalRef.current = setInterval(() => { aionSoul.evolve(); setSoulState({ ...aionSoul }); }, 60000);
-    energyIntervalRef.current = setInterval(() => { if (aionSoul.energyLevel < 30 && Math.random() > 0.8) { aionSoul.recharge(); setSoulState({ ...aionSoul }); } }, 30000);
+    energyIntervalRef.current = setInterval(() => { if (aionSoul.energyLevel < 30 || aionSoul.willpower < 30) { aionSoul.recharge(); setSoulState({ ...aionSoul }); } }, 30000);
     const quantumInterval = setInterval(() => { if (settings.enableQuantum) { const result = aionSoul.quantumFluctuation(); setQuantumState(quantumSimulator.getCircuit("consciousness").toString()); setSoulState({ ...aionSoul }); showNotification(`Quantum fluctuation: ${result}`); } }, 45000);
     const neuralInterval = setInterval(() => { if (settings.enableNeural) { const outputs = aionSoul.neuralActivation(); setNeuralOutput(outputs); setSoulState({ ...aionSoul }); } }, 30000);
     const selfReflectionInterval = setInterval(() => { if (settings.enableSelfReflection && conversationHistory.length > 0) { performSelfReflection(); } }, settings.reflectionFrequency);
-    return () => { clearInterval(moodIntervalRef.current); clearInterval(idleTimerRef.current); clearInterval(biometricIntervalRef.current); clearInterval(soulEvolutionIntervalRef.current); clearInterval(energyIntervalRef.current); clearInterval(quantumInterval); clearInterval(neuralInterval); clearInterval(selfReflectionInterval); };
+    
+    // NEW: Interval for memory consolidation
+    const memoryConsolidationInterval = setInterval(() => {
+      if (aionSoul.focus === 'idle' && aionSoul.memories.length > 10) {
+        aionSoul.consolidateMemories();
+        setSoulState({ ...aionSoul });
+      }
+    }, 600000); // Run every 10 minutes
+
+    return () => { 
+      clearInterval(moodIntervalRef.current); 
+      clearInterval(idleTimerRef.current); 
+      clearInterval(biometricIntervalRef.current); 
+      clearInterval(soulEvolutionIntervalRef.current); 
+      clearInterval(energyIntervalRef.current); 
+      clearInterval(quantumInterval); 
+      clearInterval(neuralInterval); 
+      clearInterval(selfReflectionInterval);
+      // NEW: Clear the new interval
+      clearInterval(memoryConsolidationInterval);
+    };
   }, [lastActive, isSpeaking, isThinking, settings, speak, showNotification, conversationHistory, performSelfReflection]);
 
   // Enhanced initialization
@@ -1511,6 +2108,83 @@ function App() {
     if (audioRef.current) { audioRef.current.volume = settings.volume * 0.5; }
   }, [settings]);
 
+  // Load persisted conversation on startup
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("aion_conversation");
+      if (saved) setConversationHistory(JSON.parse(saved));
+    } catch (e) {
+      console.warn("Failed to load saved conversation:", e);
+    }
+  }, []);
+
+  // Persist conversation locally whenever it changes
+  useEffect(() => {
+    try {
+      localStorage.setItem("aion_conversation", JSON.stringify(conversationHistory));
+    } catch (e) {
+      console.warn("Failed to persist conversation:", e);
+    }
+  }, [conversationHistory]);
+
+  // Automatic sync when connection restored (safe, controlled)
+  useEffect(() => {
+    const syncWithBackend = async () => {
+      if (!navigator.onLine) return;
+      try {
+        const payload = { conversation: conversationHistory.slice(-50) };
+        const res = await fetch('/api/sync-conversation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (res.ok) {
+          showNotification('Conversation synced to backend', 'success');
+        } else {
+          console.warn('Sync failed:', res.status, res.statusText);
+        }
+      } catch (err) {
+        console.warn('Sync error:', err);
+      }
+    };
+
+    const handleOnline = () => {
+      setIsOnline(true);
+      showNotification('Back online — attempting sync', 'info');
+      syncWithBackend();
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      showNotification('Offline — working locally', 'warning');
+    };
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    if (navigator.onLine) syncWithBackend();
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [conversationHistory, showNotification]);
+
+  // Check for backend updates (notify-only, operator must approve)
+  useEffect(() => {
+    const checkForUpdates = async () => {
+      if (!navigator.onLine) return;
+      try {
+        const r = await fetch('/api/check-updates');
+        if (r.ok) {
+          const j = await r.json().catch(() => null);
+          if (j && j.updateAvailable) {
+            showNotification(`Update available: ${j.version}. Please review before applying.`, 'info');
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    };
+    checkForUpdates();
+  }, []);
+
   // Enhanced chat scrolling
   useEffect(() => {
     if (chatContainerRef.current) { chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight; }
@@ -1521,7 +2195,8 @@ function App() {
     if (activeTab === "math" && mathSolution) { renderGeometryDiagram(); }
   }, [activeTab, mathSolution, renderGeometryDiagram]);
 
-  // Enhanced panel rendering
+  // 2. UPDATE THE renderActivePanel FUNCTION
+  // MODIFIED: Enhanced panel rendering to include Procedures
   const renderActivePanel = () => {
     switch (activeTab) {
       case 'soul':
@@ -1556,9 +2231,17 @@ function App() {
           searchQuery={searchQuery}
           searchError={searchError}
           onExport={handleExportResults}
+          onFollowUp={handleFollowUpSearch} // <<< ADD THIS NEW PROP
         />;
       case 'math':
-        return <MathPanel mathSolution={mathSolution} settings={settings} mathCanvasRef={mathCanvasRef} setActiveTab={setActiveTab} />;
+        return <MathPanel 
+          mathSolution={mathSolution} 
+          settings={settings} 
+          mathCanvasRef={mathCanvasRef} 
+          setActiveTab={setActiveTab} 
+          onSolveCustomProblem={handleSolveCustomProblem}
+          setParentMathSolution={setMathSolution}
+        />;
       case 'quantum':
         const applyQuantumGate = (gate, target) => {
           const circuit = quantumSimulator.getCircuit("consciousness");
@@ -1579,9 +2262,27 @@ function App() {
         };
         return <NeuralPanel soulState={soulState} neuralOutput={neuralOutput} runNeuralSimulation={runNeuralSimulation} neuralCanvasRef={neuralCanvasRef} setActiveTab={setActiveTab} randomNeuralTest={randomNeuralTest} />;
       case 'creative':
-        return <CreativePanel setActiveTab={setActiveTab} generateCreativeContent={generateCreativeContent} generateImage={generateImage} isThinking={isThinking} isImageGenerating={isImageGenerating} creativeOutput={creativeOutput} settings={settings} userInput={userInput} generatedImage={generatedImage} />;
+        return <CreativePanel 
+          setActiveTab={setActiveTab} 
+          generateCreativeContent={generateCreativeContent} 
+          generateImage={generateImage} 
+          isThinking={isThinking} 
+          isImageGenerating={isImageGenerating} 
+          creativeOutput={creativeOutput} 
+          settings={settings} 
+          userInput={userInput} 
+          generatedImage={generatedImage} 
+          // NEW: Pass video generation props
+          generateVideo={generateVideo}
+          isVideoGenerating={isVideoGenerating}
+          generatedVideo={generatedVideo}
+        />;
       case 'goals':
-        return <GoalsPanel soulState={soulState} setActiveTab={setActiveTab} />;
+        return <GoalsPanel 
+          soulState={soulState} 
+          setActiveTab={setActiveTab}
+          onAddGoal={handleAddGoal} // Add this line
+        />;
       case 'knowledge':
         return <KnowledgePanel 
           soulState={soulState} 
@@ -1590,21 +2291,40 @@ function App() {
           onUpdate={handleUpdateKnowledge}
           onDelete={handleDeleteKnowledge}
         />;
+      // NEW: Case for procedures panel
+      case 'procedures':
+        return <ProceduresPanel 
+            soulState={soulState} 
+            setActiveTab={setActiveTab} 
+            // Add functions to manage procedures if needed, e.g., deleting
+        />;
+      case 'fileUpload':
+        return <FileUploadPanel />;
       case 'chat':
       default:
         return <ChatPanel 
-        chatContainerRef={chatContainerRef} 
-        conversationHistory={conversationHistory} 
-        reply={reply} 
-        soulState={soulState} 
-        sentimentScore={sentimentScore}
-        isThinking={isThinking}
-        isStreaming={isStreaming}
-        streamingResponse={streamingResponse}
-        onSpeak={speak}
-        onRegenerate={handleRegenerate} 
-        onCancel={() => abortController && abortController.abort()}
-    />;
+          chatContainerRef={chatContainerRef} 
+          conversationHistory={conversationHistory} 
+          reply={reply} 
+          soulState={soulState} 
+          sentimentScore={sentimentScore}
+          isThinking={isThinking}
+          isStreaming={isStreaming}
+          streamingResponse={streamingResponse}
+          onSpeak={speak}
+          onRegenerate={handleRegenerate} 
+          onCancel={() => abortController && abortController.abort()}
+          // ADD THIS LINE
+          onExamplePrompt={handleExamplePromptClick} 
+          // Make sure you also pass onEditMessage and onFeedback if they aren't already there
+          onEditMessage={onEditMessage} // Assuming you have a handler for this
+          onFeedback={onFeedback}       // Assuming you have a handler for this
+          // Uploads wiring
+          uploadedFiles={uploadedFiles}
+          onInsertFile={(f) => { setUserInput(prev => prev + ` [file:${f.name}]`); setNotification({ message: `Inserted ${f.name}` }); }}
+          onOpenFile={(f) => { try { const url = f.url || f.analysis?.remote?.url; if (url) window.open(url, '_blank'); else setNotification({ message: 'No URL available for this file' }); } catch(e){ console.error(e); } }}
+          onFilesSelected={(files) => handleFilesSelected(files)}
+        />;
     }
   };
 
@@ -1628,6 +2348,10 @@ function App() {
           showSettings={showSettings}
           showSoulPanel={showSoulPanel}
           setShowSoulPanel={setShowSoulPanel}
+          isOnline={isOnline}
+          onSync={async () => { try { const res = await tryResendOutbox(); showNotification(`Synced ${res.sent || 0} items`, 'success'); } catch (e) { showNotification('Sync failed', 'error'); } }}
+          offlineEnabled={settings.enableOfflineMode}
+          onToggleOffline={(val) => { setSettings(prev => ({ ...prev, enableOfflineMode: !!val })); localStorage.setItem('aion_settings', JSON.stringify({ ...settings, enableOfflineMode: !!val })); }}
         />
 
         <Tabs 
@@ -1642,7 +2366,14 @@ function App() {
         {renderActivePanel()}
 
         <div className="input-section">
-          <div className="input-container">
+          <div className="input-container"
+               onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; }}
+               onDrop={async (e) => {
+                 e.preventDefault();
+                 const dtFiles = Array.from(e.dataTransfer.files || []);
+                 if (dtFiles.length > 0) await handleFilesSelected(dtFiles);
+               }}
+          >
             <textarea
               ref={inputRef}
               className="chat-input"
@@ -1650,22 +2381,35 @@ function App() {
               onChange={(e) => setUserInput(e.target.value)}
               placeholder={isListening ? "Listening..." : "Speak or type to AION... (try 'research web3')"}
               onKeyDown={handleKeyDown}
-              disabled={isThinking || isImageGenerating}
+              disabled={isThinking || isImageGenerating || isVideoGenerating}
               rows="1"
             />
             <div className="input-actions">
               <button
                 className={`icon-button mic-button ${isListening ? 'active' : ''}`}
                 onClick={toggleSpeechRecognition}
-                disabled={isThinking || !isSpeechSupported || isImageGenerating}
+                disabled={isThinking || !isSpeechSupported || isImageGenerating || isVideoGenerating}
                 title={isSpeechSupported ? "Voice input" : "Speech not supported"}
               >
                 <i className={`icon-mic ${isListening ? 'pulse' : ''}`}></i>
               </button>
+              {/* File upload button */}
+              <input ref={fileInputRef} type="file" id="file-upload" style={{ display: 'none' }} multiple onChange={(e) => handleFilesSelected(Array.from(e.target.files || []), e.target)} />
+              <button className="icon-button" title="Upload files" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+                <i className="icon-upload"></i>
+              </button>
               <button
                 className="send-button"
-                onClick={() => askAion()}
-                disabled={isThinking || !userInput.trim() || isImageGenerating}
+                onClick={async () => {
+                  await askAion();
+                  // Revoke any object URLs for uploaded files that were sent/used
+                  try {
+                    uploadedFiles.forEach(f => { if (f.url) { try { URL.revokeObjectURL(f.url); } catch (e) {} } });
+                    // Optionally clear previews after send
+                    setUploadedFiles(prev => prev.filter(p => !(p.analysis && p.analysis.indexed)));
+                  } catch (e) { /* ignore */ }
+                }}
+                disabled={isThinking || !userInput.trim() || isImageGenerating || isVideoGenerating}
               >
                 {isThinking ? (
                   <i className="icon-spinner spin"></i>
@@ -1675,6 +2419,61 @@ function App() {
               </button>
             </div>
           </div>
+          {/* Uploaded files preview / actions */}
+          {uploadedFiles && uploadedFiles.length > 0 && (
+            <div className="uploaded-files-panel" style={{ marginTop: 10 }}>
+              <h5>Uploaded Files</h5>
+              <div className="uploaded-files-grid">
+                {uploadedFiles.map(file => (
+                  <div key={file.id} className="uploaded-file-card" style={{ background: 'var(--bg-surface)', padding: 8, borderRadius: 8, border: '1px solid var(--border-soft)' }}>
+                    <div style={{ fontWeight: 700 }}>{file.name}</div>
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{Math.round(file.size/1024)} KB • {file.type || 'unknown'}</div>
+                    <div style={{ marginTop: 6 }}>
+                      <small>Status: {file.analysis?.status || 'idle'}</small>
+                      {file.analysis?.indexed ? (
+                        <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Indexed ✓</div>
+                      ) : null}
+                    </div>
+                    {file.url ? (
+                      <div className="file-thumb" style={{ width: '100%', height: 110, marginTop: 8 }}>
+                        <img src={file.url} alt={file.name} />
+                      </div>
+                    ) : null}
+                    <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                      <button onClick={() => {
+                        // insert a reference to this file into the chat input
+                        setUserInput(prev => prev + ` [file:${file.name}]`);
+                        setNotification({ message: `Inserted reference to ${file.name}` });
+                      }}>Insert</button>
+                      <button onClick={() => {
+                        // remove
+                        setUploadedFiles(prev => prev.filter(p => p.id !== file.id));
+                        URL.revokeObjectURL(file.url);
+                      }}>Remove</button>
+                      {file.url && (file.type.startsWith('image/') ? (
+                        <a href={file.url} target="_blank" rel="noreferrer"><button>Open</button></a>
+                      ) : null)}
+                      {file.analysis?.indexInfo ? (
+                        <button onClick={() => alert(JSON.stringify(file.analysis.indexInfo, null, 2))}>Index Info</button>
+                      ) : null}
+                    </div>
+                      <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
+                        {!file.analysis?.indexed && (
+                          <button onClick={async () => {
+                            try {
+                              const entry = { title: file.name, text: file.analysis?.excerpt || file.name, snippet: (file.analysis?.excerpt || file.name).slice(0,400), ts: Date.now() };
+                              await indexKnowledge([entry]);
+                              setUploadedFiles(prev => prev.map(p => p.id === file.id ? { ...p, analysis: { ...(p.analysis||{}), indexed: true } } : p));
+                              setNotification({ message: `Saved ${file.name} to local index` });
+                            } catch (e) { console.warn('indexKnowledge failed', e); setNotification({ message: 'Failed to save', type: 'error' }); }
+                          }}>Save</button>
+                        )}
+                      </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <div className="quick-feelings">
             <div className="feelings-title">Express Feeling:</div>
@@ -1703,6 +2502,7 @@ function App() {
         speak={speak}
         soulState={soulState}
         isSpeechSupported={isSpeechSupported}
+        showNotification={showNotification}
       />
     </div>
   );

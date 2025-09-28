@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 
 const SettingsModal = ({
   showSettings,
@@ -9,7 +9,24 @@ const SettingsModal = ({
   speak = () => {},
   soulState = {},
   isSpeechSupported = false
+  , showNotification = () => {}
 }) => {
+  // Keep hooks at the top so they run consistently even when the modal is hidden.
+  const modalRef = useRef(null);
+  // Local confirmation state for destructive actions (avoids global confirm())
+  const [confirmClear, setConfirmClear] = useState(false);
+  useEffect(() => {
+    if (!showSettings) return;
+    // move focus into the modal for accessibility
+    try { modalRef.current && modalRef.current.focus(); } catch (e) { /* ignore */ }
+
+    const onKey = (e) => {
+      if (e.key === 'Escape') setShowSettings(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [showSettings, setShowSettings]);
+
   if (!showSettings) return null;
 
   // Safely extract numeric values with defaults to avoid calling toFixed on undefined
@@ -20,10 +37,11 @@ const SettingsModal = ({
   const reflectionFrequency = Number(settings.reflectionFrequency ?? 300000);
   const neuralLayers = Number(settings.neuralLayers ?? 3);
   const quantumDepth = Number(settings.quantumDepth ?? 2);
+  const videoDuration = Number(settings.videoDuration ?? 10);
 
   return (
     <div className="settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
-      <div className="settings-content">
+      <div className="settings-content" ref={modalRef} tabIndex={-1}>
         <div className="settings-header">
           <h2>Settings</h2>
           <button
@@ -34,20 +52,6 @@ const SettingsModal = ({
           >
             &times;
           </button>
-        </div>
-
-        <div className="settings-tabs" role="tablist" aria-hidden="false">
-          <button className="settings-tab active" type="button">Voice</button>
-          <button className="settings-tab" type="button">Appearance</button>
-          <button className="settings-tab" type="button">Behavior</button>
-          <button className="settings-tab" type="button">Search</button>
-          <button className="settings-tab" type="button">Math</button>
-          <button className="settings-tab" type="button">Quantum</button>
-          <button className="settings-tab" type="button">Neural</button>
-          <button className="settings-tab" type="button">Creative</button>
-          <button className="settings-tab" type="button">Memory</button>
-          <button className="settings-tab" type="button">Goals</button>
-          <button className="settings-tab" type="button">Knowledge</button>
         </div>
 
         <div className="settings-grid">
@@ -202,6 +206,18 @@ const SettingsModal = ({
             </div>
 
             <div className="setting-item toggle">
+              <label>Auto Index Responses (Local)</label>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.autoIndexResponses)}
+                  onChange={(e) => setSettings({ ...settings, autoIndexResponses: e.target.checked })}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item toggle">
               <label>Auto Listen</label>
               <label className="switch">
                 <input
@@ -307,7 +323,7 @@ const SettingsModal = ({
                 type="text"
                 value={settings.realSearchApiEndpoint ?? ''}
                 onChange={(e) => setSettings({ ...settings, realSearchApiEndpoint: e.target.value })}
-                placeholder="e.g., https://your-backend.com/api/search"
+                placeholder="e.g., [https://your-backend.com/api/search](https://your-backend.com/api/search)"
               />
             </div>
           </div>
@@ -409,6 +425,65 @@ const SettingsModal = ({
             </div>
           </div>
 
+          {/* Memory & Sync Settings */}
+          <div className="settings-group">
+            <h3>Memory & Sync</h3>
+
+            <div className="setting-item toggle">
+              <label>Enable Auto Sync</label>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.enableAutoSync)}
+                  onChange={(e) => setSettings({ ...settings, enableAutoSync: e.target.checked })}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item toggle">
+              <label>Enable Long Term Memory</label>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.enableLongTermMemory)}
+                  onChange={(e) => setSettings({ ...settings, enableLongTermMemory: e.target.checked })}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item">
+              <label>Stored Conversation</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button onClick={() => {
+                  try {
+                    const data = localStorage.getItem('aion_conversation');
+                    const blob = new Blob([data || '[]'], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `aion-conversation-${new Date().toISOString().slice(0,10)}.json`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                  } catch (e) { console.error(e); }
+                }}>Export</button>
+                <button onClick={() => {
+                  if (!confirmClear) {
+                    setConfirmClear(true);
+                    showNotification('Click Clear again within 6s to confirm clearing local conversation', 'warning');
+                    setTimeout(() => setConfirmClear(false), 6000);
+                    return;
+                  }
+                  // confirmed
+                  try { localStorage.removeItem('aion_conversation'); } catch (e) { /* ignore */ }
+                  setConfirmClear(false);
+                  showNotification('Local conversation cleared', 'success');
+                }}>{confirmClear ? 'Confirm Clear' : 'Clear'}</button>
+              </div>
+            </div>
+          </div>
+
           {/* Creative Settings */}
           <div className="settings-group">
             <h3>Creative Settings</h3>
@@ -435,6 +510,45 @@ const SettingsModal = ({
                 <span className="slider"></span>
               </label>
             </div>
+            
+            <div className="setting-item toggle">
+              <label>Enable Video Generation</label>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.enableVideoGeneration)}
+                  onChange={(e) => setSettings({ ...settings, enableVideoGeneration: e.target.checked })}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item">
+                <label>Video Resolution</label>
+                <select
+                    value={settings.videoResolution ?? '512x512'}
+                    onChange={(e) => setSettings({ ...settings, videoResolution: e.target.value })}
+                    disabled={!settings.enableVideoGeneration}
+                >
+                    <option value="256x256">256x256</option>
+                    <option value="512x512">512x512</option>
+                    <option value="1024x576">1024x576 (16:9)</option>
+                </select>
+            </div>
+
+            <div className="setting-item">
+              <label>Video Duration (s): {videoDuration}</label>
+              <input
+                type="range"
+                min="5"
+                max="30"
+                step="1"
+                value={videoDuration}
+                onChange={(e) => setSettings({ ...settings, videoDuration: parseInt(e.target.value, 10) })}
+                disabled={!settings.enableVideoGeneration}
+              />
+            </div>
+
           </div>
 
           {/* Memory Settings */}

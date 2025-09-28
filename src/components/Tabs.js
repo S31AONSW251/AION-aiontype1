@@ -80,6 +80,21 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           Knowledge
         </button>
       )}
+      <button
+        className={`tab-button ${activeTab === "fileUpload" ? 'active' : ''}`}
+        onClick={() => setActiveTab("fileUpload")}
+      >
+        File Analysis
+      </button>
+      {/* NEW: Add Procedures Tab */}
+      {settings.enableProceduralMemory && (
+        <button
+          className={`tab-button ${activeTab === 'procedures' ? 'active' : ''}`}
+          onClick={() => setActiveTab('procedures')}
+        >
+          Procedures
+        </button>
+      )}
     </div>
   );
 };

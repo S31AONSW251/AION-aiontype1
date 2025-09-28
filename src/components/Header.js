@@ -1,6 +1,16 @@
 import React from 'react';
 
-const Header = ({ soulState = {}, setShowSettings = () => {}, showSettings = false, showSoulPanel = false, setShowSoulPanel = () => {} }) => {
+const Header = ({
+  soulState = {},
+  setShowSettings = () => {},
+  showSettings = false,
+  showSoulPanel = false,
+  setShowSoulPanel = () => {},
+  isOnline = true,
+  onSync = () => {},
+  offlineEnabled = false,
+  onToggleOffline = () => {}
+}) => {
   const mood = soulState?.currentMood ?? 'calm';
   const energyRaw = Number(soulState?.energyLevel ?? 0);
   const energy = Number.isFinite(energyRaw) ? energyRaw : 0;
@@ -21,7 +31,24 @@ const Header = ({ soulState = {}, setShowSettings = () => {}, showSettings = fal
         </div>
       </div>
 
+      {/* Centered brand: single source of truth for the AION wordmark */}
+      <div className="header-center">
+        <div className="brand">
+          <span className="brand-logo" aria-hidden={false}>AION</span>
+          <h1 className="sr-only">AION</h1>
+        </div>
+      </div>
+
       <div className="header-right">
+        <div className="connection-controls" aria-hidden={false}>
+          <button className={`icon-indicator ${isOnline ? 'online' : 'offline'}`} title={isOnline ? 'Online' : 'Offline'} aria-pressed={isOnline} type="button">
+            {isOnline ? '●' : '○'}
+          </button>
+          <button className="btn-sync" onClick={onSync} title="Sync queued items" type="button">Sync</button>
+          <label className="offline-toggle">
+            <input type="checkbox" checked={offlineEnabled} onChange={(e) => onToggleOffline(e.target.checked)} /> Offline
+          </label>
+        </div>
         <button
           className={`icon-button ${showSoulPanel ? 'active' : ''}`}
           onClick={() => setShowSoulPanel(!showSoulPanel)}
