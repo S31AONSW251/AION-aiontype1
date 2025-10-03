@@ -30,6 +30,14 @@
     "socket.io-client": "^4.8.1",
     "three": "^0.152.0",
     "web-vitals": "^2.1.4"
+    ,
+    "dexie": "^3.2.2",
+    "uuid": "^9.0.0"
+  },
+  "dependenciesMeta": {
+    "uuid": {
+      "optional": false
+    }
   },
   "scripts": {
     "start": "react-scripts start",

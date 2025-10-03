@@ -159,20 +159,64 @@
 
   body { background: var(--bg-page); color: var(--text-primary); font-family: var(--font-sans); -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
   .app-container { background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006)); border-radius: calc(var(--radius-lg) + 6px); box-shadow: var(--shadow-deep); padding: 24px; backdrop-filter: var(--glass-blur); }
-  .app-header { background: linear-gradient(180deg, rgba(255,255,255,0.008), rgba(255,255,255,0.004)); border-radius: 12px; padding: 16px 20px; align-items: center; gap: 16px; border: 1px solid rgba(255,255,255,0.02); box-shadow: 0 6px 20px rgba(0,0,0,0.6); }
+  .app-header { background: linear-gradient(180deg, rgba(255,255,255,0.006), rgba(255,255,255,0.003)); border-radius: 12px; padding: 12px 18px; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.018); box-shadow: 0 10px 30px rgba(0,0,0,0.55); }
 
   /* Brand: text-only 'AION' wordmark — no color gradients */
   .brand-logo { font-family: var(--font-display); font-weight: 900; letter-spacing: 1.6px; font-size: 1.25rem; color: var(--text-primary); text-transform:uppercase; display:inline-block; }
 
   /* Header layout: center brand and keep controls left/right */
-  .app-header { display:flex; align-items:center; justify-content:space-between; gap:12px; position:relative; }
-  .header-left { display:flex; align-items:center; gap:12px; }
-  .header-right { display:flex; align-items:center; gap:8px; }
-  .header-center { position:absolute; left:50%; transform:translateX(-50%); display:flex; align-items:center; justify-content:center; pointer-events:none; }
-  .header-center .brand { pointer-events:auto; }
+  .app-header { display:flex; align-items:center; justify-content:space-between; gap:12px; position:relative; height: var(--header-height); }
+  .header-left { display:flex; align-items:center; gap:12px; flex: 1 1 0; justify-content: flex-start; }
+  .header-right { display:flex; align-items:center; gap:8px; flex: 1 1 0; justify-content: flex-end; }
+  /* Ensure exact three-item header layout */
+  .header-left .brand-left, .brand-right { display:flex; align-items:center; gap:8px; }
+  .header-center { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); display: flex; align-items: center; justify-content: center; pointer-events: auto; z-index: 60; width: auto; max-width: 60%; text-align: center; }
+  .header-center .center-online { pointer-events: auto; }
+  .brand-logo { pointer-events: auto; user-select: none; }
 
-  /* Make the centered brand non-interactive (decorative) unless explicitly clickable */
-  .brand-logo { pointer-events: none; user-select: none; }
+  /* Reordered header layout: online icon at left, brand centered, settings at right */
+  .header-reordered .header-left,
+  .header-reordered .header-center,
+  .header-reordered .header-right {
+    display: flex;
+    align-items: center;
+  }
+  .header-reordered .header-left { justify-content: flex-start; gap: 8px; min-width: 120px; }
+  .header-reordered .header-center { position: absolute; left: 50%; transform: translateX(-50%); pointer-events: none; }
+  .header-reordered .brand-center { pointer-events: auto; }
+  .header-reordered .header-right { justify-content: flex-end; min-width: 120px; }
+
+  .left-online { font-size: 18px; width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center; border-radius:999px; }
+  .left-pill { margin-left: 6px; }
+  /* Compact header control cluster for premium look */
+  .header-left .header-controls { display:flex; gap:8px; align-items:center; }
+  /* header icon buttons: use dark glass surface rather than bright white */
+  .app-header .icon-button { width:36px; height:36px; border-radius:999px; padding:6px; background: var(--bg-surface); border: 1px solid rgba(255,255,255,0.02); box-shadow: 0 6px 18px rgba(0,0,0,0.45); color: var(--text-primary); }
+  .app-header .icon-button:hover { transform: translateY(-2px); box-shadow: 0 10px 26px rgba(0,0,0,0.5); }
+  /* stronger override for any header control that might render as a white pill */
+  .app-header .header-controls button,
+  .app-header .header-right .icon-button,
+  .app-header .btn-ghost,
+  .app-header .btn-sync,
+  .app-header .offline-toggle,
+  .app-header .offline-toggle input {
+    background: rgba(255,255,255,0.02) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(255,255,255,0.02) !important;
+  }
+  .app-header .offline-toggle input[type="checkbox"] {
+    -webkit-appearance: none; appearance: none; width:18px; height:18px; display:inline-block; border-radius:999px; margin-right:8px; vertical-align:middle; background: rgba(255,255,255,0.03); border:1px solid rgba(0,0,0,0.12); box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+  }
+  .app-header .offline-toggle input[type="checkbox"]:checked { background: var(--text-primary); }
+  .app-header .btn-ghost, .app-header .btn-sync { padding:6px 10px; font-size:0.9rem; border-radius:10px; }
+  /* keep the centered brand visually centered and prevent control overflow */
+  .app-header { padding:10px 16px; }
+  /* Precisely center the wordmark in the header and keep it above controls */
+  /* center-online and queue pill */
+  .icon-button.center-online { font-size:1.15rem; width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.02); backdrop-filter: blur(6px); box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
+  .icon-button.center-online.online { color: #9be7a0; }
+  .icon-button.center-online.offline { color: #ff7b7b; }
+  .queue-pill { margin-left: 8px; background: rgba(255,255,255,0.03); color: var(--text-primary); padding: 4px 8px; border-radius: 999px; font-weight:700; font-size:0.85rem; border:1px solid rgba(255,255,255,0.02); }
 
   /* Hide the top-left mood/energy UI visually (user requested removal). Keep in DOM for screen readers. */
   .header-left .soul-status { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
@@ -194,6 +238,12 @@
   .btn-ghost, .action-button { background: transparent; border: 1px solid rgba(255,255,255,0.02); color: var(--muted-400); padding: 8px 12px; border-radius: 10px; }
   .icon-button { background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.008)); border: 1px solid rgba(255,255,255,0.02); box-shadow: 0 8px 30px rgba(0,0,0,0.55); width:48px; height:48px; border-radius:12px; display:flex; align-items:center; justify-content:center; transition: var(--transition-smooth); }
   .icon-button:hover { transform: translateY(-4px) scale(1.01); box-shadow: 0 14px 34px rgba(0,0,0,0.65); }
+  /* center-specific online/offline icon */
+  .icon-button.center-online { font-size:1.15rem; width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center; background: rgba(255,255,255,0.02); backdrop-filter: blur(6px); box-shadow: 0 2px 10px rgba(0,0,0,0.25); }
+  .icon-button.center-online.online { color: #9be7a0; }
+  .icon-button.center-online.offline { color: #ff7b7b; }
+
+  .queue-pill { margin-left: 8px; background: rgba(255,255,255,0.03); color: var(--text-primary); padding: 4px 8px; border-radius: 999px; font-weight:700; font-size:0.85rem; border:1px solid rgba(255,255,255,0.02); }
 
   .message-content, .aion-message { background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006)); border-radius: 12px; padding: 12px 14px; border: 1px solid rgba(255,255,255,0.02); box-shadow: 0 6px 16px rgba(0,0,0,0.55); color: var(--text-primary); }
   .message-wrapper.user .message-content { background: linear-gradient(90deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02)); color: var(--text-primary); border: 1px solid rgba(255,255,255,0.03); box-shadow: 0 6px 18px rgba(0,0,0,0.6); }
@@ -361,67 +411,177 @@ body.light-theme .chat-input::placeholder {
   font-size: 1.9rem !important;
   color: transparent !important;
   background-image: linear-gradient(90deg, #003366, #0077ff) !important;
-  -webkit-background-clip: text !important;
-  background-clip: text !important;
-  text-shadow: none !important;
+}
+/* =================================================================== */
+/* AION Ultra Premium Theme - App.css                                    */
+/* =================================================================== */
+/* Purpose: provide a cohesive ultra-premium, black & white glass theme  */
+/* preserving existing class names used by components (panels, chat,     */
+/* header, tabs). This file is intentionally self-contained and careful */
+/* to avoid global hiding rules.                                           */
+/* =================================================================== */
+
+:root {
+  /* Core tokens */
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+  --base-font-size: 16px;
+  --rounded: 12px;
+  --radius-sm: 8px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+
+  /* Color & surfaces (monochrome) */
+  --bg-page: #0b0b0b; /* deep black page */
+  --bg-surface: rgba(255,255,255,0.03); /* subtle surface on black */
+  --bg-card: rgba(255,255,255,0.02);
+  --bg-muted: rgba(255,255,255,0.01);
+  --glass: rgba(255,255,255,0.04);
+  --glass-strong: rgba(255,255,255,0.06);
+
+  --text-primary: #f5f6f7;
+  --text-muted: rgba(245,246,247,0.55);
+  --text-inverse: #0b0b0b;
+
+  --border-strong: rgba(255,255,255,0.06);
+  --border-primary: rgba(255,255,255,0.04);
+
+  --shadow-soft: 0 6px 18px rgba(4,4,4,0.6);
+  --shadow-deep: 0 12px 40px rgba(0,0,0,0.7);
+  --shadow-focus: 0 0 0 3px rgba(255,255,255,0.06);
+
+  --glass-blur: 8px;
 }
 
-/* Extra safety: some sections set placeholder color later; make sure light-theme placeholders stay visible */
-body.light-theme input::placeholder,
-body.light-theme textarea::placeholder {
-  color: rgba(11,18,32,0.38) !important;
-}
 html, body, #root { height: 100%; }
 html { font-size: var(--base-font-size); -webkit-tap-highlight-color: transparent; }
 body {
   margin: 0;
   font-family: var(--font-sans);
-  background: var(--bg-page);
+  background: linear-gradient(180deg, var(--bg-page) 0%, rgba(10,10,10,0.98) 100%);
   color: var(--text-primary);
-  line-height: 1.6;
-  overflow-x: hidden;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
+/* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
   * { transition-duration: 0.001ms !important; animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; }
 }
 
-.u-row { display:flex; gap:8px; align-items:center; }
-.u-col { display:flex; flex-direction:column; gap:8px; }
+/* Utility helpers */
+.u-row { display:flex; gap:var(--space-sm); align-items:center; }
+.u-col { display:flex; flex-direction:column; gap:var(--space-sm); }
 .hidden { display:none !important; }
 .rounded { border-radius: var(--rounded) !important; }
 .text-muted { color: var(--text-muted) !important; }
 .text-primary { color: var(--text-primary) !important; }
+.sr-only, .visually-hidden { position:absolute !important; width:1px !important; height:1px !important; padding:0 !important; margin:-1px !important; overflow:hidden !important; clip:rect(0 0 0 0) !important; white-space:nowrap !important; border:0 !important; }
 
-/* Accessibility helpers */
-.sr-only,
-.visually-hidden {
-  position: absolute !important;
-  width: 1px !important;
-  height: 1px !important;
-  padding: 0 !important;
-  margin: -1px !important;
-  overflow: hidden !important;
-  clip: rect(0 0 0 0) !important;
-  white-space: nowrap !important;
-  border: 0 !important;
+/* Global container */
+.app-container { min-height: 100vh; display:flex; flex-direction:column; }
+
+/* Header */
+.app-header, .chat-header { display:flex; align-items:center; justify-content:space-between; padding:12px 20px; gap:12px; backdrop-filter: blur(var(--glass-blur)); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-bottom: 1px solid var(--border-primary); }
+.app-header .brand-logo, .chat-header .brand-logo { font-weight:700; letter-spacing:2px; font-size:1.1rem; color:var(--text-primary); text-align:center; margin:0 auto; }
+  /* Slightly larger centered wordmark for visibility */
+  .app-header .brand-logo { font-size:1.2rem; font-weight:900; letter-spacing:1.8px; text-transform:uppercase; }
+
+/* Toggleable premium theme: body.theme-premium */
+body.theme-premium .app-header { padding: 14px 18px; height: 72px; }
+body.theme-premium .header-center { top: 50%; }
+body.theme-premium .app-header .brand-logo { font-size:1.28rem; letter-spacing:2px; }
+body.theme-premium .app-header .icon-button, body.theme-premium .app-header .btn-ghost { background: rgba(16,18,20,0.6) !important; border-color: rgba(255,255,255,0.02) !important; }
+body.theme-premium .chat-composer, body.theme-premium .composer-input { background: rgba(16,18,20,0.6) !important; }
+.app-header .header-left, .app-header .header-right { display:flex; align-items:center; gap:12px; }
+
+/* Strong header control overrides to prevent bright white pills and keep layout compact */
+header.app-header .header-left .header-controls,
+header.app-header .header-right {
+  display:flex; align-items:center; gap:8px; max-height:40px; overflow:visible;
 }
 
-/* Focus outline utility for keyboard navigation */
-.focus-ring:focus {
-  outline: none;
-  box-shadow: var(--shadow-focus);
-  border-color: var(--border-focus);
+header.app-header .header-left .header-controls button.icon-button,
+header.app-header .header-right button.icon-button,
+header.app-header .header-right .btn-ghost,
+header.app-header .header-right .btn-sync,
+header.app-header .header-right .offline-toggle {
+  background: rgba(10,12,14,0.64) !important;
+  color: var(--text-primary) !important;
+  border: 1px solid rgba(255,255,255,0.03) !important;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5) !important;
+  width:36px; height:36px; padding:6px !important; border-radius:999px !important;
 }
 
-/* ---------------------------
-   Global Reset & Accessibility
-   --------------------------- */
-/* sensible reset to reduce cross-browser inconsistencies */
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
+header.app-header .offline-toggle input[type="checkbox"] {
+  background: rgba(255,255,255,0.02) !important; border:1px solid rgba(255,255,255,0.02) !important; width:18px !important; height:18px !important; border-radius:999px !important;
+}
+
+/* Keep centered brand fully centered even with control changes */
+header.app-header .header-center { left:50%; position:absolute; top:50%; transform: translate(-50%, -50%); pointer-events:none; z-index:1; }
+header.app-header .brand { pointer-events:auto; z-index:2; }
+
+/* Main layout */
+.main-content { display:flex; gap:18px; padding:14px; box-sizing:border-box; align-items:flex-start; }
+.sidebar { width: 260px; min-width: 200px; max-width: 320px; display:flex; flex-direction:column; gap:14px; }
+.workspace { flex:1; display:flex; flex-direction:column; gap:10px; }
+
+/* Tabs */
+.tab-container { display:flex; gap:8px; align-items:center; }
+.tab-button { background: transparent; color:var(--text-muted); border:1px solid transparent; padding:8px 12px; border-radius:8px; cursor:pointer; transition: all .18s ease; font-weight:600; }
+.tab-button:hover { transform: translateY(-2px); color:var(--text-primary); }
+.tab-button.active { background: rgba(255,255,255,0.03); color:var(--text-primary); border-color: rgba(255,255,255,0.04); box-shadow: var(--shadow-soft); }
+
+/* Panels & Cards */
+.panel-card, .agent-card, .search-result, .uploaded-file-card, .knowledge-item { background: linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0.006)); border-radius: 10px; border:1px solid rgba(255,255,255,0.012); padding:12px; box-shadow: 0 8px 28px rgba(0,0,0,0.45); color:var(--text-primary); }
+.panel-card:hover { transform: translateY(-4px); box-shadow: 0 20px 40px rgba(0,0,0,0.55); }
+
+.search-panel { display:flex; flex-direction:column; gap:16px; flex:1; overflow-y:auto; padding:18px; }
+.search-panel-header { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--border-primary); }
+
+/* Conversation / Chat */
+.chat-container { display:flex; flex-direction:column; height: 100%; background: transparent; }
+.conversation-history { flex:1; overflow:auto; display:flex; flex-direction:column; gap:10px; padding: 14px; }
+.message-wrapper { display:flex; gap:12px; align-items:flex-start; }
+.aion-avatar, .user-avatar { width:40px; height:40px; border-radius:50%; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; color:var(--text-primary); font-weight:700; }
+.avatar-icon { font-weight:700; font-size:0.95rem; }
+
+.aion-message, .message-content { background: rgba(0,0,0,0.10); padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.012); color:var(--text-primary); max-width: 82%; }
+.message-header { display:flex; gap:8px; align-items:center; font-size:0.85rem; color:var(--text-muted); margin-bottom:6px; }
+.message-body { font-size:0.95rem; color:var(--text-primary); }
+
+/* Typing and streaming states */
+.typing-indicator { display:flex; gap:8px; align-items:center; color:var(--text-muted); }
+.typing-dots span { display:inline-block; width:5px; height:5px; background:var(--text-muted); border-radius:50%; margin-right:4px; opacity:0.6; animation: blink 1.2s infinite; }
+@keyframes blink { 0%{opacity:.2} 50%{opacity:1} 100%{opacity:.2} }
+
+/* Composer / Input */
+.input-section { padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.012); display:flex; align-items:center; gap:10px; }
+.input-container { position:relative; flex:1; }
+.chat-input { width:100%; padding:10px 12px; border-radius:999px; background: rgba(255,255,255,0.015); border:1px solid rgba(255,255,255,0.012); color:var(--text-primary); resize:none; min-height:44px; }
+.input-actions { display:flex; gap:8px; align-items:center; }
+
+/* Lightbox & overlays */
+.lightbox-overlay { position:fixed; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(2,2,2,0.65); z-index:9000; }
+.lightbox-content { max-width: 90%; max-height: 90%; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); padding:14px; border-radius:12px; box-shadow: 0 28px 60px rgba(0,0,0,0.6); }
+
+/* Small screens adjustments */
+@media (max-width: 900px) {
+  .main-content { padding:12px; flex-direction:column; }
+  .sidebar { width:100%; max-width:none; }
+  .app-header .brand-logo { margin: 0; }
+}
+
+/* Print styles: keep decorative bits hidden but do not affect app runtime
+   (only hide purely decorative elements when printing). */
+@media print {
+  body { background: #fff; color:#000; }
+  .background-animation, .icon-button, .settings-modal, .notification { display:none !important; }
+  .conversation-history { color:#000; }
+  .message-content, .aion-message { background: #f7f7f7 !important; border: none !important; box-shadow:none !important; color:#000 !important; }
+}
+
 small, strike, strong, sub, sup, tt, var,
 b, u, i, center,
 dl, dt, dd, ol, ul, li,
@@ -579,7 +739,7 @@ body.light-theme .brand-logo { color: var(--text-primary); }
 .center-brand .header-left, .center-brand .header-right { position: absolute; top: 50%; transform: translateY(-50%); }
 
 .tab-button:hover { transform: translateY(-2px); }
-.tab-button.active { background: linear-gradient(90deg,var(--color-primary),var(--color-secondary)); color:white; border-color:transparent; box-shadow:var(--shadow-sm); }
+.tab-button.active { background: rgba(255,255,255,0.03); color:var(--text-primary); border-color:transparent; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
 
 /* Accessibility helper: visually-hidden but available to screen readers */
 .sr-only {
@@ -600,7 +760,7 @@ body.light-theme .brand-logo { color: var(--text-primary); }
 
 /* Premium SVG icon mappings (use currentColor for theming) */
 .icon-button i { color: var(--text-primary); }
-.icon-button:hover i { color: var(--color-secondary); }
+.icon-button:hover i { color: var(--text-primary); opacity: 0.95; }
 
 /* Microphone icon */
 .icon-mic i, .icon-mic { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><path fill='currentColor' d='M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 14 0h-2z'/></svg>"); }
@@ -3785,7 +3945,8 @@ body.light-theme .welcome-logo {
 
 @media print {
   body { background: #fff; color:#000; }
-  .background-animation, .icon-button, .input-section, .tabs, .settings-modal, .notification { display:none !important; }
+  /* hide only decorative/ephemeral UI in print output */
+  .background-animation, .icon-button, .settings-modal, .notification { display:none !important; }
   .conversation-history { color:#000; }
   .message-content, .aion-message { background: #f7f7f7 !important; border: none !important; box-shadow:none !important; color:#000 !important; }
 }

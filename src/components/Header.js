@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import syncService from '../services/syncService';
+import { pendingCount } from '../lib/offlineQueue';
 
 const Header = ({
   soulState = {},
@@ -16,48 +18,50 @@ const Header = ({
   const energy = Number.isFinite(energyRaw) ? energyRaw : 0;
   const energyTitle = typeof energy === 'number' ? `${energy.toFixed(0)}%` : `${energy}%`;
 
+  const [online, setOnline] = useState(navigator.onLine);
+  const [queueCount, setQueueCount] = useState(0);
+
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+    const refreshCount = async () => setQueueCount(await pendingCount());
+    refreshCount();
+    syncService.onQueueChange(refreshCount);
+    return () => {
+      window.removeEventListener('online', update);
+      window.removeEventListener('offline', update);
+    };
+  }, []);
+
   return (
-    <header className="app-header">
+    <header className="app-header header-reordered">
       <div className="header-left">
-        <h1>AION</h1>
-        <div className="soul-status" aria-label="Soul status">
-          <span className={`mood ${mood}`}>{mood}</span>
-          <div className="energy-bar" title={`Energy: ${energyTitle}`}>
-            <div
-              className="energy-fill"
-              style={{ width: `${Math.max(0, Math.min(100, energy))}%` }}
-            ></div>
-          </div>
-        </div>
+        {/* Online/offline icon moved to left per user request */}
+        <button
+          className={`icon-button left-online ${online ? 'online' : 'offline'}`}
+          title={online ? 'Online' : 'Offline'}
+          aria-pressed={online}
+          type="button"
+          onClick={() => onToggleOffline(!offlineEnabled)}
+        >
+          <span className="sr-only">{online ? 'Online' : 'Offline'}</span>
+          {online ? '●' : '○'}
+        </button>
+        {queueCount > 0 && (
+          <div className="queue-pill left-pill" title={`${queueCount} queued`} aria-hidden="true">{queueCount}</div>
+        )}
       </div>
 
-      {/* Centered brand: single source of truth for the AION wordmark */}
       <div className="header-center">
-        <div className="brand">
-          <span className="brand-logo" aria-hidden={false}>AION</span>
+        {/* Centered AION wordmark */}
+        <div className="brand-center">
+          <span className="brand-logo" aria-hidden="false">AION</span>
           <h1 className="sr-only">AION</h1>
         </div>
       </div>
 
       <div className="header-right">
-        <div className="connection-controls" aria-hidden={false}>
-          <button className={`icon-indicator ${isOnline ? 'online' : 'offline'}`} title={isOnline ? 'Online' : 'Offline'} aria-pressed={isOnline} type="button">
-            {isOnline ? '●' : '○'}
-          </button>
-          <button className="btn-sync" onClick={onSync} title="Sync queued items" type="button">Sync</button>
-          <label className="offline-toggle">
-            <input type="checkbox" checked={offlineEnabled} onChange={(e) => onToggleOffline(e.target.checked)} /> Offline
-          </label>
-        </div>
-        <button
-          className={`icon-button ${showSoulPanel ? 'active' : ''}`}
-          onClick={() => setShowSoulPanel(!showSoulPanel)}
-          title="Soul Panel"
-          aria-pressed={showSoulPanel}
-          type="button"
-        >
-          <i className="icon-soul" aria-hidden="true"></i>
-        </button>
         <button
           className={`icon-button ${showSettings ? 'active' : ''}`}
           onClick={() => setShowSettings(!showSettings)}
@@ -66,6 +70,7 @@ const Header = ({
           type="button"
         >
           <i className="icon-settings" aria-hidden="true"></i>
+          <span className="sr-only">Settings</span>
         </button>
       </div>
     </header>

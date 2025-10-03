@@ -70,6 +70,7 @@ const ComposerInput = ({
   disabled = false,
   isTyping = false // Show typing indicator from other users
 }) => {
+  // Optional prop: onFeelingChange(selectedFeeling)
   const [showCommands, setShowCommands] = useState(false);
   const [showMentions, setShowMentions] = useState(false);
   const [commandFilter, setCommandFilter] = useState('');
@@ -77,6 +78,7 @@ const ComposerInput = ({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [typingTimeout, setTypingTimeout] = useState(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedFeeling, setSelectedFeeling] = useState(null);
   const inputRef = useRef(null);
   const composerRef = useRef(null);
   const fileInputRef = useRef(null);
@@ -235,6 +237,22 @@ const ComposerInput = ({
     }
   };
 
+  const FEELINGS = [
+    { key: '🙂', label: 'Pleasant' },
+    { key: '😊', label: 'Happy' },
+    { key: '🤔', label: 'Curious' },
+    { key: '😮', label: 'Surprised' },
+    { key: '😢', label: 'Sad' },
+    { key: '😡', label: 'Frustrated' }
+  ];
+
+  const handleFeelingSelect = (feeling) => {
+    setSelectedFeeling(feeling.key);
+    if (typeof onFeelingChange === 'function') {
+      try { onFeelingChange(feeling); } catch (e) { /* ignore */ }
+    }
+  };
+
   const handleKeyDown = (e) => {
     // Handle rich text shortcuts
     if (e.ctrlKey || e.metaKey) {
@@ -384,6 +402,22 @@ const ComposerInput = ({
           disabled={disabled}
           rows={1}
         />
+      </div>
+
+      {/* Feeling / express bar under the input */}
+      <div className="feeling-bar" role="tablist" aria-label="Express feeling">
+        {FEELINGS.map(f => (
+          <button
+            key={f.key}
+            type="button"
+            className={`feeling-btn ${selectedFeeling === f.key ? 'selected' : ''}`}
+            title={f.label}
+            onClick={() => handleFeelingSelect(f)}
+          >
+            <span aria-hidden="true">{f.key}</span>
+            <span className="sr-only">{f.label}</span>
+          </button>
+        ))}
       </div>
 
       {/* Command suggestions */}

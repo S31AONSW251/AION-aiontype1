@@ -67,8 +67,8 @@
 .message-wrapper.user { justify-content:flex-end; }
 
 .message-actions { display:flex; gap:8px; }
-.action-btn { display:inline-flex; align-items:center; justify-content:center; width:36px; height:36px; border-radius:8px; border:none; background:transparent; cursor:pointer; color:var(--text-primary); }
-.action-btn i { display:block; width:18px; height:18px; }
+.action-btn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; border:none; background:transparent; cursor:pointer; color:var(--text-primary); }
+.action-btn i { display:block; width:16px; height:16px; }
 
 .uploaded-files-panel { padding:8px 0; }
 .uploaded-files-panel .panel-header { display:flex; align-items:center; justify-content:space-between; }
@@ -218,9 +218,9 @@
 
 .search-box input:focus {
   outline: none;
-  border-color: var(--primary-color, #0066ff);
+  border-color: rgba(255,255,255,0.04);
   width: 240px;
-  box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+  box-shadow: 0 0 0 6px rgba(255,255,255,0.03);
 }
 
 .search-icon {
@@ -251,9 +251,9 @@
 
 .filter-buttons button.active,
 .filter-buttons button:hover {
-  background: var(--primary-color, #0066ff);
-  color: white;
-  border-color: var(--primary-color, #0066ff);
+  background: var(--text-primary);
+  color: var(--bg-page);
+  border-color: rgba(255,255,255,0.02);
 }
 
 .conversation-history {
@@ -293,33 +293,13 @@
   -moz-osx-font-smoothing: grayscale;
   user-select: text;
   -webkit-user-select: text;
+  color: var(--text-primary);
+  background: transparent !important;
+  text-shadow: none;
 }
 
-/* Typographic gradient + glow for the AION wordmark */
-.brand-logo {
-  font-size: 1.1rem;
-  color: transparent;
-  background-clip: text;
-  -webkit-background-clip: text;
-  background-image: linear-gradient(90deg, #00e0ff, #0066ff);
-  text-shadow: 0 6px 18px rgba(0,102,255,0.12);
-  transition: transform 0.28s ease, text-shadow 0.28s ease;
-  padding: 0;
-  border-radius: 0;
-}
-
-.brand-logo:hover {
-  transform: translateY(-3px) scale(1.02);
-  text-shadow: 0 18px 40px rgba(0,102,255,0.22);
-}
-
-.brand-logo-large {
-  font-size: 2.6rem;
-  background-image: linear-gradient(90deg, #00e0ff, #0058ff);
-  text-shadow: 0 10px 30px rgba(0,86,255,0.14);
-  padding: 0;
-  border-radius: 0;
-}
+.brand-logo { font-size: 1.05rem; }
+.brand-logo-large { font-size: 2.2rem; }
 
 /* make the typographic logo keyboard-focusable and accessible */
 .brand-logo:focus, .brand-logo-large:focus { outline: none; box-shadow: 0 0 0 4px rgba(0,212,255,0.08); }
@@ -339,13 +319,29 @@
 .minimal-inner { display:flex; flex-direction:column; align-items:center; gap:18px; }
 .brand-mark { width:72px; height:72px; border-radius:999px; background: transparent !important; color: inherit; box-shadow:none !important; border: 0 !important; }
 .welcome-ctas { display:flex; gap:12px; }
-.primary-cta { padding:12px 18px; border-radius:12px; font-weight:700; background: linear-gradient(90deg,#00e0ff,#0066ff); color:white; border:none; box-shadow: 0 12px 30px rgba(3,169,244,0.12); }
-.ghost-cta { padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); background:transparent; color:var(--text-primary); }
+.primary-cta { padding:12px 18px; border-radius:12px; font-weight:700; background: var(--text-primary); color: var(--bg-page); border:none; box-shadow: 0 12px 30px rgba(0,0,0,0.5); }
+.ghost-cta { padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); background:transparent; color:var(--text-primary); }
 .welcome-context h4 { margin:0; }
 
 /* Ensure attachments and composer are visually elevated */
-.chat-composer { display:flex; gap:12px; align-items:center; padding:12px 16px; border-top:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(0,0,0,0.02), transparent); }
-.composer-input { width: 100%; min-height:44px; border-radius:12px; padding:10px 12px; border:1px solid rgba(255,255,255,0.04); background: rgba(0,0,0,0.02); color:var(--text-primary); resize:none; }
+.chat-composer { display:flex; gap:8px; align-items:center; padding:8px 12px; border-top:1px solid rgba(255,255,255,0.012); background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.06)); position: sticky; bottom: 0; z-index: 40; }
+.composer-input { width: 100%; min-height:40px; border-radius:999px; padding:8px 10px; border:1px solid rgba(255,255,255,0.02); background: rgba(16,18,20,0.6); color:var(--text-primary); resize:none; font-size:0.95rem; }
+
+/* Force composer actions to be compact dark icons */
+.chat-composer .action-btn, .chat-composer .icon-button, .chat-composer .rich-text-button, .chat-composer .file-upload-button {
+  width:36px; height:36px; border-radius:999px; background: rgba(10,12,14,0.64); border:1px solid rgba(255,255,255,0.02); box-shadow: 0 6px 18px rgba(0,0,0,0.45); color:var(--text-primary); padding:6px; display:inline-flex; align-items:center; justify-content:center;
+}
+
+/* Remove any floating white backgrounds inside composer */
+.chat-composer button, .chat-composer input, .chat-composer .attachment-item { background: transparent !important; }
+
+/* Strong overrides to remove any bright/white composer pills left by other styles */
+.chat-composer, .composer-input, .composer-input-wrapper, .attachment-item, .attachment-thumb {
+  background: rgba(16,18,20,0.6) !important;
+  border-color: rgba(255,255,255,0.02) !important;
+  color: var(--text-primary) !important;
+}
+.chat-composer .primary-cta, .chat-composer .ghost-cta { background: transparent !important; border: 1px solid rgba(255,255,255,0.04) !important; color: var(--text-primary) !important; }
 
 /* Composer attachment previews (thumbnails inside the composer) */
 .attachment-previews {
@@ -409,8 +405,8 @@
   pointer-events: none;
 }
 .welcome-ctas { display:flex; gap:12px; }
-.primary-cta { background:linear-gradient(180deg,#0b5cff,#0061e0); color:white; padding:10px 16px; border-radius:10px; border:none; font-weight:600; cursor:pointer; box-shadow: 0 6px 18px rgba(11,92,255,0.12); }
-.ghost-cta { background:transparent; color:var(--text-primary,#111); padding:10px 16px; border-radius:10px; border:1px solid rgba(17,17,17,0.06); cursor:pointer; font-weight:600; }
+.primary-cta { background: var(--text-primary); color: var(--bg-page); padding:10px 16px; border-radius:10px; border:none; font-weight:600; cursor:pointer; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+.ghost-cta { background:transparent; color:var(--text-primary); padding:10px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); cursor:pointer; font-weight:600; }
 .primary-cta:hover { transform:translateY(-2px); }
 .ghost-cta:hover { background: rgba(0,0,0,0.02); }
 
@@ -980,23 +976,23 @@
 }
 
 .avatar-badge { position: relative; }
-.avatar-circle { width:74px; height:74px; border-radius:18px; background: linear-gradient(135deg,#0ea5e9,#7c3aed); display:flex; align-items:center; justify-content:center; color:white; font-weight:800; font-size:28px; }
+.avatar-circle { width:74px; height:74px; border-radius:18px; background: linear-gradient(135deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); display:flex; align-items:center; justify-content:center; color:var(--text-primary); font-weight:800; font-size:28px; }
 .premium-star { position:absolute; right:-6px; top:-8px; background:gold; color:#222; width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; box-shadow:0 2px 6px rgba(0,0,0,0.2); }
 
 .premium-title h1 { margin:0; font-size:22px; color:var(--text-primary); }
 .premium-title .subtitle { margin:4px 0 0 0; color:var(--text-secondary); font-size:13px; }
 .lead { font-size:15px; color:var(--text-primary); margin-bottom:12px; }
 .welcome-actions { display:flex; gap:12px; justify-content:center; margin-top:12px; }
-.primary-cta { background:var(--primary-color,#0066ff); color:white; padding:10px 16px; border-radius:10px; border:none; cursor:pointer; }
-.ghost-cta { background:transparent; color:var(--text-primary); padding:10px 16px; border-radius:10px; border:1px solid rgba(0,0,0,0.06); cursor:pointer; }
+.primary-cta { background: var(--text-primary); color: var(--bg-page); padding:10px 16px; border-radius:10px; border:none; cursor:pointer; }
+.ghost-cta { background:transparent; color:var(--text-primary); padding:10px 16px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); cursor:pointer; }
 
 /* Composer styles */
-.chat-composer { display:flex; gap:12px; align-items:center; padding:12px 16px; border-top:1px solid rgba(0,0,0,0.06); background:rgba(255,255,255,0.02); }
+.chat-composer { display:flex; gap:12px; align-items:center; padding:10px 14px; border-top:1px solid rgba(255,255,255,0.02); background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent); }
 .composer-left { display:flex; align-items:center; gap:8px; }
 .composer-middle { flex:1; }
-.composer-input { width:100%; padding:10px 14px; border-radius:14px; border:1px solid rgba(0,0,0,0.06); background:var(--bg-primary,#fff); }
+.composer-input { width:100%; padding:10px 12px; border-radius:999px; border:1px solid rgba(255,255,255,0.012); background: rgba(255,255,255,0.015); color:var(--text-primary); }
 .composer-right { display:flex; gap:8px; }
-.send-btn { background:var(--primary-color,#0066ff); color:white; padding:10px 14px; border-radius:10px; border:none; cursor:pointer; }
+.send-btn { background: var(--text-primary); color: var(--bg-page); padding:10px 14px; border-radius:10px; border:none; cursor:pointer; }
 
 /* Dark Theme Support */
 .dark-theme .chat-container {
@@ -1105,11 +1101,11 @@
 /* Make message header labels selectable and high-contrast */
 .chat-header + .conversation-history .message-header .username,
 .message-header .username,
-.message-header .mood-indicator {
+A.message-header .mood-indicator {
   color: #ffffff !important;
   user-select: text !important;
   -webkit-user-select: text !important;
   -moz-user-select: text !important;
   cursor: text !important;
 }
-
+/* End of ChatPanel.css */

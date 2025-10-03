@@ -36,6 +36,7 @@ import ProceduresPanel from './components/panels/ProceduresPanel';
 
 import "./App.css";
 import { offlineReply, storeConversation, queueOutgoing, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
+import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
 
 // --- DEFAULT SETTINGS moved to module scope so effects can reuse them safely ---
@@ -363,29 +364,40 @@ function App() {
 
           const form = new FormData();
           form.append('file', item.file, item.name);
-          const res = await fetch('/api/upload', { method: 'POST', body: form });
-          if (!res.ok) {
-            const msg = `Upload failed: ${res.status} ${res.statusText}`;
-            setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'error', message: msg } } : p));
-          } else {
-            const json = await res.json().catch(() => null);
-            setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'done', remote: json } } : p));
-            // Attempt to index the uploaded file for retrieval (try local dev stub first)
+          if (!navigator.onLine) {
+            // store metadata + file in queue – large files may be too big for IndexedDB; only store metadata here
             try {
-              const indexCandidates = [ 'http://127.0.0.1:5001/api/index-file', '/api/index-file' ];
-              for (const idxUrl of indexCandidates) {
-                try {
-                  const idxForm = new FormData();
-                  idxForm.append('file', item.file, item.name);
-                  const r = await fetch(idxUrl, { method: 'POST', body: idxForm });
-                  if (!r.ok) continue;
-                  const idxJson = await r.json().catch(() => null);
-                  setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), indexed: true, indexInfo: idxJson } } : p));
-                  break;
-                } catch (e) { /* try next candidate */ }
-              }
+              await enqueue('uploadFile', { name: item.name, size: item.size, type: item.type, fileBlob: null, localId: item.id });
+              setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'queued' } } : p));
             } catch (e) {
-              console.warn('Indexing failed', e);
+              setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'error', message: 'Enqueue upload failed' } } : p));
+            }
+          } else {
+            const res = await fetch('/api/upload', { method: 'POST', body: form });
+            if (!res.ok) {
+              const msg = `Upload failed: ${res.status} ${res.statusText}`;
+              setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'error', message: msg } } : p));
+            } else {
+              const json = await res.json().catch(() => null);
+              setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'done', remote: json } } : p));
+
+              // Attempt to index the uploaded file for retrieval (try local dev stub first)
+              try {
+                const indexCandidates = [ 'http://127.0.0.1:5001/api/index-file', '/api/index-file' ];
+                for (const idxUrl of indexCandidates) {
+                  try {
+                    const idxForm = new FormData();
+                    idxForm.append('file', item.file, item.name);
+                    const r = await fetch(idxUrl, { method: 'POST', body: idxForm });
+                    if (!r.ok) continue;
+                    const idxJson = await r.json().catch(() => null);
+                    setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), indexed: true, indexInfo: idxJson } } : p));
+                    break;
+                  } catch (e) { /* try next candidate */ }
+                }
+              } catch (e) {
+                console.warn('Indexing failed', e);
+              }
             }
           }
         } catch (err) {
@@ -1524,21 +1536,42 @@ function App() {
           } 
         };
         
-        // Use centralized proxy (returns full text); update streaming state once
-        setIsStreaming(true);
-        try {
-          const fullResponse = await callOllamaGenerate(promptPayload);
-          if (settings.enableRealTimeStreaming) {
-            setStreamingResponse(fullResponse);
-            setReply(fullResponse);
-          } else {
-            setReply(fullResponse);
+        // Use centralized proxy (returns full text); if offline, enqueue the job and optionally provide a local fallback
+        if (!navigator.onLine) {
+          // enqueue the generation so it runs when back online
+          try {
+            await enqueue('generate', { promptPayload, context: { conversation: conversationHistory.slice(-20) } });
+            showNotification('You are offline — request queued and will be processed when back online', 'info');
+          } catch (e) {
+            console.warn('Enqueue failed', e);
+            showNotification('Failed to queue request locally', 'error');
           }
-          const soulfulResponse = getMoodBasedResponse(fullResponse);
-          setReply(soulfulResponse);
-          if (settings.autoSpeakReplies) { speak(soulfulResponse); }
-        } finally {
-          setIsStreaming(false);
+
+          // Try to provide a very lightweight offline reply (templates / cached answers)
+          try {
+            const offlineText = await offlineReply(question);
+            setReply(offlineText.text || 'Queued (offline)');
+            setConversationHistory(prev => [...prev.slice(-9), { time: new Date().toLocaleString(), question, response: offlineText.text || 'Queued (offline)', mood: soulState.currentMood, sentiment: currentSentiment, status: 'pending' }]);
+          } catch (err) {
+            setReply('Queued (offline) — will send when online');
+            setConversationHistory(prev => [...prev.slice(-9), { time: new Date().toLocaleString(), question, response: 'Queued (offline)', mood: soulState.currentMood, sentiment: currentSentiment, status: 'pending' }]);
+          }
+        } else {
+          setIsStreaming(true);
+          try {
+            const fullResponse = await callOllamaGenerate(promptPayload);
+            if (settings.enableRealTimeStreaming) {
+              setStreamingResponse(fullResponse);
+              setReply(fullResponse);
+            } else {
+              setReply(fullResponse);
+            }
+            const soulfulResponse = getMoodBasedResponse(fullResponse);
+            setReply(soulfulResponse);
+            if (settings.autoSpeakReplies) { speak(soulfulResponse); }
+          } finally {
+            setIsStreaming(false);
+          }
         }
       }
       
