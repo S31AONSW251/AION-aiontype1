@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import FileSaver from "file-saver";
 import Lottie from "lottie-react";
 
@@ -1705,6 +1705,120 @@ function App() {
     askAion(promptText);      // This immediately triggers the query with that prompt.
   }, [askAion]); // Dependency on askAion is important for useCallback
 
+  // Handler used by ChatPanel when the composer inside it sends a message
+  const handleChatPanelSend = useCallback(async (payload) => {
+    // payload: { text, attachments, feeling }
+    try {
+      const text = (payload && payload.text) ? String(payload.text).trim() : '';
+      if (payload && Array.isArray(payload.attachments) && payload.attachments.length > 0) {
+        // Let the existing upload handler process attachments (will queue if offline)
+        try { await handleFilesSelected(payload.attachments); } catch (e) { console.warn('handleFilesSelected failed', e); }
+      }
+      if (text) {
+        // Set the input so UI reflects the sent text, then ask AION to process it
+        setUserInput(text);
+        // Provide a minimal immediate UX cue
+        showNotification('Message sent from ChatPanel', 'info');
+        await askAion(text);
+      }
+    } catch (e) {
+      console.error('handleChatPanelSend error', e);
+      showNotification('Failed to send message from ChatPanel', 'error');
+    }
+  }, [handleFilesSelected, askAion, showNotification]);
+
+  // Handler to save a message to the local index when ChatPanel requests it
+  const handleSaveToIndex = useCallback(async (entry) => {
+    try {
+      if (!entry) return;
+      const idxEntry = {
+        title: (entry.question && entry.question.slice(0, 80)) || (entry.response && entry.response.slice(0, 80)) || 'AION message',
+        text: entry.response || entry.question || '',
+        snippet: (entry.response || entry.question || '').slice(0, 256),
+        time: new Date().toISOString()
+      };
+      await indexKnowledge([idxEntry]);
+      showNotification('Saved message to local index', 'success');
+    } catch (e) {
+      console.error('handleSaveToIndex failed', e);
+      showNotification('Failed to save message to index', 'error');
+    }
+  }, [showNotification]);
+
+  // --- Phase 1 offline helpers: graceful fallbacks and enqueueing ---
+  const offlineHelpers = useMemo(() => ({
+    // Attempt to generate text via server; if offline, enqueue and return a lightweight fallback
+    async generateWithFallback(promptPayload) {
+      if (navigator.onLine) {
+        try {
+          return await callOllamaGenerate(promptPayload);
+        } catch (e) {
+          console.warn('generateWithFallback: server error', e);
+        }
+      }
+      // Enqueue the generation request for later processing
+      try {
+        await enqueue('generate', { promptPayload, queuedAt: Date.now() });
+      } catch (e) { console.warn('enqueue generate failed', e); }
+      // Provide a simple offline reply as a fallback
+      try {
+        const offline = await offlineReply(promptPayload.prompt || '');
+        return offline.text || 'Queued (offline)';
+      } catch (e) {
+        return 'Queued (offline) — will process when online';
+      }
+    },
+
+    // Attempt to upload; if offline, enqueue metadata and return an id
+    async uploadWithFallback(file) {
+      if (navigator.onLine) {
+        try {
+          const form = new FormData(); form.append('file', file, file.name);
+          const res = await fetch('/api/upload', { method: 'POST', body: form });
+          if (res.ok) return await res.json();
+          throw new Error('Upload failed');
+        } catch (e) {
+          console.warn('uploadWithFallback upload failed', e);
+        }
+      }
+      try {
+        await enqueue('uploadFile', { name: file.name, size: file.size, type: file.type, queuedAt: Date.now() });
+      } catch (e) { console.warn('enqueue uploadFile failed', e); }
+      return { queued: true, localId: `queued-${Date.now()}` };
+    },
+
+    // Retrieval fallback: try local index or simple offline reply
+    async retrieveWithFallback(query) {
+      if (navigator.onLine) {
+        try {
+          const res = await fetch('/api/retrieve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query }) });
+          if (res.ok) return await res.json();
+        } catch (e) { console.warn('retrieveWithFallback server failed', e); }
+      }
+      try {
+        const fallback = await offlineReply(query || '');
+        return { contexts: [fallback.text || 'No local context'] };
+      } catch (e) {
+        return { contexts: [] };
+      }
+    },
+
+    // Index fallback: try server; if offline, enqueue
+    async indexWithFallback(entries) {
+      if (!Array.isArray(entries)) entries = [entries];
+      if (navigator.onLine) {
+        try { await indexKnowledge(entries); return { ok: true }; } catch (e) { console.warn('indexWithFallback server/index failed', e); }
+      }
+      try {
+        await enqueue('index', { entries, queuedAt: Date.now() });
+        return { ok: 'queued' };
+      } catch (e) {
+        console.warn('enqueue index failed', e);
+        return { ok: false };
+      }
+    }
+  }), [callOllamaGenerate]);
+
   // Add this function in your App component
   const handleSolveCustomProblem = useCallback((problem) => {
     setActiveTab("math");
@@ -2265,6 +2379,7 @@ function App() {
           searchError={searchError}
           onExport={handleExportResults}
           onFollowUp={handleFollowUpSearch} // <<< ADD THIS NEW PROP
+          offlineHelpers={offlineHelpers}
         />;
       case 'math':
         return <MathPanel 
@@ -2309,6 +2424,7 @@ function App() {
           generateVideo={generateVideo}
           isVideoGenerating={isVideoGenerating}
           generatedVideo={generatedVideo}
+          offlineHelpers={offlineHelpers}
         />;
       case 'goals':
         return <GoalsPanel 
@@ -2347,16 +2463,18 @@ function App() {
           onSpeak={speak}
           onRegenerate={handleRegenerate} 
           onCancel={() => abortController && abortController.abort()}
-          // ADD THIS LINE
-          onExamplePrompt={handleExamplePromptClick} 
-          // Make sure you also pass onEditMessage and onFeedback if they aren't already there
-          onEditMessage={onEditMessage} // Assuming you have a handler for this
-          onFeedback={onFeedback}       // Assuming you have a handler for this
+          onExamplePrompt={handleExamplePromptClick}
+          onEditMessage={onEditMessage}
+          onFeedback={onFeedback}
           // Uploads wiring
           uploadedFiles={uploadedFiles}
           onInsertFile={(f) => { setUserInput(prev => prev + ` [file:${f.name}]`); setNotification({ message: `Inserted ${f.name}` }); }}
           onOpenFile={(f) => { try { const url = f.url || f.analysis?.remote?.url; if (url) window.open(url, '_blank'); else setNotification({ message: 'No URL available for this file' }); } catch(e){ console.error(e); } }}
           onFilesSelected={(files) => handleFilesSelected(files)}
+          // New handlers added to satisfy ChatPanel API
+          onSend={handleChatPanelSend}
+          onSaveToIndex={handleSaveToIndex}
+          offlineHelpers={offlineHelpers}
         />;
     }
   };

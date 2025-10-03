@@ -1,86 +1,4 @@
-/* ChatPanel.css - Using utility classes from App.css */
-
-.chat-container {
-  height: 100%;
-  animation: fadeIn var(--transition-medium);
-}
-
-.chat-header {
-  padding-bottom: var(--panel-gap);
-}
-
-.chat-title {
-  margin: 0;
-  font-size: var(--text-lg);
-  font-weight: var(--font-semibold);
-}
-
-.search-box {
-  padding: 6px var(--container-padding);
-  border-radius: var(--rounded-md);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-soft);
-  transition: var(--transition-fast);
-}
-
-.search-box:focus-within {
-  border-color: var(--border-focus);
-  box-shadow: var(--shadow-sm);
-}
-
-.search-box input {
-  border: 0;
-  background: transparent;
-  color: var(--text-primary);
-  min-width: 140px;
-  font-size: var(--text-sm);
-}
-
-.conversation-history {
-  overflow: auto;
-  padding: calc(var(--panel-gap) / 2) 2px;
-  scroll-behavior: smooth;
-}
-
-.message-group {
-  animation: slideIn var(--transition-medium);
-}
-
-/* Ensure message wrappers layout consistently and do not stretch */
-.message-wrapper { display:flex; gap:12px; align-items:flex-start; }
-
-.message-content, .aion-message { max-width: 78%; word-wrap: break-word; }
-
-.user-avatar i,
-.aion-avatar .avatar-icon,
-.user-avatar .avatar-icon {
-  font-weight: var(--font-bold);
-}
-
-.aion-avatar {
-  width: 44px;
-  height: 44px;
-  border-radius: var(--rounded-full);
-}
-
-.message-content { max-width:78%; }
-.message-wrapper.user { justify-content:flex-end; }
-
-.message-actions { display:flex; gap:8px; }
-.action-btn { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:8px; border:none; background:transparent; cursor:pointer; color:var(--text-primary); }
-.action-btn i { display:block; width:16px; height:16px; }
-
-.uploaded-files-panel { padding:8px 0; }
-.uploaded-files-panel .panel-header { display:flex; align-items:center; justify-content:space-between; }
-.uploaded-files-grid { display:flex; gap:8px; flex-wrap:wrap; padding-top:8px; }
-.uploaded-file-card { background:var(--bg-card); border:1px solid var(--border-soft); padding:8px; border-radius:10px; width:200px; display:flex; flex-direction:column; gap:8px; }
-.uploaded-file-card .file-thumb { height:110px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.005)); }
-.uploaded-file-card img { width:100%; height:100%; object-fit:cover; }
-.uploaded-file-card { background:var(--bg-card); border:1px solid var(--border-soft); padding:8px; border-radius:10px; width:200px; display:flex; flex-direction:column; gap:8px; max-width:100%; box-sizing:border-box; }
-.uploaded-file-card .file-thumb { height:110px; border-radius:8px; overflow:hidden; display:flex; align-items:center; justify-content:center; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.004)); }
-.uploaded-file-card img { max-width:100%; max-height:100%; width:auto; height:auto; object-fit:cover; }
-.file-meta { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-.file-name { font-weight:700; font-size:0.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* ChatPanel styles - deduplicated. Full definitions appear below; earlier thin/partial duplicates removed to avoid repetition. */
 
 /* Constrain images, videos and iframes inside messages to avoid full-page previews */
 .message-body img,
@@ -1070,6 +988,40 @@
     margin-top: 8px;
     justify-content: flex-end;
   }
+
+  /* Mobile-specific composer and layout fixes */
+  .chat-composer {
+    padding: 12px 10px;
+    gap: 8px;
+    align-items: flex-end;
+  }
+
+  /* Larger, more readable composer input on phones */
+  .composer-input, .composer-input textarea, .composer-input-wrapper .composer-input {
+    font-size: 16px !important;
+    min-height: 56px !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+  }
+
+  /* Make action icons easy to tap */
+  .chat-composer .action-btn, .chat-composer .icon-button, .chat-composer .file-upload-button {
+    width: 44px !important;
+    height: 44px !important;
+    padding: 8px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Ensure conversation history leaves room for sticky composer */
+  .conversation-history {
+    padding-bottom: 90px; /* composer + safe area */
+  }
+
+  /* Lightbox and overlays full-screen on mobile */
+  .lightbox-overlay {
+    padding: 12px;
+  }
+  .lightbox-content { width: 100%; height: 100%; max-width: none; border-radius: 8px; }
 }
 
 /* High-specificity overrides to guarantee brand/header visibility and text selection

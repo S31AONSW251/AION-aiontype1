@@ -65,6 +65,7 @@ const ComposerInput = ({
   onFileUpload,
   onTypingStart,
   onTypingEnd,
+  onFeelingChange, // optional callback when a feeling is selected
   mentionables = [], // List of users/items that can be mentioned
   placeholder = 'Type a message...',
   disabled = false,

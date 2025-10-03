@@ -9,9 +9,10 @@ export default function ChatPanelContainer() {
   const [isThinking, setIsThinking] = useState(false);
   const chatRef = useRef(null);
 
-  const postMessageToServer = async ({ text, attachments }) => {
+  const postMessageToServer = async ({ text, attachments, feeling }) => {
     const form = new FormData();
     form.append('text', text || '');
+    if (feeling) form.append('feeling', feeling);
     (attachments || []).forEach((f) => form.append('files[]', f));
 
     const resp = await fetch('/api/messages', {
@@ -22,16 +23,16 @@ export default function ChatPanelContainer() {
     return resp.json();
   };
 
-  const handleSend = async ({ text, attachments }) => {
+  const handleSend = async ({ text, attachments, feeling }) => {
     // optimistic user message
-    const userMsg = { id: `u-${Date.now()}`, question: text, time: new Date().toLocaleTimeString() };
+    const userMsg = { id: `u-${Date.now()}`, question: text, time: new Date().toLocaleTimeString(), feeling };
     setConversation((prev) => [...prev, userMsg]);
     // persist user message offline
     try { await storeConversation({ role: 'user', text, ts: Date.now() }); } catch (e) { console.warn('storeConversation failed', e); }
     setIsThinking(true);
 
     try {
-      const data = await postMessageToServer({ text, attachments });
+  const data = await postMessageToServer({ text, attachments, feeling });
       // expect server to return an object { response: string, id?: string }
       const aionMsg = {
         id: data.id || `a-${Date.now()}`,
@@ -39,7 +40,7 @@ export default function ChatPanelContainer() {
         time: new Date().toLocaleTimeString(),
       };
       setConversation((prev) => [...prev, aionMsg]);
-      try { await storeConversation({ role: 'assistant', text: aionMsg.response, ts: Date.now() }); } catch (e) { console.warn('store conversation failed', e); }
+  try { await storeConversation({ role: 'assistant', text: aionMsg.response, ts: Date.now() }); } catch (e) { console.warn('store conversation failed', e); }
       // Auto-index assistant replies if the user has enabled that setting in the app
       try {
         const raw = localStorage.getItem('aion_settings');
@@ -57,7 +58,7 @@ export default function ChatPanelContainer() {
     } catch (e) {
       console.warn('Send failed, using offline fallback', e);
       // queue outgoing for later sync
-      try { await queueOutgoing({ text, attachments, ts: Date.now() }); } catch (qe) { console.warn('queueOutgoing failed', qe); }
+  try { await queueOutgoing({ text, attachments, feeling, ts: Date.now() }); } catch (qe) { console.warn('queueOutgoing failed', qe); }
 
       // Try local model first
       let fallback = null;

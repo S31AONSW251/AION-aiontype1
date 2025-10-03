@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import ComposerInput from './ComposerInput';
 import { CopyToClipboard } from 'react-copy-to-clipboard';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -330,6 +331,7 @@ const ChatPanel = React.memo(({
   const localFileInputRef = useRef(null);
   const [dragOver, setDragOver] = useState(false);
   const [composerText, setComposerText] = useState('');
+  const [selectedFeeling, setSelectedFeeling] = useState(null);
   // Helper to safely produce a preview URL or use existing URLs.
   const getPreview = (item) => {
     if (!item) return null;
@@ -478,19 +480,20 @@ const ChatPanel = React.memo(({
     const text = (composerText || '').trim();
     if (!text && (!attachments || attachments.length === 0)) return;
     const filesToSend = attachments.map(a => a.file);
-    // Call parent handler with message and attachments (original File objects)
+    // Call parent handler with message, attachments and optional feeling
     try {
-      onSend({ text, attachments: filesToSend });
+      onSend({ text, attachments: filesToSend, feeling: selectedFeeling });
     } catch (e) {
       console.error('onSend handler error', e);
     }
     // Clear composer and revoke previews
     setComposerText('');
+    setSelectedFeeling(null);
     setAttachments((prev) => {
       prev.forEach(a => { try { if (a.preview) URL.revokeObjectURL(a.preview); } catch (e) {} });
       return [];
     });
-  }, [composerText, attachments, onSend]);
+  }, [composerText, attachments, onSend, selectedFeeling]);
 
   // Lightbox state for previewing images/videos
   const [lightboxOpen, setLightboxOpen] = useState(false);
@@ -556,10 +559,34 @@ const ChatPanel = React.memo(({
         {isThinking && !reply && !isStreaming && <TypingIndicator />}
       </div>
 
-      <div className="chat-footer">
-        <div className="conversation-stats">
-          <span>{enhancedHistory.length} messages</span>
-          <span>Connection: {soulState?.connectionLevel || 0}%</span>
+      <div className="chat-composer-area">
+        <div className="chat-composer">
+          <div className="composer-left" />
+          <div className="composer-middle">
+            <ComposerInput
+              value={composerText}
+              onChange={setComposerText}
+              onSubmit={(val) => { setComposerText(''); onSend({ text: val, attachments: [], feeling: selectedFeeling }); setSelectedFeeling(null); }}
+              onFileUpload={(files) => { handleLocalFileInput({ target: { files } }); }}
+              onTypingStart={() => {}}
+              onTypingEnd={() => {}}
+              mentionables={[]}
+              placeholder="Ask AION..."
+              disabled={false}
+              isTyping={false}
+              onFeelingChange={(f) => setSelectedFeeling(f?.key || null)}
+            />
+          </div>
+          <div className="composer-right">
+            <button className="primary-cta" onClick={handleSend} title="Send">Send</button>
+          </div>
+        </div>
+
+        <div className="chat-footer">
+          <div className="conversation-stats">
+            <span>{enhancedHistory.length} messages</span>
+            <span>Connection: {soulState?.connectionLevel || 0}%</span>
+          </div>
         </div>
       </div>
       {/* Lightbox overlay for previewing media */}
