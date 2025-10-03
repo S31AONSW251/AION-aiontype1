@@ -32,6 +32,7 @@ import KnowledgePanel from './components/panels/KnowledgePanel';
 import FileUploadPanel from './components/panels/FileUploadPanel';
 // NEW: Import the new ProceduresPanel
 import ProceduresPanel from './components/panels/ProceduresPanel';
+import StatusPanel from './components/panels/StatusPanel';
 
 
 import "./App.css";
@@ -77,6 +78,8 @@ export const DEFAULT_SETTINGS = {
   enableOfflineMode: true,
   // When true, server replies and uploaded files are automatically indexed into the local offline store
   autoIndexResponses: false,
+  // Admin key for local admin UI (not secure for production)
+  adminKey: '',
 };
 
 // Browser-specific speech recognition support
@@ -267,6 +270,9 @@ function App() {
   // Add to state
   const [systemStatus, setSystemStatus] = useState(systemIntegration.getStatus());
   const [systemActions, setSystemActions] = useState([]);
+
+  // API base for internal calls (empty string uses same origin)
+  const apiBase = '';
 
   const audioRef = useRef(null);
   const recognitionRef = useRef(null);
@@ -800,7 +806,8 @@ function App() {
       if (modelToUse) payload.model = modelToUse;
       if (options && options.params) payload.options = options.params;
 
-      const res = await fetch("http://127.0.0.1:5000/ollama/generate", {
+      const backend = apiBase || 'http://127.0.0.1:5000';
+      const res = await fetch(`${backend}/ollama/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -843,12 +850,12 @@ function App() {
   }, [settings.enableCreativeGeneration, showNotification, speak, soulState.currentMood, userInput, callOllamaGenerate]);
 
   // Enhanced image generation
-  const generateImage = useCallback(async () => {
+  const generateImage = useCallback(async (promptArg = null) => {
     if (!settings.enableImageGeneration) {
       showNotification("Image generation is disabled in settings", "warning");
       return;
     }
-    const prompt = userInput;
+    const prompt = (promptArg && String(promptArg).trim()) ? String(promptArg).trim() : userInput;
     if (!prompt.trim()) {
       showNotification("Please enter a description for the image.", "warning");
       return;
@@ -858,7 +865,8 @@ function App() {
     showNotification("Generating image via custom backend...", "info");
     setGeneratedImage(null);
     try {
-      const response = await fetch("http://127.0.0.1:5000/generate-image", { 
+      const backend = apiBase || 'http://127.0.0.1:5000';
+      const response = await fetch(`${backend}/generate-image`, { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ prompt: prompt }) 
@@ -904,13 +912,31 @@ function App() {
     setGeneratedVideo(null);
     
     try {
-      const response = await fetch("http://127.0.0.1:5000/generate-video", {
+      const backend = apiBase || 'http://127.0.0.1:5000';
+      // map frontend settings to backend params
+      let width = 512, height = 512;
+      try {
+        const parts = String(settings.videoResolution || '512x512').split('x');
+        if (parts.length === 2) {
+          width = parseInt(parts[0], 10) || 512;
+          height = parseInt(parts[1], 10) || 512;
+        }
+      } catch (e) {
+        width = 512; height = 512;
+      }
+      // assume 8 fps by default (server uses 8 fps fallback)
+      const fps = 8;
+      const num_frames = Math.max(1, Math.round((Number(settings.videoDuration) || 1) * fps));
+
+      const response = await fetch(`${backend}/generate-video`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
             prompt: prompt,
-            duration: settings.videoDuration,
-            resolution: settings.videoResolution
+            steps: 30,
+            width: width,
+            height: height,
+            num_frames: num_frames
         })
       });
       
@@ -2447,6 +2473,8 @@ function App() {
             setActiveTab={setActiveTab} 
             // Add functions to manage procedures if needed, e.g., deleting
         />;
+      case 'status':
+        return <StatusPanel apiBase={apiBase} adminKey={settings.adminKey || ''} />;
       case 'fileUpload':
         return <FileUploadPanel />;
       case 'chat':

@@ -52,6 +52,23 @@ const CustomCodeRenderer = ({ node, inline, className, children, ...props }) => 
 
 const markdownComponents = { code: CustomCodeRenderer };
 
+// Map a small set of feeling keys to emoji for quick visual badges
+const getFeelingEmoji = (feeling) => {
+  if (!feeling) return null;
+  const key = String(feeling).toLowerCase();
+  const map = {
+    happy: '😊',
+    sad: '😢',
+    angry: '😠',
+    curious: '🧐',
+    excited: '🤩',
+    neutral: '😐',
+    thoughtful: '💭',
+    contemplative: '🤔',
+  };
+  return map[key] || '✨';
+};
+
 // Enhanced Typing indicator
 const TypingIndicator = React.memo(() => (
   <div className="message-wrapper">
