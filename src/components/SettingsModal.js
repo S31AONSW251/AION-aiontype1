@@ -425,6 +425,34 @@ const SettingsModal = ({
             </div>
           </div>
 
+          {/* Admin / Developer Settings */}
+          <div className="settings-group">
+            <h3>Admin</h3>
+            <div className="setting-item">
+              <label>Admin Key (used for admin endpoints)</label>
+              <input
+                type="text"
+                value={settings.adminKey ?? ''}
+                onChange={(e) => setSettings({ ...settings, adminKey: e.target.value })}
+                placeholder="Enter admin key"
+              />
+            </div>
+            <div className="setting-item">
+              <button type="button" onClick={async () => {
+                try {
+                  const key = settings.adminKey || '';
+                  const res = await fetch('/admin/allow-external', { method: 'POST', headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+                  const j = await res.json();
+                  if (j && j.ok) {
+                    showNotification('Toggled external access: ' + (j.AION_ALLOW_EXTERNAL ? 'ENABLED' : 'DISABLED'), 'success');
+                  } else {
+                    showNotification('Toggle failed', 'error');
+                  }
+                } catch (e) { showNotification('Toggle failed: ' + e.message, 'error'); }
+              }}>Toggle External Access</button>
+            </div>
+          </div>
+
           {/* Memory & Sync Settings */}
           <div className="settings-group">
             <h3>Memory & Sync</h3>

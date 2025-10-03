@@ -274,6 +274,21 @@ function App() {
   // API base for internal calls (empty string uses same origin)
   const apiBase = '';
 
+  // Helper that adds Authorization header if admin key present in settings
+  const apiFetch = useCallback(async (path, opts = {}) => {
+    const headers = opts.headers ? { ...opts.headers } : {};
+    if (settings && settings.adminKey) {
+      headers['Authorization'] = `Bearer ${settings.adminKey}`;
+    }
+    const merged = { ...opts, headers };
+    return fetch(apiBase + path, merged);
+  }, [settings, apiBase]);
+
+  const notify = useCallback((note) => {
+    setNotification(note);
+    setTimeout(() => setNotification(null), 4000);
+  }, []);
+
   const audioRef = useRef(null);
   const recognitionRef = useRef(null);
   const idleTimerRef = useRef(null);
@@ -2469,9 +2484,9 @@ function App() {
       // NEW: Case for procedures panel
       case 'procedures':
         return <ProceduresPanel 
-            soulState={soulState} 
-            setActiveTab={setActiveTab} 
-            // Add functions to manage procedures if needed, e.g., deleting
+            setActiveTab={setActiveTab}
+            notify={notify}
+            apiFetch={apiFetch}
         />;
       case 'status':
         return <StatusPanel apiBase={apiBase} adminKey={settings.adminKey || ''} />;
