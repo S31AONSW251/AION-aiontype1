@@ -6,8 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './ChatPanel.css';
-import ExamplePrompts from './ExamplePrompts';
-import AvatarBadge from './AvatarBadge';
+// ExamplePrompts and AvatarBadge imports removed because they are not used in this file
 
 // Enhanced Code renderer component
 const CustomCodeRenderer = ({ node, inline, className, children, ...props }) => {
@@ -52,22 +51,7 @@ const CustomCodeRenderer = ({ node, inline, className, children, ...props }) => 
 
 const markdownComponents = { code: CustomCodeRenderer };
 
-// Map a small set of feeling keys to emoji for quick visual badges
-const getFeelingEmoji = (feeling) => {
-  if (!feeling) return null;
-  const key = String(feeling).toLowerCase();
-  const map = {
-    happy: '😊',
-    sad: '😢',
-    angry: '😠',
-    curious: '🧐',
-    excited: '🤩',
-    neutral: '😐',
-    thoughtful: '💭',
-    contemplative: '🤔',
-  };
-  return map[key] || '✨';
-};
+// feeling emoji helper removed (unused)
 
 // Enhanced Typing indicator
 const TypingIndicator = React.memo(() => (
@@ -179,7 +163,6 @@ const UserMessage = React.memo(({ entry, onEdit, onSaveToIndex }) => {
 // AION Message Component
 const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFeedback, sentimentScore, onSaveToIndex }) => {
   const [isCopied, setIsCopied] = useState(false);
-  const [userFeedback, setUserFeedback] = useState(null);
   const [expanded, setExpanded] = useState(false);
 
   const handleCopy = useCallback(() => {
@@ -187,10 +170,7 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
     setTimeout(() => setIsCopied(false), 1600);
   }, []);
 
-  const handleFeedback = useCallback((feedbackType) => {
-    setUserFeedback(feedbackType);
-    if (onFeedback) onFeedback(feedbackType, entry.id);
-  }, [entry.id, onFeedback]);
+  // feedback handler removed (no feedback controls in this component)
 
   const confidenceLevel = useMemo(() => {
     // Calculate confidence based on various factors
@@ -345,8 +325,7 @@ const ChatPanel = React.memo(({
   }, [conversationHistory]);
 
   // Upload helpers (drag/drop + file input)
-  const localFileInputRef = useRef(null);
-  const [dragOver, setDragOver] = useState(false);
+  const [, setDragOver] = useState(false);
   const [composerText, setComposerText] = useState('');
   const [selectedFeeling, setSelectedFeeling] = useState(null);
   // Helper to safely produce a preview URL or use existing URLs.
@@ -394,12 +373,7 @@ const ChatPanel = React.memo(({
   // Keep track of timers for simulated uploads so they can be cancelled
   const uploadTimers = useRef({});
 
-  const humanFileSize = (size) => {
-    if (!size && size !== 0) return '';
-    const i = size === 0 ? 0 : Math.floor(Math.log(size) / Math.log(1024));
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    return `${(size / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${sizes[i]}`;
-  };
+  // humanFileSize helper removed (unused)
 
   useEffect(() => {
     const el = chatContainerRef?.current;
@@ -417,24 +391,7 @@ const ChatPanel = React.memo(({
     };
   }, [chatContainerRef, onFilesSelected]);
 
-  const handleLocalFileInput = useCallback((e) => {
-    const files = Array.from(e.target.files || []);
-    if (files.length) {
-      // limit file size to 10MB per file to avoid huge previews
-      const accepted = files.filter((f) => f.size == null || f.size <= 10 * 1024 * 1024);
-      const newItems = accepted.map((f, i) => ({ id: `local-${Date.now()}-${i}`, file: f, preview: getPreview(f), progress: 0, status: 'uploading' }));
-      setAttachments((prev) => {
-        const next = [...prev, ...newItems];
-        // start simulated uploads for each new item
-        newItems.forEach((item) => simulateUpload(item));
-        try { onFilesSelected(next.map(a => a.file)); } catch (e) {}
-        return next;
-      });
-    }
-    e.target.value = null;
-  }, [onFilesSelected]);
-
-  const simulateUpload = (item) => {
+  const simulateUpload = useCallback((item) => {
     // Simulate a progressive upload over 1.5-3 seconds
     const duration = 1500 + Math.floor(Math.random() * 1500);
     const start = Date.now();
@@ -452,19 +409,28 @@ const ChatPanel = React.memo(({
       }
     };
     uploadTimers.current[item.id] = setTimeout(tick, 120);
-  };
+  }, [onInsertFile]);
 
-  const cancelUpload = (id) => {
-    if (uploadTimers.current[id]) {
-      clearTimeout(uploadTimers.current[id]);
-      delete uploadTimers.current[id];
+  const handleLocalFileInput = useCallback((e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length) {
+      // limit file size to 10MB per file to avoid huge previews
+      const accepted = files.filter((f) => f.size == null || f.size <= 10 * 1024 * 1024);
+      const newItems = accepted.map((f, i) => ({ id: `local-${Date.now()}-${i}`, file: f, preview: getPreview(f), progress: 0, status: 'uploading' }));
+      setAttachments((prev) => {
+        const next = [...prev, ...newItems];
+        // start simulated uploads for each new item
+        newItems.forEach((item) => simulateUpload(item));
+        try { onFilesSelected(next.map(a => a.file)); } catch (e) {}
+        return next;
+      });
     }
-    setAttachments((prev) => {
-      const next = prev.filter(a => a.id !== id);
-      try { onFilesSelected(next.map(a => a.file)); } catch (e) {}
-      return next;
-    });
-  };
+    e.target.value = null;
+  }, [onFilesSelected, simulateUpload]);
+
+
+
+  // cancelUpload removed (not used by UI)
 
   // Keep attachments in sync if parent supplies uploadedFiles
   useEffect(() => {
@@ -478,20 +444,7 @@ const ChatPanel = React.memo(({
     });
   }, [uploadedFiles]);
 
-  const removeAttachment = useCallback((index) => {
-    setAttachments((prev) => {
-      const next = prev.slice();
-      const [removed] = next.splice(index, 1);
-      try { if (removed && removed.preview) URL.revokeObjectURL(removed.preview); } catch (e) {}
-      // cancel timers if any
-      if (removed && uploadTimers.current[removed.id]) {
-        clearTimeout(uploadTimers.current[removed.id]);
-        delete uploadTimers.current[removed.id];
-      }
-      try { onFilesSelected(next.map(a => a.file)); } catch (e) {}
-      return next;
-    });
-  }, [onFilesSelected]);
+  // removeAttachment removed (not used by UI)
 
   const handleSend = useCallback(() => {
     const text = (composerText || '').trim();
@@ -516,22 +469,10 @@ const ChatPanel = React.memo(({
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxItem, setLightboxItem] = useState(null); // { src, type, name }
 
-  const openLightbox = useCallback((item) => {
-    setLightboxItem(item);
-    setLightboxOpen(true);
-  }, []);
-
   const closeLightbox = useCallback(() => {
     setLightboxOpen(false);
     setLightboxItem(null);
   }, []);
-
-  const handleComposerKeyDown = useCallback((e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSend();
-    }
-  }, [handleSend]);
 
   return (
     <div className="chat-container" ref={chatContainerRef}>

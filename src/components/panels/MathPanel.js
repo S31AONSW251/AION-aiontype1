@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 // No direct toTex import from mathjs
 import * as math from 'mathjs';
@@ -32,7 +33,10 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
   const isPanningRef = useRef(false);
   const lastPosRef = useRef({ x: 0, y: 0 });
 
+  // Re-run diagram render when relevant inputs change. renderAdvancedDiagram is declared later; disable exhaustive-deps here.
   useEffect(() => {
+    // renderAdvancedDiagram is declared later; this effect intentionally runs when these inputs change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     renderAdvancedDiagram();
   }, [mathSolution, localMathSolution, graphSettings, plotExpression]);
 
@@ -45,18 +49,48 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
     }
   }, []);
 
+  // Memoized solver used by keyboard shortcut and buttons.
+  const handleSolveCustom = useCallback(() => {
+    if (!customProblem.trim()) return;
+    try {
+      if (solveMode === 'local' && engineRef.current) {
+        const local = engineRef.current.solve(customProblem);
+        if (!local.error) {
+          setLocalMathSolution(local);
+          try { if (typeof setParentMathSolution === 'function') setParentMathSolution(local); } catch(e){}
+        } else {
+          // fall back to remote if local cannot parse
+          onSolveCustomProblem(customProblem);
+        }
+      } else {
+        onSolveCustomProblem(customProblem);
+      }
+      setInputHistory(prev => [customProblem, ...prev.slice(0, 9)]);
+      setCustomProblem('');
+      setErrorMsg('');
+    } catch (err) {
+      setErrorMsg('Error solving problem: ' + err.message);
+    }
+  }, [customProblem, solveMode, onSolveCustomProblem, setParentMathSolution]);
+
   // Keyboard shortcut: Ctrl+Enter to solve
+  const handleSolveCustomCb = useCallback(() => {
+    if (customProblem.trim()) handleSolveCustom();
+  }, [customProblem, handleSolveCustom]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const handler = (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-        if (customProblem.trim()) handleSolveCustom();
+        handleSolveCustomCb();
       }
     };
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
-  }, [customProblem]);
+  }, [handleSolveCustomCb]);
 
   // Canvas pan/zoom handlers
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const canvas = mathCanvasRef?.current;
     if (!canvas) return;
@@ -242,7 +276,8 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
   };
 
   const renderGraph = (canvas, ctx, solution) => {
-    const { xMin, xMax, yMin, yMax, step } = graphSettings;
+  // eslint-disable-next-line no-unused-vars
+  const { xMin, xMax, yMin, yMax, step: _step } = graphSettings;
     const width = canvas.width;
     const height = canvas.height;
     
@@ -400,7 +435,8 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
   };
 
   const renderCustomPlot = (canvas, ctx, expression) => {
-    const { xMin, xMax, yMin, yMax, step } = graphSettings;
+  // eslint-disable-next-line no-unused-vars
+  const { xMin, xMax, yMin, yMax, step: _step } = graphSettings;
     const width = canvas.width;
     const height = canvas.height;
     
@@ -480,29 +516,7 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
     ctx.fillText(`f(x) = ${expression}`, 10, 50);
   };
 
-  const handleSolveCustom = () => {
-    if (customProblem.trim()) {
-      try {
-        if (solveMode === 'local' && engineRef.current) {
-          const local = engineRef.current.solve(customProblem);
-          if (!local.error) {
-            setLocalMathSolution(local);
-            try { if (typeof setParentMathSolution === 'function') setParentMathSolution(local); } catch(e){}
-          } else {
-            // fall back to remote if local cannot parse
-            onSolveCustomProblem(customProblem);
-          }
-        } else {
-          onSolveCustomProblem(customProblem);
-        }
-        setInputHistory([customProblem, ...inputHistory.slice(0, 9)]);
-        setCustomProblem('');
-        setErrorMsg('');
-      } catch (err) {
-        setErrorMsg('Error solving problem: ' + err.message);
-      }
-    }
-  };
+  // handleSolveCustom is memoized earlier via useCallback
 
   // Export canvas as SVG wrapper (embed PNG as image inside SVG for higher fidelity)
   const exportCanvasAsSVG = () => {
@@ -678,6 +692,7 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
 
   useEffect(() => {
     // proactively load KaTeX when the panel mounts to improve perceived speed
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     ensureKatexLoaded();
   }, []);
 

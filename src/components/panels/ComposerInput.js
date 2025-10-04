@@ -161,6 +161,7 @@ const ComposerInput = ({
   const handleChange = (e) => {
     const newValue = e.target.value;
     onChange(newValue);
+    handleTyping();
 
     // Check for slash commands
     if (newValue.startsWith('/')) {

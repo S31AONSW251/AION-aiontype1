@@ -877,3 +877,6 @@ export class SoulMatrix {
     this.addLog("Log cleared");
   }
 }
+
+// Export fallback implementations for external testing or optional usage
+export { FallbackQuantumState, FallbackNeuralNetwork };

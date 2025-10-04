@@ -398,6 +398,57 @@ body.light-theme .brand-logo { color: var(--text-primary); }
 .timeline { display:flex; gap:8px; overflow:auto; padding:8px 0; }
 .timeline-step { min-width:220px; padding:10px; border-radius:8px; background:transparent; border:1px solid transparent; }
 .timeline-step.current { border-color: var(--color-secondary); box-shadow: var(--shadow-sm); }
+
+/* ---------------------------
+   ProceduresPanel specific styles
+   Ensures ProceduresPanel.js uses the app theme without editing the component
+   --------------------------- */
+.procedures-panel { /* prefer dark panel by default to match rest of app */
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: var(--shadow-soft);
+}
+
+.procedures-panel .panel-header { margin-bottom:12px }
+
+.procedures-panel .back-button {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.procedures-panel .back-button:hover { background: var(--glass); transform: translateY(-2px) }
+
+.procedures-actions { display:flex; gap:16px; flex-wrap:wrap; align-items:flex-start; margin-bottom:12px }
+.create-procedure-form { display:flex; flex-direction:column; gap:8px; min-width:240px; max-width:560px }
+.create-procedure-form .input, .create-procedure-form input, .create-procedure-form textarea { width:100% }
+
+.procedure-search { display:flex; gap:8px; align-items:center }
+.procedure-search input { min-width:180px }
+
+/* Reuse app input/button tokens where possible */
+.procedures-panel input, .procedures-panel textarea { padding:10px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); outline:none }
+.procedures-panel input:focus, .procedures-panel textarea:focus { box-shadow:0 10px 30px rgba(2,10,14,0.6), 0 0 0 6px var(--focus) }
+
+.procedures-panel button { padding:8px 12px; border-radius:10px; border:1px solid var(--border); background:transparent; color:var(--text); cursor:pointer }
+.procedures-panel button.primary, .procedures-panel button.btn-primary { background: linear-gradient(90deg,var(--accent),var(--accent-2)); color:#041316; border:none }
+.procedures-panel button.ghost { background:transparent; border:1px solid rgba(255,255,255,0.03) }
+
+.procedure-list { display:flex; flex-direction:column; gap:12px; margin-top:8px }
+.procedure-item { padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.02); background: linear-gradient(180deg, rgba(255,255,255,0.01), transparent) }
+.procedure-head { display:flex; justify-content:space-between; align-items:center; gap:8px }
+.procedure-head strong { font-size:1rem }
+.procedure-item ol { margin:8px 0 0 18px }
+.procedure-item pre { white-space:pre-wrap; background: rgba(255,255,255,0.02); padding:8px; border-radius:8px }
+
+@media (max-width:720px) {
+  .procedures-actions { flex-direction:column }
+  .procedure-search { width:100%; justify-content:flex-start }
+}
 .progress-bar { height:8px; width:100%; background:var(--bg-muted); border-radius:999px; overflow:hidden; }
 .progress-fill { height:100%; background: linear-gradient(90deg,var(--color-secondary),var(--color-primary)); }
 

@@ -63,4 +63,6 @@ export function startAutoSync(apiSend) {
   window.addEventListener('online', () => runQueue(apiSend).catch(() => {}));
 }
 
-export default { runQueue, startAutoSync, onQueueChange };
+const SyncService = { runQueue, startAutoSync, onQueueChange };
+
+export default SyncService;

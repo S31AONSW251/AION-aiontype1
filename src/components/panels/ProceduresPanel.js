@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 
 const ProceduresPanel = ({ setActiveTab, notify, apiFetch }) => {
   const [procedures, setProcedures] = useState([]);
@@ -8,7 +8,7 @@ const ProceduresPanel = ({ setActiveTab, notify, apiFetch }) => {
   const [query, setQuery] = useState('');
   const socketRef = useRef(null);
 
-  const fetchProcedures = async () => {
+  const fetchProcedures = useCallback(async () => {
     setLoading(true);
     try {
       const fetcher = apiFetch || fetch;
@@ -20,7 +20,7 @@ const ProceduresPanel = ({ setActiveTab, notify, apiFetch }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [apiFetch]);
 
   useEffect(() => {
     fetchProcedures();
@@ -29,7 +29,7 @@ const ProceduresPanel = ({ setActiveTab, notify, apiFetch }) => {
       // If socket.io.js is loaded globally
       if (window.io) {
         socketRef.current = window.io();
-        socketRef.current.on('procedures_updated', () => fetchProcedures());
+  socketRef.current.on('procedures_updated', () => fetchProcedures());
         socketRef.current.on('procedure_executed', (data) => {
           notify && notify({ type: 'info', text: `Procedure executed: ${data.name}` });
         });
@@ -40,7 +40,7 @@ const ProceduresPanel = ({ setActiveTab, notify, apiFetch }) => {
     return () => {
       try { socketRef.current && socketRef.current.disconnect(); } catch (e) {}
     };
-  }, []);
+  }, [fetchProcedures, notify]);
 
   const createProcedure = async (ev) => {
     ev && ev.preventDefault();

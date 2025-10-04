@@ -22,21 +22,6 @@ const FileUploadPanel = () => {
     };
   }, [files]);
 
-  const handleDrop = useCallback((e) => {
-    e.preventDefault();
-    const droppedFiles = Array.from(e.dataTransfer.files);
-    handleFiles(droppedFiles);
-  }, []);
-
-  const handleDragOver = useCallback((e) => {
-    e.preventDefault();
-  }, []);
-
-  const handleFileInput = useCallback((e) => {
-    const selectedFiles = Array.from(e.target.files);
-    handleFiles(selectedFiles);
-  }, []);
-
   const createObjectURL = useCallback((file) => {
     try {
       // Only create URL for valid File/Blob objects
@@ -50,7 +35,7 @@ const FileUploadPanel = () => {
     }
   }, []);
 
-  const handleFiles = async (newFiles) => {
+  const handleFiles = useCallback(async (newFiles) => {
     // Convert files to objects with safe URL creation
     const processedFiles = newFiles.map(file => ({
       file,
@@ -85,7 +70,22 @@ const FileUploadPanel = () => {
       }
       setIsUploading(false);
     }
-  };
+  }, [createObjectURL]);
+
+  const handleDrop = useCallback((e) => {
+    e.preventDefault();
+    const droppedFiles = Array.from(e.dataTransfer.files);
+    handleFiles(droppedFiles);
+  }, [handleFiles]);
+
+  const handleDragOver = useCallback((e) => {
+    e.preventDefault();
+  }, []);
+
+  const handleFileInput = useCallback((e) => {
+    const selectedFiles = Array.from(e.target.files);
+    handleFiles(selectedFiles);
+  }, [handleFiles]);
 
   const renderAnalysis = (analysis) => {
     if (!analysis) return null;

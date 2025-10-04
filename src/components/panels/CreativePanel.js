@@ -96,7 +96,7 @@ const CreativePanel = ({
       }
     }).catch((err) => { console.warn('Failed to fetch ollama models', err); });
     return () => { mounted = false; };
-  }, []);
+  }, [selectedModel]);
 
   useEffect(() => {
     // typing indicator for prompt textarea
@@ -109,6 +109,8 @@ const CreativePanel = ({
     };
     el.addEventListener('input', onInput);
     return () => el.removeEventListener('input', onInput);
+  // typing effect listens to promptRef only; stable handler -- disable exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

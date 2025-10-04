@@ -429,11 +429,8 @@ export class MathEngine {
     this.perfMonitor.start('solveEquation');
     
     try {
-      // Remove spaces and ensure proper format
-      const cleanEquation = equation.replace(/\s+/g, '');
-      
-      // Use math.js solve function
-      const solutions = this.math.solve(equation, variable);
+  // Use math.js solve function
+  const solutions = this.math.solve(equation, variable);
       
       const result = {
         problem: equation,

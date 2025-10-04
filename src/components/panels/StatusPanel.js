@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 export default function StatusPanel({ apiBase = '' , adminKey = ''}) {
   const [status, setStatus] = useState(null);
@@ -6,11 +6,7 @@ export default function StatusPanel({ apiBase = '' , adminKey = ''}) {
   const [error, setError] = useState(null);
   const [toggling, setToggling] = useState(false);
 
-  useEffect(() => {
-    fetchStatus();
-  }, []);
-
-  async function fetchStatus() {
+  const fetchStatus = useCallback(async () => {
     try {
       const res = await fetch((apiBase || '') + '/api/status');
       const j = await res.json();
@@ -18,7 +14,9 @@ export default function StatusPanel({ apiBase = '' , adminKey = ''}) {
     } catch (e) {
       setError(String(e));
     }
-  }
+  }, [apiBase]);
+
+  useEffect(() => { fetchStatus(); }, [fetchStatus]);
 
   async function fetchAdmin() {
     try {

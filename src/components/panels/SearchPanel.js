@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as d3 from 'd3';
 import AssetsLibrary from './AssetsLibrary';
@@ -7,7 +8,7 @@ const getHostname = (url) => {
   try {
     return new URL(url).hostname.replace('www.', '');
   } catch (e) {
-    const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:\/\n?]+)/im);
+    const match = url.match(/^(?:https?:\/\/)?(?:[^@\n]+@)?(?:www\.)?([^:/\n?]+)/im);
     return match ? match[1] : 'unknown';
   }
 };
@@ -207,6 +208,7 @@ const VideoLightbox = ({ video, onClose, onPrev, onNext }) => {
   );
 };
 
+// eslint-disable-next-line no-unused-vars
 const VideoGallery = ({ videos, query }) => {
   const [selected, setSelected] = useState(null);
   const [index, setIndex] = useState(0);
@@ -887,12 +889,15 @@ const RichResultModal = ({ result, onClose }) => {
     }
   };
 
+  // auto-fetch a lightweight insight when modal opens (non-blocking)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
-    // auto-fetch a lightweight insight when modal opens (non-blocking)
     if (result) fetchAiInsight();
   }, [result]);
 
   // focus management & focus trap
+  // focus management uses modalRef; disabling exhaustive-deps is acceptable here
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!modalRef.current) return;
     // save previously focused element
@@ -1356,6 +1361,7 @@ const ListView = ({ results }) => {
   const total = results.length;
   const pages = Math.max(1, Math.ceil(total / pageSize));
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { if (page > pages) setPage(1); }, [pages]);
 
   const start = (page - 1) * pageSize;
@@ -1537,7 +1543,7 @@ const SearchPanel = ({
 }) => {
   const [query, setQuery] = useState("");
   const [sortOption, setSortOption] = useState("relevance");
-  const [planVisible, setPlanVisible] = useState(true);
+  // plan visibility state removed (not used)
   const [thoughtsVisible, setThoughtsVisible] = useState(false);
   const [filters, setFilters] = useState({});
   const [providers, setProviders] = useState({
@@ -1548,10 +1554,10 @@ const SearchPanel = ({
     twitter: false,
     reddit: false
   });
-  const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  // current step index state removed (not used)
   const [viewMode, setViewMode] = useState('list');
   const [savedSessions, setSavedSessions] = useState([]);
-  const [selectedSession, setSelectedSession] = useState(null);
+  const [, setSelectedSession] = useState(null);
   const [summaryMode, setSummaryMode] = useState('detailed'); // 'brief', 'detailed', 'comprehensive'
   const [graphExpanded, setGraphExpanded] = useState(false);
   const [assetsOpen, setAssetsOpen] = useState(false);
@@ -1862,6 +1868,9 @@ const SearchPanel = ({
               >
                 Comprehensive
               </button>
+              <div className="sentiment-summary">
+                <small>Sentiment — +{sentimentData.positive} / 0:{sentimentData.neutral} / -{sentimentData.negative}</small>
+              </div>
             </div>
 
             <div className="export-options">

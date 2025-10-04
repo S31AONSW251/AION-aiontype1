@@ -19,6 +19,25 @@ const MemoryManager = ({
   });
 
   // Enhanced memory retrieval with semantic search
+  // Update memory statistics
+  const updateMemoryStats = useCallback(() => {
+    if (!soulState) return;
+    
+    const stats = {
+      total: (soulState.memories?.length || 0) + 
+             (soulState.longTermMemory?.length || 0) +
+             (soulState.episodicMemory?.length || 0) +
+             (soulState.proceduralMemory?.length || 0),
+      shortTerm: soulState.memories?.length || 0,
+      longTerm: soulState.longTermMemory?.length || 0,
+      episodic: soulState.episodicMemory?.length || 0,
+      procedural: soulState.proceduralMemory?.length || 0
+    };
+    
+    setMemoryStats(stats);
+  }, [soulState]);
+
+  // Enhanced memory retrieval with semantic search
   const handleMemoryRetrieval = useCallback(async (query) => {
     if (!query.trim()) return;
     
@@ -38,7 +57,7 @@ const MemoryManager = ({
       console.error("Memory retrieval error:", error);
       setConsolidationStatus('error');
     }
-  }, [onMemoryRetrieval]);
+  }, [onMemoryRetrieval, updateMemoryStats]);
 
   // Memory consolidation process
   const handleMemoryConsolidation = useCallback(async () => {
@@ -56,25 +75,8 @@ const MemoryManager = ({
       console.error("Memory consolidation error:", error);
       setConsolidationStatus('error');
     }
-  }, [onMemoryConsolidation]);
+  }, [onMemoryConsolidation, updateMemoryStats]);
 
-  // Update memory statistics
-  const updateMemoryStats = useCallback(() => {
-    if (!soulState) return;
-    
-    const stats = {
-      total: (soulState.memories?.length || 0) + 
-             (soulState.longTermMemory?.length || 0) +
-             (soulState.episodicMemory?.length || 0) +
-             (soulState.proceduralMemory?.length || 0),
-      shortTerm: soulState.memories?.length || 0,
-      longTerm: soulState.longTermMemory?.length || 0,
-      episodic: soulState.episodicMemory?.length || 0,
-      procedural: soulState.proceduralMemory?.length || 0
-    };
-    
-    setMemoryStats(stats);
-  }, [soulState]);
 
   // Memory cleanup process
   const handleMemoryCleanup = useCallback(async () => {

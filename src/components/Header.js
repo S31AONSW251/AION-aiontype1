@@ -13,10 +13,7 @@ const Header = ({
   offlineEnabled = false,
   onToggleOffline = () => {}
 }) => {
-  const mood = soulState?.currentMood ?? 'calm';
-  const energyRaw = Number(soulState?.energyLevel ?? 0);
-  const energy = Number.isFinite(energyRaw) ? energyRaw : 0;
-  const energyTitle = typeof energy === 'number' ? `${energy.toFixed(0)}%` : `${energy}%`;
+  // mood and energy values are available on soulState if needed for UI enhancements
 
   const [online, setOnline] = useState(navigator.onLine);
   const [queueCount, setQueueCount] = useState(0);

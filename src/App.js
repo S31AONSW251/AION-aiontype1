@@ -33,10 +33,11 @@ import FileUploadPanel from './components/panels/FileUploadPanel';
 // NEW: Import the new ProceduresPanel
 import ProceduresPanel from './components/panels/ProceduresPanel';
 import StatusPanel from './components/panels/StatusPanel';
+import WebCachePanel from './components/panels/WebCachePanel';
 
 
 import "./App.css";
-import { offlineReply, storeConversation, queueOutgoing, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
+import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
 
@@ -96,6 +97,7 @@ const systemIntegration = new SystemIntegration();
 
 // --- Helper: robust streaming parser for NDJSON / JSON-lines and plain text streams ---
 // Usage: await processStreamedResponse(response, async (piece) => { ... })
+/* eslint-disable-next-line no-unused-vars */
 async function processStreamedResponse(response, onPiece) {
   // If response has no body (non-streaming), fallback to text
   if (!response || !response.body || typeof response.body.getReader !== 'function') {
@@ -178,7 +180,7 @@ function App() {
 
   // File upload / multi-modal input state
   const [uploadedFiles, setUploadedFiles] = useState([]); // { id, name, type, size, url, analysis }
-  const [isUploading, setIsUploading] = useState(false);
+  const [, setIsUploading] = useState(false);
 
 
   // NEW: State for Episodic Memory
@@ -206,6 +208,7 @@ function App() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [showSoulPanel, setShowSoulPanel] = useState(false);
+  const [showWebCache, setShowWebCache] = useState(false);
 
   // Centralized helper to call backend Ollama proxy and normalize response
   const callOllamaGenerate = useCallback(async (promptPayload, onPiece = null) => {
@@ -269,10 +272,13 @@ function App() {
 
   // Add to state
   const [systemStatus, setSystemStatus] = useState(systemIntegration.getStatus());
-  const [systemActions, setSystemActions] = useState([]);
+  // systemActions state removed because it was not used; re-add if needed in future
 
   // API base for internal calls (empty string uses same origin)
   const apiBase = '';
+
+  // convenience for WebCachePanel
+  const apiFetchWrapper = async (path, opts) => apiFetch(path, opts);
 
   // Helper that adds Authorization header if admin key present in settings
   const apiFetch = useCallback(async (path, opts = {}) => {
@@ -296,7 +302,7 @@ function App() {
   const fileInputRef = useRef(null);
 
   // Basic client-side analysis for uploaded files
-  const analyzeFile = async (item) => {
+  const analyzeFile = useCallback(async (item) => {
     try {
       const file = item.file;
       const analysis = { status: 'processing' };
@@ -349,7 +355,7 @@ function App() {
       setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis } : p));
       return analysis;
     }
-  };
+  }, []);
   
   // Reusable handler for files selected (from footer input or ChatPanel)
   const handleFilesSelected = useCallback(async (files, inputElem = null) => {
@@ -862,7 +868,7 @@ function App() {
     } finally {
       setIsThinking(false);
     }
-  }, [settings.enableCreativeGeneration, showNotification, speak, soulState.currentMood, userInput, callOllamaGenerate]);
+  }, [settings.enableCreativeGeneration, showNotification, speak, soulState.currentMood, userInput]);
 
   // Enhanced image generation
   const generateImage = useCallback(async (promptArg = null) => {
@@ -1686,14 +1692,14 @@ function App() {
       aionSoul.setFocus('idle'); // Ensure focus is reset
       setSoulState({ ...aionSoul });
     }
-  }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand, findRelevantEpisodes, logEpisodicEvent, handleProceduralRequest, callOllamaGenerate]);
+  }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand, findRelevantEpisodes, logEpisodicEvent, handleProceduralRequest, callOllamaGenerate, getMoodBasedResponse]);
   
   // You might need this helper function in App.js scope if it's not imported
-  const getHostname = (url) => {
+  const getHostname = useCallback((url) => {
     try {
       return new URL(url).hostname.replace('www.', '');
     } catch (e) { return 'unknown source'; }
-  };
+  }, []);
 
   // Add this new handler function inside the App component
   const handleFollowUpSearch = useCallback((followUpQuery, contextSummary, contextResults) => {
@@ -1718,10 +1724,10 @@ function App() {
         ${contextText}
       `;
 
-      // Use the main askAion function to process this new, detailed prompt
-      askAion(newPrompt);
+    // Use the main askAion function to process this new, detailed prompt
+    askAion(newPrompt);
 
-  }, [askAion, showNotification]); // Add getHostname helper or import it if needed
+  }, [askAion, showNotification, getHostname]); // Add getHostname helper or import it if needed
 
   // Placeholder handler for onFeedback
   const onFeedback = useCallback((feedbackType, messageId) => {
@@ -2051,20 +2057,7 @@ function App() {
   }, [settings.enableNeural, settings.neuralLayers, speak, biometricFeedback.connectionLevel, showNotification, soulState]);
 
   // Enhanced key handling
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      const text = (e.target && e.target.value) ? e.target.value.trim() : userInput.trim();
-      if (text.startsWith('/')) {
-        // Handle slash command locally
-        handleSlashCommand(text);
-      } else {
-        askAion();
-      }
-    }
-  }, [askAion]);
-
-  // Handle simple slash/mention commands entered by user
+  // Move handleSlashCommand earlier so it's defined before handleKeyDown
   const handleSlashCommand = useCallback((cmd) => {
     const parts = cmd.slice(1).split(/\s+/);
     const name = parts[0].toLowerCase();
@@ -2103,6 +2096,21 @@ function App() {
     }
     showNotification('Unknown slash command', 'warning');
   }, [conversationHistory, clearConversation, showNotification]);
+
+  const handleKeyDown = useCallback((e) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      const text = (e.target && e.target.value) ? e.target.value.trim() : userInput.trim();
+      if (text.startsWith('/')) {
+        // Handle slash command locally
+        handleSlashCommand(text);
+      } else {
+        askAion();
+      }
+    }
+  }, [askAion, handleSlashCommand, userInput]);
+
+  
 
   // Enhanced geometry diagram rendering
   const renderGeometryDiagram = useCallback(() => {
@@ -2355,6 +2363,8 @@ function App() {
   }, [conversationHistory, showNotification]);
 
   // Check for backend updates (notify-only, operator must approve)
+  // The effect intentionally omits some volatile deps (showNotification is stable)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const checkForUpdates = async () => {
       if (!navigator.onLine) return;
@@ -2371,7 +2381,7 @@ function App() {
       }
     };
     checkForUpdates();
-  }, []);
+  }, [showNotification]);
 
   // Enhanced chat scrolling
   useEffect(() => {
@@ -2558,6 +2568,7 @@ function App() {
         />
 
         {renderActivePanel()}
+        {activeTab === 'webcache' && <WebCachePanel apiBase={apiBase} apiFetch={apiFetchWrapper} />}
 
         <div className="input-section">
           <div className="input-container"
