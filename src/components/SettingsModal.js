@@ -27,6 +27,17 @@ const SettingsModal = ({
     return () => document.removeEventListener('keydown', onKey);
   }, [showSettings, setShowSettings]);
 
+  // Persist settings whenever they change while the modal is open (or when user toggles).
+  useEffect(() => {
+    try {
+      if (settings && typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem('aion_settings', JSON.stringify(settings));
+      }
+    } catch (e) {
+      // ignore storage errors
+    }
+  }, [settings]);
+
   if (!showSettings) return null;
 
   // Safely extract numeric values with defaults to avoid calling toFixed on undefined
@@ -153,6 +164,42 @@ const SettingsModal = ({
                 />
                 <span className="slider"></span>
               </label>
+            </div>
+
+            <div className="setting-item toggle">
+              <label>Ambient Background</label>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.ambientBackgroundEnabled)}
+                  onChange={(e) => setSettings({ ...settings, ambientBackgroundEnabled: e.target.checked })}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item toggle">
+              <label>Particles</label>
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={Boolean(settings.particlesEnabled)}
+                  onChange={(e) => setSettings({ ...settings, particlesEnabled: e.target.checked })}
+                />
+                <span className="slider"></span>
+              </label>
+            </div>
+
+            <div className="setting-item">
+              <label>Palette</label>
+              <select
+                value={settings.palette ?? 'cyan'}
+                onChange={(e) => setSettings({ ...settings, palette: e.target.value })}
+              >
+                <option value="cyan">Cyan (default)</option>
+                <option value="magenta">Magenta</option>
+                <option value="lime">Lime</option>
+              </select>
             </div>
 
             <div className="setting-item toggle">
@@ -325,6 +372,21 @@ const SettingsModal = ({
                 onChange={(e) => setSettings({ ...settings, realSearchApiEndpoint: e.target.value })}
                 placeholder="e.g., [https://your-backend.com/api/search](https://your-backend.com/api/search)"
               />
+            </div>
+          </div>
+
+          {/* Security Settings */}
+          <div className="settings-group">
+            <h3>Security & Admin</h3>
+            <div className="setting-item">
+              <label>Admin Key (local)</label>
+              <input
+                type="password"
+                value={settings.adminKey ?? ''}
+                onChange={(e) => setSettings({ ...settings, adminKey: e.target.value })}
+                placeholder="Optional admin key for protected actions"
+              />
+              <div className="muted small">Used locally to authorize admin actions (pause/resume agent). Stored in browser localStorage.</div>
             </div>
           </div>
 

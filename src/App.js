@@ -20,6 +20,8 @@ import Tabs from './components/Tabs';
 import Notification from './components/Notification';
 import SettingsModal from './components/SettingsModal';
 import ChatPanel from './components/panels/ChatPanel';
+import AIAnalysisModal from './components/AIAnalysisModal';
+import WelcomeSplash from './components/WelcomeSplash';
 import SoulPanel from './components/panels/SoulPanel';
 import MemoriesPanel from './components/panels/MemoriesPanel';
 import SearchPanel from './components/panels/SearchPanel';
@@ -81,6 +83,12 @@ export const DEFAULT_SETTINGS = {
   autoIndexResponses: false,
   // Admin key for local admin UI (not secure for production)
   adminKey: '',
+  // Ambient background control (separate from global animations)
+  ambientBackgroundEnabled: true,
+  // Color palette: 'cyan' (default), 'magenta', 'lime'
+  palette: 'cyan',
+  // Particle layer control (only particles)
+  particlesEnabled: true,
 };
 
 // Browser-specific speech recognition support
@@ -180,6 +188,7 @@ function App() {
 
   // File upload / multi-modal input state
   const [uploadedFiles, setUploadedFiles] = useState([]); // { id, name, type, size, url, analysis }
+  const [analysisModal, setAnalysisModal] = useState({ open: false, analysis: null, fileName: '' });
   const [, setIsUploading] = useState(false);
 
 
@@ -209,6 +218,46 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showSoulPanel, setShowSoulPanel] = useState(false);
   const [showWebCache, setShowWebCache] = useState(false);
+  // Show pre-app welcome splash unless user opted out
+  const [showSplash, setShowSplash] = useState(() => {
+    try { return localStorage.getItem('aion_skip_splash') !== '1'; } catch (e) { return true; }
+  });
+  // Ultra Power Mode (quick frontend 'boost' toggle)
+  // When enabled, temporarily applies aggressive settings to demonstrate an "advanced" mode.
+  const [ultraPower, setUltraPower] = useState(() => {
+    try { return localStorage.getItem('aion_ultra_power') === '1'; } catch (e) { return false; }
+  });
+  const prevSettingsRef = useRef(null);
+
+  useEffect(() => {
+    // Apply or revert lightweight 'power' overrides
+    if (ultraPower) {
+      // Save a shallow snapshot so we can revert later
+      prevSettingsRef.current = { ...settings };
+      setSettings(prev => ({
+        ...prev,
+        // crank up model aggressiveness and multimodal abilities for demonstration
+        responseTemperature: Math.min(1.0, (prev.responseTemperature || 0.7) + 0.25),
+        maxResponseTokens: Math.max(4096, (prev.maxResponseTokens || 4096) * 2),
+        enableAdvancedReasoning: true,
+        enablePredictiveAnalysis: true,
+        enableMultiModalProcessing: true,
+        enableRealTimeStreaming: true,
+        enableSelfCorrection: true,
+      }));
+      try { localStorage.setItem('aion_ultra_power', '1'); } catch (e) {}
+      notify({ message: 'Ultra Power Mode enabled — boosted reasoning & multimodal features' });
+    } else {
+      // revert to previous settings snapshot if available
+      if (prevSettingsRef.current) {
+        setSettings(prevSettingsRef.current);
+        prevSettingsRef.current = null;
+      }
+      try { localStorage.removeItem('aion_ultra_power'); } catch (e) {}
+      notify({ message: 'Ultra Power Mode disabled' });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ultraPower]);
 
   // Centralized helper to call backend Ollama proxy and normalize response
   const callOllamaGenerate = useCallback(async (promptPayload, onPiece = null) => {
@@ -273,6 +322,49 @@ function App() {
   // Add to state
   const [systemStatus, setSystemStatus] = useState(systemIntegration.getStatus());
   // systemActions state removed because it was not used; re-add if needed in future
+
+  // Live Agent state
+  const [agentEvents, setAgentEvents] = useState([]);
+  const agentSourceRef = useRef(null);
+
+  // Subscribe to backend agent SSE stream
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (agentSourceRef.current) return; // already connected
+    try {
+      const es = new EventSource('/api/agent/stream');
+      agentSourceRef.current = es;
+      es.onmessage = (ev) => {
+        try {
+          const data = JSON.parse(ev.data);
+          if (data.type === 'status') {
+            setAgentStatus(data.status || 'unknown');
+          } else if (data.type) {
+            setAgentEvents(prev => [...prev, data]);
+          }
+        } catch (err) {
+          console.warn('Invalid SSE data', err, ev.data);
+        }
+      };
+      es.onerror = (e) => {
+        console.warn('Agent SSE error', e);
+        setAgentStatus('disconnected');
+        try { es.close(); } catch(_){}
+        agentSourceRef.current = null;
+      };
+    } catch (err) {
+      console.warn('Failed to connect to agent stream', err);
+      setAgentStatus('error');
+    }
+
+    return () => {
+      if (agentSourceRef.current) {
+        try { agentSourceRef.current.close(); } catch (e) {}
+        agentSourceRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // API base for internal calls (empty string uses same origin)
   const apiBase = '';
@@ -407,6 +499,21 @@ function App() {
             } else {
               const json = await res.json().catch(() => null);
               setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), status: 'done', remote: json } } : p));
+
+              // Attempt server-side analysis of the uploaded file
+              try {
+                const analyzeUrl = '/api/analyze-file';
+                const payload = { file_url: (json && (json.url || json.fileUrl || json.path)) || null };
+                if (payload.file_url) {
+                  const ar = await fetch(analyzeUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                  if (ar.ok) {
+                    const ajson = await ar.json().catch(() => null);
+                    setUploadedFiles(prev => prev.map(p => p.id === item.id ? { ...p, analysis: { ...(p.analysis || {}), serverAnalysis: ajson } } : p));
+                  } else {
+                    console.warn('analyze-file returned non-ok', ar.status);
+                  }
+                }
+              } catch (e) { console.warn('server-side analyze failed', e); }
 
               // Attempt to index the uploaded file for retrieval (try local dev stub first)
               try {
@@ -2533,7 +2640,15 @@ function App() {
   };
 
   return (
-    <div className={`app-container ${settings.theme}-theme`}>
+    <div className={`app-container ${settings.theme}-theme ${settings.energySaver ? 'energy-saver' : ''} palette-${settings.palette || 'cyan'}`}>
+      {/* Ambient animated backgrounds (CSS layers) - controlled by settings */}
+      {settings.animationEnabled && settings.ambientBackgroundEnabled && !settings.energySaver && (
+        <>
+          <div className="bg-ambient" aria-hidden="true" />
+          {settings.particlesEnabled && <div className="bg-particles" aria-hidden="true" />}
+        </>
+      )}
+
       {settings.animationEnabled && (
         <Lottie
           animationData={chakraAnimation}
@@ -2544,6 +2659,11 @@ function App() {
       )}
       
       <Notification notification={notification} />
+
+      {/* Pre-app welcome splash — blocks access until user enters */}
+      {showSplash && (
+        <WelcomeSplash onEnter={() => setShowSplash(false)} />
+      )}
 
       <div className="main-content">
         <Header 
@@ -2558,6 +2678,19 @@ function App() {
           onToggleOffline={(val) => { setSettings(prev => ({ ...prev, enableOfflineMode: !!val })); localStorage.setItem('aion_settings', JSON.stringify({ ...settings, enableOfflineMode: !!val })); }}
         />
 
+        {/* Ultra Power Mode control (frontend demonstration) */}
+        <div className="power-toggle" role="region" aria-label="Ultra Power Mode" style={{display:'flex',alignItems:'center',gap:12,margin:'10px 0'}}>
+          <button
+            className={`btn elevated ${ultraPower ? 'power-on' : ''}`}
+            onClick={() => setUltraPower(p => !p)}
+            aria-pressed={ultraPower}
+            title="Toggle Ultra Power Mode"
+          >
+            {ultraPower ? 'ULTRA POWER: ON' : 'Ultra Power Mode — OFF'}
+          </button>
+          <div className="muted small">Temporarily boosts reasoning, streaming and multimodal features.</div>
+        </div>
+
         <Tabs 
           activeTab={activeTab}
           setActiveTab={setActiveTab}
@@ -2566,6 +2699,32 @@ function App() {
           isMathQuery={isMathQuery}
           userInput={userInput}
         />
+
+        {/* Live Agent panel: simple status and recent events */}
+        <div className="panel" style={{marginTop:8}}>
+          <h3 style={{margin:'0 0 8px 0'}}>AION Live Presence</h3>
+          <div style={{display:'flex',alignItems:'center',gap:12}}>
+            <div className="kv">
+              <strong>Status:</strong>
+              <span style={{marginLeft:8}}>{agentStatus}</span>
+            </div>
+            <div style={{marginLeft:'auto',display:'flex',gap:8}}>
+              <button className="btn" onClick={async () => { try { const res = await apiFetch('/api/agent/control',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({action:'pause'})}); if(res.ok) setAgentStatus('paused'); } catch(e){ console.warn(e);} }}>Pause</button>
+              <button className="btn primary" onClick={async () => { try { const res = await apiFetch('/api/agent/control',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({action:'resume'})}); if(res.ok) setAgentStatus('running'); } catch(e){ console.warn(e);} }}>Resume</button>
+            </div>
+          </div>
+          <div style={{marginTop:10}}>
+            <div style={{maxHeight:160,overflow:'auto',padding:8,background:'rgba(0,0,0,0.04)',borderRadius:8}}>
+              {agentEvents.slice().reverse().slice(0,20).map(ev => (
+                <div key={ev.id} style={{padding:'6px 8px',borderBottom:'1px solid rgba(255,255,255,0.02)'}}>
+                  <div style={{fontSize:12,color:'var(--muted)'}}>{ev.ts} — <strong>{ev.type}</strong></div>
+                  <div style={{marginTop:4}}>{ev.message}</div>
+                </div>
+              ))}
+              {agentEvents.length === 0 && <div className="muted">No events yet. Connect to the agent stream to receive live updates.</div>}
+            </div>
+          </div>
+        </div>
 
         {renderActivePanel()}
         {activeTab === 'webcache' && <WebCachePanel apiBase={apiBase} apiFetch={apiFetchWrapper} />}
@@ -2633,10 +2792,23 @@ function App() {
                   <div key={file.id} className="uploaded-file-card" style={{ background: 'var(--bg-surface)', padding: 8, borderRadius: 8, border: '1px solid var(--border-soft)' }}>
                     <div style={{ fontWeight: 700 }}>{file.name}</div>
                     <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{Math.round(file.size/1024)} KB • {file.type || 'unknown'}</div>
-                    <div style={{ marginTop: 6 }}>
+                    <div style={{ marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>
                       <small>Status: {file.analysis?.status || 'idle'}</small>
+                      {/* spinner for queued/processing */}
+                      {(file.analysis?.status === 'queued' || file.analysis?.status === 'analyzing' || file.analysis?.status === 'processing') && (
+                        <span className="small-spinner" title="Analysis in progress" aria-hidden="true"></span>
+                      )}
+                      {file.analysis?.status === 'done' && (
+                        <span className="ai-done-badge" title="Analysis complete">✓</span>
+                      )}
                       {file.analysis?.indexed ? (
                         <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Indexed ✓</div>
+                      ) : null}
+                      {/* indicator showing whether AI summary is auto-generated */}
+                      {file.analysis?.serverAnalysis?.analysis?.ai_understanding ? (
+                        <span className="ai-source-badge" title={file.analysis.serverAnalysis.analysis.ai_understanding.auto_generated ? 'Auto-generated by AI' : 'AI-generated'}>
+                          {file.analysis.serverAnalysis.analysis.ai_understanding.auto_generated ? 'AI (auto)' : 'AI'}
+                        </span>
                       ) : null}
                     </div>
                     {file.url ? (
@@ -2644,6 +2816,28 @@ function App() {
                         <img src={file.url} alt={file.name} />
                       </div>
                     ) : null}
+
+                    {/* Small AI-understanding summary card (compact) */}
+                    {file.analysis?.serverAnalysis?.analysis?.ai_understanding ? (
+                      <div className="ai-summary-card" style={{ marginTop: 8 }}>
+                        <div style={{ fontWeight: 800, marginBottom: 6 }}>AI Summary</div>
+                        <div style={{ fontSize: 13, color: 'var(--muted)' }}>
+                          {file.analysis.serverAnalysis.analysis.ai_understanding.summary
+                            || file.analysis.serverAnalysis.analysis.ai_understanding.short_summary
+                            || file.analysis.serverAnalysis.analysis.ai_understanding.key_findings
+                            || file.analysis.serverAnalysis.analysis.content_summary
+                            || 'No summary available.'}
+                        </div>
+                        <div style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+                          <button className="btn" onClick={() => {
+                            setAnalysisModal({ open: true, analysis: file.analysis?.serverAnalysis?.analysis || null, fileName: file.name });
+                          }}>View full analysis</button>
+                        </div>
+                      </div>
+                    ) : null}
+
+                    {/* Show server-side analysis if available (full) */}
+                    {/* Full server analysis is available in a modal */}
                     <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                       <button onClick={() => {
                         // insert a reference to this file into the chat input
@@ -2708,6 +2902,13 @@ function App() {
         soulState={soulState}
         isSpeechSupported={isSpeechSupported}
         showNotification={showNotification}
+      />
+      {/* AI Analysis modal (renders full analysis when requested) */}
+      <AIAnalysisModal
+        open={analysisModal.open}
+        analysis={analysisModal.analysis}
+        fileName={analysisModal.fileName}
+        onClose={() => setAnalysisModal({ open: false, analysis: null, fileName: '' })}
       />
     </div>
   );

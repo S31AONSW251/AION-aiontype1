@@ -35,6 +35,18 @@ It correctly bundles React in production mode and optimizes the build for the be
 The build is minified and the filenames include the hashes.\
 Your app is ready to be deployed!
 
+## Ultra Power Mode (experimental)
+
+The interface includes a demonstration "Ultra Power Mode" toggle. This is a frontend-only convenience that temporarily adjusts local settings (temperature, max token budget and feature flags) to simulate a higher-capability profile.
+
+How to use:
+
+- Open the app and click the "Ultra Power Mode" button below the header. It will persist to localStorage while enabled.
+- Note: this visual/UX toggle does not automatically change server-side model capacity or billing — for real capability changes enable the matching backend endpoints and model overrides (see the backend README).
+
+Use with care: enabling aggressive settings may increase latency, memory usage, or cost when the backend honors these parameters.
+
+
 See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
 
 ### `npm run eject`

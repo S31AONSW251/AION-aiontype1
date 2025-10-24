@@ -233,9 +233,9 @@ const CreativePanel = ({
         <div className="image-output-section">
           <h4>Generated Image</h4>
           <div className="image-container">
-            <img src={generatedImage} alt="AI generated visual" />
+            <img src={`http://127.0.0.1:5000${generatedImage}`} alt="AI generated visual" />
             <div className="image-actions">
-              <a href={generatedImage} download="aion-creation.png" className="download-button">
+              <a href={`http://127.0.0.1:5000${generatedImage}`} download="aion-creation.png" className="download-button">
                 Download
               </a>
             </div>

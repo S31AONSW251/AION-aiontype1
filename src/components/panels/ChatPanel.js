@@ -73,28 +73,70 @@ const TypingIndicator = React.memo(() => (
   </div>
 ));
 
-// Minimal ultra-professional welcome message
+// Futuristic welcome/hero message (sci-fi, professional)
 const WelcomeMessage = React.memo(({ onExampleClick }) => (
-  <div className="empty-chat-container minimal-welcome" role="region" aria-label="Welcome to AION">
-    <div className="minimal-inner">
-      <div className="brand-compact">
-        <div className="brand-mark">
-          {/* Removed duplicate visible AION to keep a single centered wordmark in the header */}
+  <div className="empty-chat-container minimal-welcome welcome-hero" role="region" aria-label="Welcome to AION">
+    <div className="welcome-hero-grid">
+      <div className="hero-left">
+        <div className="brand-compact">
+          <div className="brand-mark" aria-hidden>
+            {/* subtle mark left intentionally minimal */}
+          </div>
+          <div className="brand-line">
+            <h2 className="brand-logo-large">AION</h2>
+            <div className="brand-tag">Living AI — Expert workflows, reimagined</div>
+          </div>
         </div>
-        <div className="brand-line">
-          {/* Accessible label for screen readers only */}
-          <h2 className="sr-only">AION</h2>
+
+        <h3 className="hero-title">Your intelligent co‑pilot for code, research, and workflows</h3>
+        <p className="hero-subtitle">AION reasons over files, memories and context to give you confident answers. Fast. Secure. Human-centered.</p>
+
+        <div className="hero-ctas">
+          <button className="primary-cta" onClick={() => onExampleClick && onExampleClick('Summarize this page')}>Get started</button>
+          <button className="ghost-cta" onClick={() => onExampleClick && onExampleClick('Show docs')}>Explore templates</button>
+        </div>
+
+        <div className="quick-prompts" aria-label="Quick examples">
+          {['Summarize this repo', 'Find TODOs', 'Explain this file'].map((p) => (
+            <button key={p} className="prompt-chip" onClick={() => onExampleClick && onExampleClick(p)}>{p}</button>
+          ))}
+        </div>
+
+        <div className="welcome-stats hero-stats">
+          <div className="stat-item">
+            <span className="stat-value">24ms</span>
+            <span className="stat-label">Avg response</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value">3.2k</span>
+            <span className="stat-label">Knowledge nodes</span>
+          </div>
+          <div className="stat-item">
+            <span className="stat-value">Live</span>
+            <span className="stat-label">Presence</span>
+          </div>
         </div>
       </div>
 
-      <div className="welcome-ctas">
-        <button className="primary-cta" onClick={() => onExampleClick && onExampleClick('Summarize this page')}>Get started</button>
-        <button className="ghost-cta" onClick={() => onExampleClick && onExampleClick('Show docs')}>Explore templates</button>
-        <button className="ghost-cta" onClick={() => onExampleClick && onExampleClick('Open examples')}>Try examples</button>
-      </div>
-      <div className="welcome-context">
-        <h4>Powerful. Fast. Delightful.</h4>
-        <p>Ask AION anything — it analyses files, reasons over context, generates code, and helps you ship faster. Built for expert workflows and delightful exploration.</p>
+      <div className="hero-right" aria-hidden>
+        <div className="orb-wrap">
+          <div className="orb-core">
+            <div className="orb-glow" />
+            <div className="orb-ring ring-1" />
+            <div className="orb-ring ring-2" />
+            <div className="orb-ring ring-3" />
+          </div>
+        </div>
+        <div className="hero-feature-cards">
+          <div className="feature-card">
+            <strong>Adaptive Reasoning</strong>
+            <div className="feature-desc">Context-aware suggestions that learn from your project.</div>
+          </div>
+          <div className="feature-card">
+            <strong>Secure Memory</strong>
+            <div className="feature-desc">Local-first storage and selective recall.</div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -117,7 +159,7 @@ const UserMessage = React.memo(({ entry, onEdit, onSaveToIndex }) => {
 
   return (
     <div className="message-wrapper user">
-      <div className="user-avatar">
+      <div className={`user-avatar ${isEditing ? 'pulse' : ''}`}>
         <span className="avatar-icon">👤</span>
       </div>
       <div className="message-content">
