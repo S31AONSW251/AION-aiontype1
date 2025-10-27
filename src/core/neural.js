@@ -226,6 +226,9 @@ export class NeuralNetwork {
     this.bias_o.randomize();
 
     this.learningRate = 0.1;
+    // safety knobs
+    this.maxGradient = 10.0; // gradient clipping to avoid explosion
+    this.maxWeight = 1e6; // cap weights to avoid numerical instability
   }
 
   /**
@@ -317,8 +320,44 @@ export class NeuralNetwork {
     let weight_ih_deltas = Matrix.multiply(hiddenGradient, inputs_T);
 
     // Adjust input to hidden weights and biases
+    // Apply gradient clipping
+    const clipMatrix = (m) => m.map(val => {
+      if (typeof val !== 'number') return val;
+      if (val > this.maxGradient) return this.maxGradient;
+      if (val < -this.maxGradient) return -this.maxGradient;
+      return val;
+    });
+
+    clipMatrix(weight_ih_deltas);
+    clipMatrix(hiddenGradient);
+
     this.weights_ih.add(weight_ih_deltas);
     this.bias_h.add(hiddenGradient);
+
+    // Safety: cap weights to reasonable magnitude
+    const capWeights = (m) => m.map(v => Math.max(-this.maxWeight, Math.min(this.maxWeight, v)));
+    capWeights(this.weights_ih);
+    capWeights(this.weights_ho);
+    capWeights(this.bias_h);
+    capWeights(this.bias_o);
+  }
+
+  /**
+   * Async wrapper to train with optional batching.
+   * @param {Array<number[]>} inputsBatch
+   * @param {Array<number[]>} targetsBatch
+   */
+  async trainAsync(inputsBatch, targetsBatch) {
+    for (let i = 0; i < inputsBatch.length; i++) {
+      this.train(inputsBatch[i], targetsBatch[i]);
+      // allow event loop to breathe for large batches
+      if (i % 32 === 0) await new Promise(r => setTimeout(r, 0));
+    }
+    return true;
+  }
+
+  setLearningRate(lr) {
+    if (typeof lr === 'number' && lr > 0 && lr < 10) this.learningRate = lr;
   }
 
   /**

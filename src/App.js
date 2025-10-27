@@ -22,6 +22,7 @@ import SettingsModal from './components/SettingsModal';
 import ChatPanel from './components/panels/ChatPanel';
 import AIAnalysisModal from './components/AIAnalysisModal';
 import WelcomeSplash from './components/WelcomeSplash';
+import About from './components/About';
 import SoulPanel from './components/panels/SoulPanel';
 import MemoriesPanel from './components/panels/MemoriesPanel';
 import SearchPanel from './components/panels/SearchPanel';
@@ -39,6 +40,9 @@ import WebCachePanel from './components/panels/WebCachePanel';
 
 
 import "./App.css";
+// Load targeted settings-modal overrides (keeps fixes isolated and easy to remove)
+import "./settings-modal-fixes.css";
+import './components/About.css';
 import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
@@ -217,7 +221,7 @@ function App() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [showSoulPanel, setShowSoulPanel] = useState(false);
-  const [showWebCache, setShowWebCache] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   // Show pre-app welcome splash unless user opted out
   const [showSplash, setShowSplash] = useState(() => {
     try { return localStorage.getItem('aion_skip_splash') !== '1'; } catch (e) { return true; }
@@ -228,6 +232,26 @@ function App() {
     try { return localStorage.getItem('aion_ultra_power') === '1'; } catch (e) { return false; }
   });
   const prevSettingsRef = useRef(null);
+
+  useEffect(() => {
+    // Monitor URL hash to support links like #/about from the splash or external links
+    const handleHash = () => {
+      try {
+        const h = (window.location.hash || '').replace(/^#/, '');
+        if (h === '/about' || h === 'about') {
+          setShowSplash(false);
+          setShowAbout(true);
+        } else {
+          setShowAbout(false);
+        }
+      } catch (e) {
+        setShowAbout(false);
+      }
+    };
+    handleHash();
+    window.addEventListener('hashchange', handleHash);
+    return () => window.removeEventListener('hashchange', handleHash);
+  }, []);
 
   useEffect(() => {
     // Apply or revert lightweight 'power' overrides
@@ -261,39 +285,36 @@ function App() {
 
   // Centralized helper to call backend Ollama proxy and normalize response
   const callOllamaGenerate = useCallback(async (promptPayload, onPiece = null) => {
+    // Try the new streaming NDJSON endpoint first. If it fails, fall back to
+    // existing behavior (localModel -> offlineReply).
     try {
-      const res = await fetch('http://127.0.0.1:5000/ollama/generate', {
+      const controller = new AbortController();
+      const res = await fetch('/api/generate/stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(promptPayload)
+        body: JSON.stringify(promptPayload),
+        signal: controller.signal,
       });
       if (!res.ok) {
         const err = await res.text().catch(() => `${res.status} ${res.statusText}`);
         throw new Error(err || `HTTP ${res.status}`);
       }
-      const data = await res.json();
-      // Normalize: proxy returns { ok: true, body: ... } or { ok: true, body: { response: '...' } }
-      let extracted = '';
-      if (data && data.ok && data.body) {
-        if (typeof data.body === 'string') extracted = data.body;
-        else if (typeof data.body === 'object') extracted = data.body.response || data.body.text || JSON.stringify(data.body);
-      } else if (data && data.body) {
-        extracted = typeof data.body === 'string' ? data.body : (data.body.response || data.body.text || JSON.stringify(data.body));
-      } else if (data && data.response) {
-        extracted = data.response;
-      } else if (typeof data === 'string') {
-        extracted = data;
-      } else {
-        extracted = JSON.stringify(data);
-      }
 
-      if (typeof onPiece === 'function') {
-        // Emit a single text piece for compatibility
-        await onPiece({ type: 'text', data: extracted });
-      }
-      return extracted;
+      // Use the shared streaming parser to process NDJSON / JSON-lines
+      await processStreamedResponse(res, async (piece) => {
+        // If parser yields JSON objects from NDJSON, forward them as-is
+        if (piece && piece.type && typeof onPiece === 'function') {
+          await onPiece(piece);
+          return;
+        }
+        // Otherwise, forward raw text pieces
+        if (typeof onPiece === 'function') await onPiece({ type: 'text', data: piece.data || '' });
+      });
+
+      // No single final return value for streaming mode; caller should rely on onPiece
+      return null;
     } catch (e) {
-      console.warn('callOllamaGenerate network/error:', e);
+      console.warn('streaming generate failed, falling back:', e);
       // Try local WASM model if available
       try {
         if (!localModel.available) await localModel.init();
@@ -329,6 +350,10 @@ function App() {
 
   // Subscribe to backend agent SSE stream
   useEffect(() => {
+  // In test environment skip mounting real SSE connections to avoid
+  // network/streaming side-effects. Use typeof guard so browsers (which
+  // don't define `process`) won't throw a ReferenceError.
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') return;
     if (typeof window === 'undefined') return;
     if (agentSourceRef.current) return; // already connected
     try {
@@ -928,54 +953,31 @@ function App() {
     const responsePrefix = responsePrefixes[type] || '';
 
     try {
-      // Build payload for backend proxy
+      // Build payload for backend proxy and use centralized helper with fallbacks
       const modelToUse = options && options.model ? options.model : undefined;
       const payload = { prompt: promptToSend };
       if (modelToUse) payload.model = modelToUse;
       if (options && options.params) payload.options = options.params;
 
-      const backend = apiBase || 'http://127.0.0.1:5000';
-      const res = await fetch(`${backend}/ollama/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        let errText = `API error: ${res.status} - ${res.statusText}`;
-        try { const errBody = await res.json(); errText = errBody.error || JSON.stringify(errBody); } catch (e) {}
-        throw new Error(errText);
-      }
-
-      const body = await res.json();
-      let extracted = '';
-      if (body && body.ok && body.body) {
-        if (typeof body.body === 'string') extracted = body.body;
-        else if (typeof body.body === 'object') extracted = (body.body.response || body.body.text || JSON.stringify(body.body));
-      } else if (body && body.body) {
-        extracted = typeof body.body === 'string' ? body.body : (body.body.response || body.body.text || JSON.stringify(body.body));
-      } else if (body && body.response) {
-        extracted = body.response;
-      } else if (typeof body === 'string') {
-        extracted = body;
-      } else {
-        extracted = JSON.stringify(body);
-      }
-
+      // Use callOllamaGenerate which has network/local/offline fallbacks
+      const extracted = await callOllamaGenerate(payload);
       const finalOutput = responsePrefix + (extracted || '').trim();
       setCreativeOutput(finalOutput);
       setReply(finalOutput);
       speak(`I have generated a ${type} for you.`);
       showNotification(`${type} generation complete`, "success");
-
     } catch (error) {
       console.error(`Error generating ${type}:`, error);
-      showNotification(`Error generating ${type}: ${error.message}`, "error");
-      setReply(`I was unable to generate ${type} at this time. Please ensure your AI server is running.`);
+      // Expose more detailed error information in the creative output for easier debugging
+      const errorDetails = (error && (error.stack || error.message)) ? (error.stack || error.message) : JSON.stringify(error);
+      showNotification(`Error generating ${type}: ${error.message || String(error)}`, "error");
+      const errorReport = `ERROR generating ${type}: ${error.message || String(error)}\n\nDetails:\n${errorDetails}`;
+      setCreativeOutput(errorReport);
+      setReply(errorReport);
     } finally {
       setIsThinking(false);
     }
-  }, [settings.enableCreativeGeneration, showNotification, speak, soulState.currentMood, userInput]);
+  }, [settings.enableCreativeGeneration, showNotification, speak, soulState.currentMood, userInput, callOllamaGenerate]);
 
   // Enhanced image generation
   const generateImage = useCallback(async (promptArg = null) => {
@@ -1690,8 +1692,9 @@ function App() {
           } 
         };
         
-        // Use centralized proxy (returns full text); if offline, enqueue the job and optionally provide a local fallback
-        if (!navigator.onLine) {
+  // Use centralized proxy (returns full text); if offline, enqueue the job and optionally provide a local fallback
+  // Note: when `settings.enableOfflineMode` is true we still attempt local/server generation
+  if (!navigator.onLine && !settings.enableOfflineMode) {
           // enqueue the generation so it runs when back online
           try {
             await enqueue('generate', { promptPayload, context: { conversation: conversationHistory.slice(-20) } });
@@ -1712,16 +1715,58 @@ function App() {
           }
         } else {
           setIsStreaming(true);
+          setStreamingResponse('');
+          let finalText = '';
+          let collectedProvenance = [];
           try {
-            const fullResponse = await callOllamaGenerate(promptPayload);
-            if (settings.enableRealTimeStreaming) {
-              setStreamingResponse(fullResponse);
-              setReply(fullResponse);
-            } else {
-              setReply(fullResponse);
+            const maybe = await callOllamaGenerate(promptPayload, async (piece) => {
+              // piece shapes: {type:'token'|'final','text',provenance,meta} or {type:'text', data: '...'}
+              try {
+                if (!piece) return;
+                if (piece.type === 'token') {
+                  setStreamingResponse(prev => prev + (piece.text || ''));
+                } else if (piece.type === 'final') {
+                  setStreamingResponse(prev => prev + (piece.text || ''));
+                  finalText = (finalText || '') + (piece.text || '');
+                  if (piece.provenance) collectedProvenance = piece.provenance;
+                } else if (piece.type === 'text') {
+                  setStreamingResponse(prev => prev + (piece.data || ''));
+                  finalText = (finalText || '') + (piece.data || '');
+                } else if (piece.type === 'json' && piece.data) {
+                  // If backend emits structured JSON, try to extract text
+                  const d = piece.data;
+                  if (typeof d === 'string') {
+                    setStreamingResponse(prev => prev + d);
+                    finalText = (finalText || '') + d;
+                  } else if (d.text) {
+                    setStreamingResponse(prev => prev + d.text);
+                    finalText = (finalText || '') + d.text;
+                  }
+                }
+              } catch (err) {
+                console.warn('onPiece handler error', err);
+              }
+            });
+
+            // If call returned a string (non-stream fallback), use it
+            if (typeof maybe === 'string' && maybe) {
+              finalText = maybe;
+              setStreamingResponse(maybe);
             }
-            const soulfulResponse = getMoodBasedResponse(fullResponse);
-            setReply(soulfulResponse);
+
+            // After streaming completes, create a moodful variation and speak if enabled
+            const soulfulResponse = getMoodBasedResponse(finalText || streamingResponse || reply || '');
+            // attach provenance to streamingResponse state by storing a special object when available
+            if (collectedProvenance && collectedProvenance.length > 0) {
+              setStreamingResponse(prev => {
+                // store as object with __text and __provenance for ChatPanel
+                return { __text: (finalText && finalText.length > 0) ? finalText : String(prev || ''), __provenance: collectedProvenance };
+              });
+              setReply((finalText && finalText.length > 0) ? soulfulResponse : soulfulResponse);
+            } else {
+              setReply(soulfulResponse);
+            }
+
             if (settings.autoSpeakReplies) { speak(soulfulResponse); }
           } finally {
             setIsStreaming(false);
@@ -1743,7 +1788,8 @@ function App() {
         const idxEntry = {
           title: (question && question.slice(0, 80)) || 'AION response',
           text: reply || '',
-          snippet: (reply || '').slice(0, 256),
+          response: reply, 
+          provenance: (streamingResponse && typeof streamingResponse === 'object' && streamingResponse.__provenance) ? streamingResponse.__provenance : undefined,
           time: new Date().toISOString()
         };
         try {
@@ -2391,6 +2437,9 @@ function App() {
 
   // Enhanced initialization
   useEffect(() => {
+  // Avoid attempting to play audio during Jest tests (JSDOM doesn't
+  // implement full audio stack and plays can cause exceptions).
+  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') return;
     if (settings.soundEffects) {
       const audio = new Audio(cosmicAudio);
       audio.loop = true;
@@ -2903,6 +2952,9 @@ function App() {
         isSpeechSupported={isSpeechSupported}
         showNotification={showNotification}
       />
+      {showAbout && (
+        <About onClose={() => { setShowAbout(false); try { window.history.replaceState(null, '', window.location.pathname + window.location.search); } catch(e) { window.location.hash = ''; } }} />
+      )}
       {/* AI Analysis modal (renders full analysis when requested) */}
       <AIAnalysisModal
         open={analysisModal.open}

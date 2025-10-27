@@ -2,6 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as d3 from 'd3';
 import AssetsLibrary from './AssetsLibrary';
+import styles from './SearchPanel.module.css';
 
 // Helper function to safely extract hostname from URLs
 const getHostname = (url) => {
@@ -13,7 +14,7 @@ const getHostname = (url) => {
   }
 };
 
-// Normalize media fields from heterogeneous search result shapes.
+// Safe getter for the first URL-like value in a mixed field
 const getFirstUrl = (val) => {
   if (!val) return null;
   if (typeof val === 'string') return val;
@@ -29,6 +30,7 @@ const getFirstUrl = (val) => {
   return null;
 };
 
+// Normalize media fields from heterogeneous search result shapes.
 const normalizeMedia = (result) => {
   try {
     const imageCandidates = [
@@ -65,28 +67,26 @@ const normalizeMedia = (result) => {
   }
 };
 
-// A simple hook for handling clicks outside an element
+// Hook: call handler when click is outside the ref element
 const useOnClickOutside = (ref, handler) => {
   useEffect(() => {
     const listener = (event) => {
       if (!ref.current || ref.current.contains(event.target)) return;
       handler(event);
     };
-    document.addEventListener("mousedown", listener);
-    document.addEventListener("touchstart", listener);
+    document.addEventListener('mousedown', listener);
+    document.addEventListener('touchstart', listener);
     return () => {
-      document.removeEventListener("mousedown", listener);
-      document.removeEventListener("touchstart", listener);
+      document.removeEventListener('mousedown', listener);
+      document.removeEventListener('touchstart', listener);
     };
   }, [ref, handler]);
 };
 
-// Enhanced Image Gallery with Lightbox
 const ImageGallery = ({ images, query }) => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // ✅ FIXED: All Hooks are now at the top of the component.
   const navigateImage = useCallback((direction) => {
     if (!images || images.length === 0) return; // Guard clause inside the function
     let newIndex;
@@ -119,16 +119,16 @@ const ImageGallery = ({ images, query }) => {
 
   return (
     <>
-      <div className="image-gallery-container">
-        <div className="gallery-header">
+  <div className={styles.imageGalleryContainer}>
+  <div className={styles.galleryHeader}>
           <h4>Visual Results for "{query}"</h4>
-          <span className="image-count">{images.length} images</span>
+          <span className={styles.imageCount}>{images.length} images</span>
         </div>
-        <div className="image-grid">
+  <div className={styles.imageGrid}>
           {images.map((img, index) => (
             <div
               key={index}
-              className="image-item"
+              className={styles.imageItem}
               role="button"
               tabIndex={0}
               onClick={() => {
@@ -138,15 +138,15 @@ const ImageGallery = ({ images, query }) => {
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { setSelectedImage(img); setCurrentIndex(index); } }}
               aria-label={`Open image ${img.title || index + 1}`}
             >
-              <div className="image-wrapper">
+              <div className={styles.imageWrapper}>
                 <img
                   src={img.src}
                   alt={img.alt || `Visual result for ${query}`}
                   loading="lazy"
-                  className="lazy-img"
+                  className={styles.lazyImg}
                   onError={(e) => e.target.style.display = 'none'}
                 />
-                {img.title && <p className="image-caption">{img.title}</p>}
+                {img.title && <p className={styles.imageCaption}>{img.title}</p>}
               </div>
             </div>
           ))}
@@ -154,19 +154,19 @@ const ImageGallery = ({ images, query }) => {
       </div>
 
       {selectedImage && (
-        <div className="lightbox" onClick={() => setSelectedImage(null)}>
-          <div className="lightbox-content" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={selectedImage?.title || 'Image lightbox'}>
-            <button className="lightbox-close" onClick={() => setSelectedImage(null)}>
+        <div className={styles.lightbox} onClick={() => setSelectedImage(null)}>
+          <div className={styles.lightboxContent} onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-label={selectedImage?.title || 'Image lightbox'}>
+            <button className={styles.lightboxClose} onClick={() => setSelectedImage(null)}>
               &times;
             </button>
-            <button className="lightbox-nav prev" onClick={() => navigateImage('prev')}>
+            <button className={`${styles.lightboxNav} ${styles.prev}`} onClick={() => navigateImage('prev')}>
               &#10094;
             </button>
             <img src={selectedImage.src} alt={selectedImage.alt} />
-            <button className="lightbox-nav next" onClick={() => navigateImage('next')}>
+            <button className={`${styles.lightboxNav} ${styles.next}`} onClick={() => navigateImage('next')}>
               &#10095;
             </button>
-            <div className="lightbox-caption">
+            <div className={styles.lightboxCaption}>
               <h4>{selectedImage.title}</h4>
               <a href={selectedImage.url} target="_blank" rel="noopener noreferrer">
                 View Source
@@ -193,13 +193,13 @@ const VideoLightbox = ({ video, onClose, onPrev, onNext }) => {
 
   if (!video) return null;
   return (
-    <div className="video-lightbox" onClick={onClose}>
-      <div className="video-lightbox-content" onClick={(e) => e.stopPropagation()}>
-        <button className="lightbox-close" onClick={onClose}>&times;</button>
-        <div className="video-player-wrap">
+    <div className={styles.videoLightbox} onClick={onClose}>
+      <div className={styles.videoLightboxContent} onClick={(e) => e.stopPropagation()}>
+        <button className={styles.lightboxClose} onClick={onClose}>&times;</button>
+        <div className={styles.videoPlayerWrap}>
           <video controls src={video.src || video.url} poster={video.poster || video.thumbnail} style={{ maxWidth: '100%' }} />
         </div>
-        <div className="lightbox-caption">
+        <div className={styles.lightboxCaption}>
           <h4>{video.title}</h4>
           {video.url && <a href={video.url} target="_blank" rel="noopener noreferrer">View Source</a>}
         </div>
@@ -232,31 +232,31 @@ const VideoGallery = ({ videos, query }) => {
 
   return (
     <>
-      <div className="video-gallery-container">
-        <div className="gallery-header">
+      <div className={styles.videoGalleryContainer}>
+        <div className={styles.galleryHeader}>
           <h4>Video Results for "{query}"</h4>
-          <span className="video-count">{videos.length} videos</span>
+          <span className={styles.videoCount}>{videos.length} videos</span>
         </div>
-        <div className="video-grid">
+        <div className={styles.videoGrid}>
           {videos.map((v, i) => (
             <div
               key={i}
-              className="video-item"
+              className={styles.videoItem}
               role="button"
               tabIndex={0}
               onClick={() => open(v, i)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') open(v, i); }}
               aria-label={`Open video ${v.title || i + 1}`}
             >
-              <div className="video-thumb">
+              <div className={styles.videoThumb}>
                 {v.thumbnail ? (
-                  <img src={v.thumbnail} alt={v.title || `Video ${i+1}`} loading="lazy" onError={(e)=> e.target.style.display='none'} className="lazy-img" />
+                  <img src={v.thumbnail} alt={v.title || `Video ${i+1}`} loading="lazy" onError={(e)=> e.target.style.display='none'} className={styles.lazyImg} />
                 ) : (
                   <video src={v.src || v.url} preload="metadata" muted playsInline style={{ maxWidth: '100%' }} />
                 )}
-                <div className="video-play-overlay" aria-hidden>▶</div>
+                <div className={styles.videoPlayOverlay} aria-hidden>▶</div>
               </div>
-              {v.title && <p className="video-caption">{v.title}</p>}
+              {v.title && <p className={styles.videoCaption}>{v.title}</p>}
             </div>
           ))}
         </div>
@@ -431,8 +431,8 @@ const KnowledgeGraph = ({ query, entities, onNodeClick, expanded = false }) => {
   if (!entities || entities.length === 0) return null;
 
   return (
-    <div className="knowledge-graph-container">
-      <div className="graph-controls">
+    <div className={styles.knowledgeGraphContainer}>
+      <div className={styles.graphControls}>
         <button
           className={`graph-mode-btn ${graphMode === 'force' ? 'active' : ''}`}
           onClick={() => setGraphMode('force')}
@@ -446,7 +446,7 @@ const KnowledgeGraph = ({ query, entities, onNodeClick, expanded = false }) => {
           Radial Layout
         </button>
         <button
-          className="reset-zoom-btn"
+          className={styles.resetZoomBtn}
           onClick={() => {
             const svg = d3.select(svgRef.current);
             svg.transition().duration(750).call(
@@ -458,10 +458,10 @@ const KnowledgeGraph = ({ query, entities, onNodeClick, expanded = false }) => {
         >
           Reset Zoom
         </button>
-        <span className="zoom-level">Zoom: {Math.round(zoomLevel * 100)}%</span>
+  <span className={styles.zoomLevel}>Zoom: {Math.round(zoomLevel * 100)}%</span>
       </div>
 
-      <div className="knowledge-graph-svg-wrapper">
+  <div className={styles.knowledgeGraphSvgWrapper}>
         <svg
           ref={svgRef}
           width={dimensions.width}
@@ -470,11 +470,11 @@ const KnowledgeGraph = ({ query, entities, onNodeClick, expanded = false }) => {
       </div>
 
       {selectedNode && (
-        <div className="node-details-panel">
+  <div className={styles.nodeDetailsPanel}>
           <h4>{selectedNode.label}</h4>
           <p>Connected to: "{query}"</p>
           <button
-            className="close-details-btn"
+            className={styles.closeDetailsBtn}
             onClick={() => setSelectedNode(null)}
           >
             Close
@@ -530,21 +530,21 @@ const AdvancedFilters = ({ filters, onFilterChange }) => {
   };
 
   return (
-    <div className="advanced-filters" ref={ref}>
+  <div className={styles.advancedFilters} ref={ref}>
       <button
-        className="filter-toggle"
+  className={styles.filterToggle}
         onClick={() => setIsOpen(!isOpen)}
       >
         <i className={`icon-filter ${isOpen ? 'active' : ''}`}></i>
         Advanced Filters
         {Object.values(filters).filter(v => v).length > 0 && (
-          <span className="filter-count">{Object.values(filters).filter(v => v).length}</span>
+          <span className={styles.filterCount}>{Object.values(filters).filter(v => v).length}</span>
         )}
       </button>
 
       {isOpen && (
-        <div className="filter-panel">
-          <div className="filter-tabs">
+  <div className={styles.filterPanel}>
+    <div className={styles.filterTabs}>
             <button
               className={activeTab === 'content' ? 'active' : ''}
               onClick={() => setActiveTab('content')}
@@ -565,20 +565,20 @@ const AdvancedFilters = ({ filters, onFilterChange }) => {
             </button>
           </div>
 
-          <div className="filter-tab-content">
+          <div className={styles.filterTabContent}>
             {activeTab === 'content' && (
               <>
-                <div className="filter-group">
+                <div className={styles.filterGroup}>
                   <label>Content Type</label>
-                  <div className="filter-options">
+                  <div className={styles.filterOptions}>
                     {['article', 'image', 'video', 'academic', 'news', 'forum'].map(type => (
-                      <label key={type} className="filter-option">
+                      <label key={type} className={styles.filterOption}>
                         <input
                           type="checkbox"
                           checked={filters.contentType === type}
                           onChange={(e) => onFilterChange('contentType', e.target.checked ? type : '')}
                         />
-                        <span className="checkmark"></span>
+                        <span className={styles.checkmark}></span>
                         {type.charAt(0).toUpperCase() + type.slice(1)}
                       </label>
                     ))}
@@ -1004,7 +1004,7 @@ const RichResultModal = ({ result, onClose }) => {
                     )
                   )}
                   {m.type === 'file' && (
-                    <div className="file-card">
+                    <div className={styles.fileCard}>
                       <i className="icon-file"></i>
                       <div className="file-meta">
                         <div className="file-name">{m.name || m.src}</div>
@@ -1014,38 +1014,38 @@ const RichResultModal = ({ result, onClose }) => {
                   )}
                 </div>
               )) : (
-                <div className="no-media">No preview media available.</div>
+                <div className={styles.noMedia}>No preview media available.</div>
               )}
             </div>
 
-            <div className="rich-links">
+            <div className={styles.richLinks}>
               <h5>Links & Outbound</h5>
               <div className="links-list">
                 <a href={result.url} target="_blank" rel="noopener noreferrer">Open Source Page</a>
                 {(result.outlinks || result.links || []).slice(0,10).map((l, i) => (
-                  <div key={i} className="outlink-item">
+                  <div key={i} className={styles.outlinkItem}>
                     <a href={l.url || l} target="_blank" rel="noopener noreferrer">{l.title || l.url || l}</a>
-                    <span className="outlink-host">{getHostname(l.url || l)}</span>
+                    <span className={styles.outlinkHost}>{getHostname(l.url || l)}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          <div className="rich-right">
-            <div className="quick-actions">
+          <div className={styles.richRight}>
+            <div className={styles.quickActions}>
               <button onClick={() => navigator.clipboard.writeText(result.url)}>Copy Link</button>
               <button onClick={() => window.open(result.url, '_blank')}>Open in New Tab</button>
               <button onClick={() => { if (result._media && (result._media.image || result._media.video)) window.open(result._media.image || result._media.video, '_blank'); }}>Open Media</button>
               <button onClick={() => { alert('Smart download: preparing assets...'); /* Could trigger /api/fetch-bundle */ }}>Download All</button>
             </div>
 
-            <div className="insights">
+            <div className={styles.insights}>
               <h5>AI Insight</h5>
-              {loadingInsight ? <div className="spinner small"></div> : (
-                <div className="insight-text">{aiInsight || 'No insight available yet.'}</div>
+              {loadingInsight ? <div className={`${styles.spinner} small`}></div> : (
+                <div className={styles.insightText}>{aiInsight || 'No insight available yet.'}</div>
               )}
-              <div className="insight-actions">
+              <div className={styles.insightActions}>
                 <button onClick={fetchAiInsight}>Regenerate Insight</button>
                 <button onClick={() => { navigator.clipboard.writeText(aiInsight || ''); }}>Copy Insight</button>
               </div>
@@ -1993,9 +1993,9 @@ const SearchPanel = ({
 
   const renderContent = () => {
     if ((isSearching || isLocalSearching) && !(searchSummary || localSummary)) {
-        return (
-            <div className="search-loading agent-card">
-                  <div className="spinner"></div>
+    return (
+      <div className="search-loading agent-card">
+          <div className={styles.spinner}></div>
                   <h4>{(isLocalSearching ? 'Local Search' : (agentStatus || 'Agent')).charAt(0).toUpperCase() + (isLocalSearching ? 'Local Search' : (agentStatus || 'Agent')).slice(1)}...</h4>
                   <p>{isLocalSearching ? `Running in-panel advanced search...` : (currentStep ? `Step ${completedSteps + 1}/${totalSteps}: ${currentStep.action} - ${currentStep.query}` : "Initiating research...")}</p>
                   <p className="loading-subtext">AION is executing its research plan...</p>
@@ -2174,50 +2174,67 @@ const SearchPanel = ({
         </div>
       </div>
 
-      <div className="search-input-container">
-        <div className="search-input-wrapper">
-          <input
-            type="text"
-            value={query}
-            placeholder="Ask AION to research a new topic..."
-            onChange={(e) => setQuery(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={isSearching}
-            className="search-input"
-          />
+  <div className={styles.sciFiHero}>
+        <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:12}}>
+          <div>
+            <div className={styles.sciFiTitle}>AION Search</div>
+            <div className={styles.sciFiSub}>Deep web-scale retrieval • multi-provider hybrid search • instant insights</div>
+          </div>
+          <div style={{opacity:0.85, fontSize:'0.9rem'}}>Status: <strong style={{color: agentStatus?.running ? '#8ef' : '#f88'}}>{agentStatus?.running ? 'Online' : 'Offline'}</strong></div>
+        </div>
 
-            {/* Provider selector for hybrid search */}
-            <div className="provider-selector" role="group" aria-label="Search providers">
-              <label className={`provider-toggle ${providers.aion ? 'active' : ''}`} title="AION (local)" tabIndex={0}>
-                <input aria-label="Toggle AION provider" type="checkbox" checked={providers.aion} onChange={() => toggleProvider('aion')} />
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="provider-icon">
-                  <path fill="currentColor" d="M12 2l3.5 6.5L22 10l-5 4.5L18 22l-6-3.5L6 22l1-7.5L2 10l6.5-1.5L12 2z" />
-                </svg>
-                <span>AION</span>
-              </label>
+        <div className={styles.searchInputContainer}>
+          <div className={styles.searchInputWrapper}>
+            <input
+              type="text"
+              value={query}
+              placeholder="Ask AION to research a new topic..."
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={isSearching}
+              className={styles.searchInput}
+            />
+            <button className={styles.searchActionBtn} onClick={() => handleAdvancedSearch(query)} aria-label="Run search">Search</button>
 
-              <label className={`provider-toggle ${providers.google ? 'active' : ''}`} title="Google" tabIndex={0}>
-                <input aria-label="Toggle Google provider" type="checkbox" checked={providers.google} onChange={() => toggleProvider('google')} />
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="provider-icon">
-                  <path fill="currentColor" d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                </svg>
-                <span>Google</span>
-              </label>
+            <div className={styles.suggestionChips}>
+              {(suggestedQueries || []).slice(0,6).map((s, i) => (
+                <div key={i} className={styles.chip} onClick={() => { setQuery(s); handleAdvancedSearch(s); }}>{s}</div>
+              ))}
+            </div>
+          </div>
 
-              <label className={`provider-toggle ${providers.youtube ? 'active' : ''}`} title="YouTube" tabIndex={0}>
-                <input aria-label="Toggle YouTube provider" type="checkbox" checked={providers.youtube} onChange={() => toggleProvider('youtube')} />
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="provider-icon">
-                  <rect x="2" y="6" width="20" height="12" rx="3" ry="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
-                  <polygon points="10,9 16,12 10,15" fill="currentColor" />
-                </svg>
-                <span>YouTube</span>
-              </label>
+          {/* Provider selector for hybrid search */}
+          <div className={styles.providerSelector} role="group" aria-label="Search providers">
+            <label className={`${styles.providerToggle} ${providers.aion ? styles.providerToggleActive : ''}`} title="AION (local)" tabIndex={0}>
+              <input aria-label="Toggle AION provider" type="checkbox" checked={providers.aion} onChange={() => toggleProvider('aion')} />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" className={styles.providerIcon}>
+                <path fill="currentColor" d="M12 2l3.5 6.5L22 10l-5 4.5L18 22l-6-3.5L6 22l1-7.5L2 10l6.5-1.5L12 2z" />
+              </svg>
+              <span>AION</span>
+            </label>
 
-              <label className={`provider-toggle ${providers.reddit ? 'active' : ''}`} title="Reddit" tabIndex={0}>
-                <input aria-label="Toggle Reddit provider" type="checkbox" checked={providers.reddit} onChange={() => toggleProvider('reddit')} />
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" className="provider-icon">
-                  <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.2" />
+            <label className={`${styles.providerToggle} ${providers.google ? styles.providerToggleActive : ''}`} title="Google" tabIndex={0}>
+              <input aria-label="Toggle Google provider" type="checkbox" checked={providers.google} onChange={() => toggleProvider('google')} />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" className={styles.providerIcon}>
+                <path fill="currentColor" d="M21 21l-4.35-4.35" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <circle cx="11" cy="11" r="6" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              </svg>
+              <span>Google</span>
+            </label>
+
+            <label className={`${styles.providerToggle} ${providers.youtube ? styles.providerToggleActive : ''}`} title="YouTube" tabIndex={0}>
+              <input aria-label="Toggle YouTube provider" type="checkbox" checked={providers.youtube} onChange={() => toggleProvider('youtube')} />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" className={styles.providerIcon}>
+                <rect x="2" y="6" width="20" height="12" rx="3" ry="3" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                <polygon points="10,9 16,12 10,15" fill="currentColor" />
+              </svg>
+              <span>YouTube</span>
+            </label>
+
+            <label className={`${styles.providerToggle} ${providers.reddit ? styles.providerToggleActive : ''}`} title="Reddit" tabIndex={0}>
+              <input aria-label="Toggle Reddit provider" type="checkbox" checked={providers.reddit} onChange={() => toggleProvider('reddit')} />
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" aria-hidden="true" focusable="false" className={styles.providerIcon}>
+                <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="1.2" />
                   <circle cx="9" cy="11" r="1" fill="currentColor" />
                   <circle cx="15" cy="11" r="1" fill="currentColor" />
                   <path d="M8 15c1.333 1 3.333 1 5 0" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" />
@@ -2227,11 +2244,11 @@ const SearchPanel = ({
             </div>
 
             {query.length > 2 && (
-            <div className="query-suggestions-popup">
+            <div className={styles.querySuggestionsPopup}>
               {suggestedQueries.filter(s => s.toLowerCase().includes(query.toLowerCase()))
                 .slice(0, 5)
                 .map((suggestion, index) => (
-                  <div key={index} className="suggestion-item" onClick={() => setQuery(suggestion)}>
+                  <div key={index} className={styles.suggestionItem} onClick={() => setQuery(suggestion)}>
                     {suggestion}
                   </div>
                 ))
@@ -2245,11 +2262,11 @@ const SearchPanel = ({
         <button
           onClick={() => { if (query.trim()) handleAdvancedSearch(query); }}
           disabled={!query.trim() || isSearching || isLocalSearching}
-          className="btn-primary search-button"
+          className={`${styles.searchButton} btn-primary`}
         >
           {(isSearching || isLocalSearching) ? (
             <>
-              <div className="spinner"></div>
+              <div className={styles.spinner}></div>
               {(isLocalSearching && fetchProgress > 0) ? `Searching... ${fetchProgress}%` : 'Researching...'}
             </>
           ) : (
@@ -2262,11 +2279,11 @@ const SearchPanel = ({
 
         {/* Local search progress / error */}
         {isLocalSearching && (
-          <div className="local-search-progress">
-            <div className="progress-bar small">
-              <div className="progress-fill" style={{ width: `${fetchProgress}%` }}></div>
+          <div className={styles.localSearchProgress}>
+            <div className={`${styles.progressBar} small`}>
+              <div className={styles.progressFill} style={{ width: `${fetchProgress}%` }}></div>
             </div>
-            <span className="progress-text">Local search: {fetchProgress}%</span>
+            <span className={styles.progressText}>Local search: {fetchProgress}%</span>
           </div>
         )}
 

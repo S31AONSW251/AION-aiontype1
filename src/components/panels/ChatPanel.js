@@ -8,6 +8,16 @@ import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './ChatPanel.css';
 // ExamplePrompts and AvatarBadge imports removed because they are not used in this file
 
+// Small utility: friendly timestamp formatter
+const formatTime = (raw) => {
+  try {
+    const d = raw ? new Date(raw) : new Date();
+    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  } catch (e) {
+    return raw || '';
+  }
+};
+
 // Enhanced Code renderer component
 const CustomCodeRenderer = ({ node, inline, className, children, ...props }) => {
   const [isCopied, setIsCopied] = useState(false);
@@ -165,7 +175,7 @@ const UserMessage = React.memo(({ entry, onEdit, onSaveToIndex }) => {
       <div className="message-content">
         <div className="message-header user-header">
           <span className="username">You</span>
-          <span className="time">{entry.time}</span>
+          <span className="time">{formatTime(entry.time)}</span>
           <span className="message-id">#{entry.id?.slice(-4) || '0000'}</span>
         </div>
         <div className="message-body">
@@ -206,6 +216,17 @@ const UserMessage = React.memo(({ entry, onEdit, onSaveToIndex }) => {
 const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFeedback, sentimentScore, onSaveToIndex }) => {
   const [isCopied, setIsCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
+  // lightweight local reactions state (emoji -> count)
+  const [reactions, setReactions] = useState(() => (entry.reactions || {}));
+
+  const toggleReaction = useCallback((emoji) => {
+    setReactions((prev) => {
+      const next = { ...prev };
+      if (!next[emoji]) next[emoji] = 0;
+      next[emoji] = next[emoji] + 1;
+      return next;
+    });
+  }, []);
 
   const handleCopy = useCallback(() => {
     setIsCopied(true);
@@ -230,7 +251,7 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
         <div className="message-header">
           <span className="username">AION</span>
           {entry.mood && <span className="mood-indicator">{entry.mood}</span>}
-          <span className="time">{entry.time}</span>
+          <span className="time">{formatTime(entry.time)}</span>
           <span className="message-id">#{entry.id?.slice(-4) || '0000'}</span>
         </div>
 
@@ -239,6 +260,14 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
             {entry.response || ''}
           </ReactMarkdown>
         </div>
+        {/* Provenance for non-streamed messages */}
+        {entry.provenance && Array.isArray(entry.provenance) && (
+          <div className="provenance-list static">
+            {entry.provenance.slice(0,3).map((p, idx) => (
+              <span key={idx} className="prov-badge">{p.id?.slice(0,6) || 'mem'} ({(p.score||0).toFixed(2)})</span>
+            ))}
+          </div>
+        )}
         
         {/* Confidence meter */}
         <div className="confidence-meter">
@@ -253,7 +282,7 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
         </div>
 
         {/* Message actions */}
-        <div className="message-actions">
+          <div className="message-actions">
           <CopyToClipboard text={entry.response || ''} onCopy={handleCopy}>
             <button 
               className={`action-btn ${isCopied ? 'copied' : ''}`} 
@@ -289,6 +318,12 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
           <button className="action-btn" title="Save message to local index" onClick={() => onSaveToIndex && onSaveToIndex(entry)}>
             💾
           </button>
+          {/* Simple reactions UI */}
+          <div className="reactions" role="group" aria-label="Reactions">
+            {['👍','🎯','❤️','🤔'].map((r) => (
+              <button key={r} className="reaction-btn" onClick={() => toggleReaction(r)} aria-label={`React ${r}`}>{r} {reactions[r] ? reactions[r] : ''}</button>
+            ))}
+          </div>
         </div>
         {/* Feedback section */}
         {/* Header controls removed per user preference — only centered AION and header buttons remain. */}
@@ -310,10 +345,26 @@ const StreamingMessage = React.memo(({ content, soulState, onCancel, isStreaming
           <span className="mood-indicator">{soulState?.currentMood || 'contemplative'}</span>
         </div>
         
-        <div className="message-body">
-          <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
-            {content || ''}
-          </ReactMarkdown>
+        <div className="message-body streaming-body">
+          {typeof content === 'object' ? (
+            <>
+              <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
+                {content.__text || ''}
+              </ReactMarkdown>
+            </>
+          ) : (
+            <ReactMarkdown components={markdownComponents} remarkPlugins={[remarkGfm]}>
+              {content || ''}
+            </ReactMarkdown>
+          )}
+          {/* Provenance area: show small badges if provenance info attached to content */}
+          {content && content.__provenance && Array.isArray(content.__provenance) && (
+            <div className="provenance-list">
+              {content.__provenance.slice(0,3).map((p, idx) => (
+                <span key={idx} className="prov-badge">{p.id?.slice(0,6) || 'mem'} ({(p.score||0).toFixed(2)})</span>
+              ))}
+            </div>
+          )}
         </div>
         
         {isStreaming && (
@@ -516,8 +567,80 @@ const ChatPanel = React.memo(({
     setLightboxItem(null);
   }, []);
 
+  // Auto-scroll and "jump to latest" UX
+  const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const scrollToBottom = useCallback(() => {
+    const el = chatContainerRef?.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+    setIsAtBottom(true);
+  }, [chatContainerRef]);
+
+  useEffect(() => {
+    const el = chatContainerRef?.current;
+    if (!el) return;
+    const onScroll = () => {
+      const buffer = 60; // px from bottom considered "at bottom"
+      const atBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) <= buffer;
+      setIsAtBottom(atBottom);
+    };
+    el.addEventListener('scroll', onScroll);
+    // run once to initialize
+    onScroll();
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [chatContainerRef]);
+
+  // Scroll to bottom when new messages arrive, only if the user was already at bottom
+  useEffect(() => {
+    if (isAtBottom) {
+      scrollToBottom();
+    }
+  }, [enhancedHistory.length, isAtBottom, scrollToBottom]);
+
+  // Click-to-open-lightbox: global handler delegated from container so markdown images open in lightbox
+  useEffect(() => {
+    const el = chatContainerRef?.current;
+    if (!el) return;
+    const onClick = (e) => {
+      const img = e.target.closest && e.target.closest('img');
+      if (img && el.contains(img)) {
+        // Determine image src and open lightbox
+        const src = img.src || img.getAttribute('src');
+        if (src) {
+          setLightboxItem({ src, type: 'image', name: img.alt || '' });
+          setLightboxOpen(true);
+        }
+      }
+    };
+    el.addEventListener('click', onClick);
+    return () => el.removeEventListener('click', onClick);
+  }, [chatContainerRef]);
+
+  // Determine theme class for this panel so CSS can adapt to light/dark appearances.
+  const [themeClass, setThemeClass] = useState('');
+  useEffect(() => {
+    try {
+      // If a global theme class is set on <html> or <body>, use that. Otherwise
+      // fallback to the user's system preference.
+      if (typeof document !== 'undefined') {
+        if (document.documentElement.classList.contains('dark-theme') || document.body.classList.contains('dark-theme')) {
+          setThemeClass('dark-theme');
+        } else if (document.documentElement.classList.contains('light-theme') || document.body.classList.contains('light-theme')) {
+          setThemeClass('light-theme');
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          setThemeClass('dark-theme');
+        } else {
+          setThemeClass('light-theme');
+        }
+      }
+    } catch (e) {
+      setThemeClass('light-theme');
+    }
+  }, []);
+
   return (
-    <div className="chat-container" ref={chatContainerRef}>
+    <div className={`chat-container ${themeClass}`} ref={chatContainerRef}>
       <div className="chat-header brand-premium">
             <div className="chat-title-row">
               <div className="title-left">
@@ -558,6 +681,13 @@ const ChatPanel = React.memo(({
 
         {isThinking && !reply && !isStreaming && <TypingIndicator />}
       </div>
+
+      {/* Jump to latest button appears when user scrolls up */}
+      {!isAtBottom && (
+        <div className="jump-to-bottom-wrap">
+          <button className="jump-to-bottom" onClick={scrollToBottom} aria-label="Jump to latest messages">⬇ New messages</button>
+        </div>
+      )}
 
       <div className="chat-composer-area">
         <div className="chat-composer">

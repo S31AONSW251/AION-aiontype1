@@ -7,6 +7,16 @@ export function onQueueChange(cb) {
   onChangeCallback = cb;
 }
 
+export function offQueueChange(cb) {
+  // simple single-callback unsubscribe: if the provided callback matches the
+  // registered one, clear it. If no callback provided, clear any existing.
+  if (!cb) {
+    onChangeCallback = null;
+    return;
+  }
+  if (onChangeCallback === cb) onChangeCallback = null;
+}
+
 function notifyChange() {
   if (onChangeCallback) onChangeCallback();
 }
@@ -63,6 +73,6 @@ export function startAutoSync(apiSend) {
   window.addEventListener('online', () => runQueue(apiSend).catch(() => {}));
 }
 
-const SyncService = { runQueue, startAutoSync, onQueueChange };
+const SyncService = { runQueue, startAutoSync, onQueueChange, offQueueChange };
 
 export default SyncService;

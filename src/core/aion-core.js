@@ -1,5 +1,5 @@
 // aion-core.js - Ultra-enhanced core with advanced capabilities
-import { aionMemory } from './aion-memory.js';
+import { advancedAionMemory as aionMemory, AdvancedAionMemory } from './aion-memory.js';
 import { aionEthics } from './aion-ethics.js';
 import { aionAgent } from './aion-agent.js';
 import { QuantumSimulator } from './quantum.js';
@@ -7,57 +7,8 @@ import { NeuralNetwork } from './neural.js';
 import { MathEngine } from './math.js';
 import { logger } from './logger.js';
 import { AION_CONFIG } from './config.js';
-
-class EventBus {
-  constructor() { this.listeners = new Map(); }
-  on(ev, fn) { (this.listeners.get(ev) || this.listeners.set(ev, []).get(ev)).push(fn); }
-  off(ev, fn) { const fns = this.listeners.get(ev) || []; this.listeners.set(ev, fns.filter(x=>x!==fn)); }
-  emit(ev, payload) { (this.listeners.get(ev) || []).forEach(fn=>{ try{fn(payload);}catch(e){console.warn('EventBus listener failed',e);} }); }
-}
-
-class TTLCache {
-  constructor() { this.store = new Map(); }
-  set(key, value, ttl = 60) { const expires = Date.now() + ttl*1000; this.store.set(key, { value, expires }); }
-  get(key) {
-    const rec = this.store.get(key); if (!rec) return null; if (Date.now() > rec.expires) { this.store.delete(key); return null; } return rec.value;
-  }
-  del(key) { this.store.delete(key); }
-}
-
-class ProviderRegistry {
-  constructor() { this.providers = new Map(); }
-  register(name, adapter) { this.providers.set(name, adapter); }
-  get(name) { return this.providers.get(name); }
-  async call(name, method, ...args) {
-    const provider = this.providers.get(name);
-    if (!provider || typeof provider[method] !== 'function') throw new Error('Provider or method not found');
-    return provider[method](...args);
-  }
-}
-
-// Exponential backoff retry helper
-const retryBackoff = async (fn, { retries = 3, baseMs = 200 } = {}) => {
-  let attempt = 0;
-  while (true) {
-    try { return await fn(); } catch (err) {
-      if (++attempt > retries) throw err;
-      const wait = baseMs * Math.pow(2, attempt - 1) + Math.floor(Math.random()*baseMs);
-      await new Promise(r => setTimeout(r, wait));
-    }
-  }
-};
-
-class PluginManager {
-  constructor() { this.plugins = []; }
-  register(plugin) { this.plugins.push(plugin); }
-  async runHook(hookName, ...args) {
-    for (const p of this.plugins) {
-      if (typeof p[hookName] === 'function') {
-        try { await p[hookName](...args); } catch (e) { console.warn('Plugin hook failed', hookName, e); }
-      }
-    }
-  }
-}
+import { EventBus, TTLCache, ProviderRegistry, retryBackoff, PluginManager } from './utilities.js';
+import { CreativityEngine } from './creativity.js';
 
 class AionCore {
   constructor() {
@@ -73,26 +24,80 @@ class AionCore {
     this.inferenceEngine = new InferenceEngine();
     this.optimizer = new SelfOptimizer();
     this.emotionalModel = new EmotionalIntelligenceModel();
-    this.creativityEngine = new CreativityEngine();
+  this.creativityEngine = new CreativityEngine(this);
 
     // State management
     this.consciousnessLevel = 0;
     this.cognitiveLoad = 0;
     this.learningRate = (AION_CONFIG && AION_CONFIG.neural && AION_CONFIG.neural.learningRate) || 0.001;
+    // Operational knobs (set before utilities that depend on them)
+    this.defaultCacheTTL = (AION_CONFIG && AION_CONFIG.cacheTTL) || 60; // seconds
+    this.telemetryEnabled = !!(AION_CONFIG && AION_CONFIG.telemetry);
 
     // Utilities
     this.eventBus = new EventBus();
-    this.cache = new TTLCache();
+    this.cache = new TTLCache(this.defaultCacheTTL);
     this.providers = new ProviderRegistry();
     this.plugins = new PluginManager();
+  // provider invocation knobs
+  this.providerTimeoutMs = (AION_CONFIG && AION_CONFIG.providerTimeoutMs) || 5000;
+  this.providerRetries = (AION_CONFIG && AION_CONFIG.providerRetries) || 2;
 
-    // Operational knobs
-    this.telemetryEnabled = !!(AION_CONFIG && AION_CONFIG.telemetry);
-    this.defaultCacheTTL = (AION_CONFIG && AION_CONFIG.cacheTTL) || 60; // seconds
+    // Initialize advanced capabilities safely
+    try {
+      this.initializeQuantumNeuralBridge();
+    } catch (e) {
+      logger && logger.warn && logger.warn('Quantum neural bridge init failed', e && e.message ? e.message : e);
+    }
+    try {
+      this.initializeAutonomousLearning();
+    } catch (e) {
+      logger && logger.warn && logger.warn('Autonomous learning init failed', e && e.message ? e.message : e);
+    }
+  }
 
-    // Initialize advanced capabilities
-    this.initializeQuantumNeuralBridge();
-    this.initializeAutonomousLearning();
+  /**
+   * Safely invoke a provider method with timeout and retry.
+   * - name: provider name registered in ProviderRegistry
+   * - method: method name to call on provider
+   * - args: array of args to forward
+   * - opts: { timeoutMs, retries }
+   */
+  async safeInvokeProvider(name, method, ...args) {
+    const opts = (typeof args[args.length-1] === 'object' && args[args.length-1] && args[args.length-1].__isOpts) ? args.pop() : {};
+    const timeoutMs = opts.timeoutMs || this.providerTimeoutMs;
+    const retries = typeof opts.retries === 'number' ? opts.retries : this.providerRetries;
+
+    const callOnce = async () => {
+      const provider = this.providers.get(name);
+      if (!provider || typeof provider[method] !== 'function') {
+        throw new Error(`Provider ${name} missing method ${method}`);
+      }
+
+      // Enforce timeout per-call
+      return await Promise.race([
+        Promise.resolve().then(() => provider[method](...args)),
+        new Promise((_, rej) => setTimeout(() => rej(new Error('Provider call timed out')), timeoutMs))
+      ]);
+    };
+
+    // Use retryBackoff helper if available
+    if (typeof retryBackoff === 'function') {
+      return await retryBackoff(callOnce, { retries });
+    }
+
+    // Fallback: simple retry loop
+    let lastErr;
+    for (let i = 0; i <= retries; i++) {
+      try {
+        return await callOnce();
+      } catch (e) {
+        lastErr = e;
+        // simple backoff
+        await new Promise(r => setTimeout(r, 200 * Math.pow(2, i)));
+      }
+    }
+    throw lastErr;
   }
 
   /**
@@ -153,7 +158,8 @@ class AionCore {
    * Enhanced processing pipeline with multiple reasoning layers
    */
   async processQuery(query, context = {}) {
-    const startTime = performance.now();
+    const nowFn = (typeof performance !== 'undefined' && performance.now) ? () => performance.now() : () => Date.now();
+    const startTime = nowFn();
     
     try {
       // Phase 1: Ethical screening
@@ -190,20 +196,20 @@ class AionCore {
       
       // Update consciousness level based on complexity
       this.updateConsciousnessLevel(query, response);
-      
-      logger.info("Query processed successfully", {
+
+      logger && logger.info && logger.info("Query processed successfully", {
         query,
-        processingTime: performance.now() - startTime,
+        processingTime: nowFn() - startTime,
         consciousnessLevel: this.consciousnessLevel
       });
       
       return response;
       
     } catch (error) {
-      logger.error("Error in query processing pipeline", {
-        error: error.message,
+      logger && logger.error && logger.error("Error in query processing pipeline", {
+        error: error && error.message ? error.message : String(error),
         query,
-        stack: error.stack
+        stack: error && error.stack
       });
       
       // Fallback to basic response
@@ -232,7 +238,13 @@ class AionCore {
         // allow providers to answer external context queries (e.g., websearch)
         const provider = this.providers.get('websearch');
         if (provider && typeof provider.search === 'function') {
-          context.external = await retryBackoff(() => provider.search(query), { retries: 2 });
+          // use safeInvokeProvider which enforces timeout and retries
+          try {
+            context.external = await this.safeInvokeProvider('websearch', 'search', query, { __isOpts: true, timeoutMs: 4000, retries: 2 });
+          } catch (err) {
+            logger && logger.warn && logger.warn('websearch provider failed, falling back to gatherExternalContext', err && err.message ? err.message : err);
+            context.external = await this.gatherExternalContext(query);
+          }
         } else {
           context.external = await this.gatherExternalContext(query);
         }
@@ -476,15 +488,23 @@ class AionCore {
   /**
    * Get system status for monitoring
    */
-  getSystemStatus() {
+  async getSystemStatus() {
+    // memory.getStats might be async in some adapters; await if it returns a promise
+    let memoryStats = null;
+    try {
+      memoryStats = await this.memory.getStats();
+    } catch (e) {
+      memoryStats = { error: e && e.message ? e.message : String(e) };
+    }
+
     return {
       consciousnessLevel: this.consciousnessLevel,
       cognitiveLoad: this.cognitiveLoad,
-      memoryStats: this.memory.getStats(),
-      activeTasks: this.agent.getActiveTasks().length,
-      ethicalConfig: this.ethics.getConfig(),
-      neuralActivity: this.neural.getActivityLevel(),
-      quantumEntanglement: this.quantum.getEntanglementLevel()
+      memoryStats,
+      activeTasks: (this.agent.getActiveTasks && this.agent.getActiveTasks().length) || 0,
+      ethicalConfig: (this.ethics.getConfig && this.ethics.getConfig()) || {},
+      neuralActivity: (this.neural.getActivityLevel && this.neural.getActivityLevel()) || 0,
+      quantumEntanglement: (this.quantum.getEntanglementLevel && this.quantum.getEntanglementLevel()) || 0
     };
   }
 }
@@ -646,58 +666,13 @@ class EmotionalIntelligenceModel {
   }
 }
 
-class CreativityEngine {
-  constructor() {
-    this.creativeTemplates = new Map();
-    this.initializeTemplates();
-  }
-
-  initializeTemplates() {
-    // Creative response templates
-    this.creativeTemplates.set('metaphor', {
-      apply: (response) => this.applyMetaphor(response)
-    });
-    
-    this.creativeTemplates.set('story', {
-      apply: (response) => this.applyStorytelling(response)
-    });
-    
-    // Add more creative templates...
-  }
-
-  async enhanceResponse(response) {
-    // Select appropriate creative enhancement
-    const enhancementType = this.selectEnhancementType(response);
-    
-    // Apply enhancement
-    if (this.creativeTemplates.has(enhancementType)) {
-      return this.creativeTemplates.get(enhancementType).apply(response);
-    }
-    
-    return response;
-  }
-
-  selectEnhancementType(response) {
-    // Determine the best creative enhancement based on response content
-    const responseLength = response.length;
-    const complexity = this.estimateComplexity(response);
-    
-    if (responseLength > 100 && complexity > 0.6) {
-      return 'metaphor';
-    } else if (responseLength > 50 && complexity > 0.4) {
-      return 'story';
-    }
-    
-    return 'none';
-  }
-}
 
 // Helper for safe provider calls with retries
 AionCore.prototype.callProvider = async function(providerName, method, ...args) {
   try {
     return await retryBackoff(() => this.providers.call(providerName, method, ...args), { retries: 3 });
   } catch (err) {
-    logger.warn(`Provider ${providerName}.${method} failed`, { error: err.message });
+    logger && logger.warn && logger.warn(`Provider ${providerName}.${method} failed`, { error: err && err.message ? err.message : String(err) });
     return null;
   }
 };
@@ -718,6 +693,8 @@ try {
     // no-op here
   }
 } catch (e) {}
+
+export { AionCore, EventBus, TTLCache, ProviderRegistry, CreativityEngine };
 
 export const aionCore = new AionCore();
 

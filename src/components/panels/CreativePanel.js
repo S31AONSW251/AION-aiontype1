@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
+import './CreativePanel.css';
+// Syntax highlighting
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const CreativePanel = ({ 
     setActiveTab, 
@@ -18,6 +22,12 @@ const CreativePanel = ({
   const [customPrompt, setCustomPrompt] = useState('');
   const [history, setHistory] = useState([]);
   const [isTyping, setIsTyping] = useState(false);
+  const [creativity, setCreativity] = useState(0.7);
+  const [length, setLength] = useState('medium');
+  const [stylePreset, setStylePreset] = useState('any');
+  const [historyCollapsed, setHistoryCollapsed] = useState(false);
+  const [lightbox, setLightbox] = useState(null); // { type: 'image'|'video', src }
+  const [palette, setPalette] = useState('cyan');
   const promptRef = useRef(null);
   // Model selector support
   const [availableModels, setAvailableModels] = useState([]);
@@ -43,25 +53,44 @@ const CreativePanel = ({
     const promptToUse = customPrompt.trim() || userInput || '';
     try {
       // Preferred: generateCreativeContent(type, prompt, options)
-      generateCreativeContent(selectedType, promptToUse, { model: selectedModel });
+      generateCreativeContent(selectedType, promptToUse, { model: selectedModel, creativity, length, style: stylePreset });
     } catch (e) {
       // Backwards compatible fallback
-      generateCreativeContent(selectedType, promptToUse);
+      generateCreativeContent(selectedType, promptToUse, { creativity, length, style: stylePreset });
     }
   };
 
   const handleGenerateVideoWithCustomPrompt = () => {
     const promptForVideo = customPrompt.trim() || userInput;
     if (promptForVideo) {
-      generateVideo(promptForVideo);
+      generateVideo(promptForVideo, { creativity, length });
     } else {
         alert("Please provide a prompt for video generation.");
     }
   };
 
+  const changePalette = (p) => {
+    setPalette(p);
+    try {
+      const container = document.querySelector('.app-container');
+      if (!container) return;
+      container.classList.remove('palette-cyan','palette-magenta','palette-lime');
+      container.classList.add(`palette-${p}`);
+    } catch (e) { console.warn('Failed to set palette', e); }
+  };
+
   const outputText = typeof creativeOutput === 'string' ? creativeOutput : '';
   const isCodeSnippet = outputText.includes('```');
   const isTextOutput = Boolean(outputText) && !isCodeSnippet;
+
+  const parseFencedCode = (text) => {
+    // Match ```lang\ncode\n```
+    const m = text.match(/```(\w+)?\n([\s\S]*)```/);
+    if (m) return { lang: m[1] || null, code: m[2] };
+    // fallback: remove backticks
+    if (text.includes('```')) return { lang: null, code: text.replace(/```/g, '') };
+    return null;
+  };
 
   useEffect(() => {
     // Add to history when creativeOutput changes
@@ -113,13 +142,29 @@ const CreativePanel = ({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Lightbox close on Escape
+  useEffect(()=>{
+    const onKey = (e)=>{
+      if(e.key === 'Escape' && lightbox) setLightbox(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return ()=>window.removeEventListener('keydown', onKey);
+  }, [lightbox]);
+
   return (
     <div className="creative-panel">
       <div className="creative-header">
         <h3>Creative Generation</h3>
-        <button className="back-button" onClick={() => setActiveTab("chat")}>
-          <i className="icon-arrow-left"></i> Back to Chat
-        </button>
+        <div style={{display:'flex',gap:8,alignItems:'center'}}>
+          <div className="palette-switch">
+            <button className={`preset ${palette==='cyan'?'active':''}`} onClick={()=>changePalette('cyan')}>Cyan</button>
+            <button className={`preset ${palette==='magenta'?'active':''}`} onClick={()=>changePalette('magenta')}>Magenta</button>
+            <button className={`preset ${palette==='lime'?'active':''}`} onClick={()=>changePalette('lime')}>Lime</button>
+          </div>
+          <button className="back-button" onClick={() => setActiveTab("chat")}>
+            <i className="icon-arrow-left"></i> Back to Chat
+          </button>
+        </div>
       </div>
 
       <div className="creative-description">
@@ -149,6 +194,15 @@ const CreativePanel = ({
               </button>
             ))}
           </div>
+          <div className="presets-row">
+            <label>Style preset:</label>
+            <div className="preset-buttons">
+              <button className={`preset ${stylePreset==='any'?'active':''}`} onClick={() => setStylePreset('any')}>Any</button>
+              <button className={`preset ${stylePreset==='poetic'?'active':''}`} onClick={() => setStylePreset('poetic')}>Poetic</button>
+              <button className={`preset ${stylePreset==='technical'?'active':''}`} onClick={() => setStylePreset('technical')}>Technical</button>
+              <button className={`preset ${stylePreset==='humorous'?'active':''}`} onClick={() => setStylePreset('humorous')}>Humorous</button>
+            </div>
+          </div>
         </div>
 
         <div className="custom-prompt">
@@ -160,6 +214,20 @@ const CreativePanel = ({
             placeholder="Enter a prompt here for text, image, or video generation..."
             rows="3"
           />
+          <div className="controls-row">
+            <div className="slider-group">
+              <label>Creativity: <strong>{Math.round(creativity*100)}%</strong></label>
+              <input type="range" min="0" max="1" step="0.01" value={creativity} onChange={(e)=>setCreativity(parseFloat(e.target.value))} />
+            </div>
+            <div className="length-group">
+              <label>Length:</label>
+              <select value={length} onChange={e=>setLength(e.target.value)}>
+                <option value="short">Short</option>
+                <option value="medium">Medium</option>
+                <option value="long">Long</option>
+              </select>
+            </div>
+          </div>
           <div className="quick-prompts">
             {quickPrompts.map(q => (
               <button key={q.id} className="quick-prompt-btn" onClick={() => setCustomPrompt(q.label)}>{q.label}</button>
@@ -173,7 +241,7 @@ const CreativePanel = ({
             onClick={handleGenerateWithCustomPrompt}
             disabled={isThinking || isImageGenerating || isVideoGenerating}
           >
-            {isThinking ? 'Generating...' : 'Generate Content'}
+            {isThinking ? <span className="btn-spinner"/> : 'Generate Content'}
           </button>
           
           <button
@@ -181,7 +249,7 @@ const CreativePanel = ({
             onClick={() => generateImage(customPrompt || userInput)}
             disabled={isThinking || isImageGenerating || isVideoGenerating || !settings.enableImageGeneration}
           >
-            {isImageGenerating ? 'Generating Image...' : 'Generate Image'}
+            {isImageGenerating ? <span className="btn-spinner"/> : 'Generate Image'}
           </button>
 
           <button
@@ -189,7 +257,7 @@ const CreativePanel = ({
             onClick={handleGenerateVideoWithCustomPrompt}
             disabled={isThinking || isImageGenerating || isVideoGenerating || !settings.enableVideoGeneration}
           >
-            {isVideoGenerating ? 'Generating Video...' : 'Generate Video'}
+            {isVideoGenerating ? <span className="btn-spinner"/> : 'Generate Video'}
           </button>
         </div>
         <div className="status-row">
@@ -216,9 +284,17 @@ const CreativePanel = ({
           </div>
           
           <div className={`output-content ${isCodeSnippet ? 'code-output' : ''}`}>
-            {isCodeSnippet ? (
-              <pre className="code-block"><code>{creativeOutput.replace(/```/g, '')}</code></pre>
-            ) : isTextOutput ? (
+            {isCodeSnippet ? (() => {
+              const parsed = parseFencedCode(creativeOutput);
+              const code = parsed ? parsed.code : creativeOutput.replace(/```/g, '');
+              const lang = parsed ? parsed.lang : null;
+              const themeStyle = (typeof document !== 'undefined' && document.body && document.body.classList && document.body.classList.contains('light-theme')) ? oneLight : oneDark;
+              return (
+                <SyntaxHighlighter language={lang || null} style={themeStyle} className="code-block">
+                  {code}
+                </SyntaxHighlighter>
+              );
+            })() : isTextOutput ? (
               <div className="formatted-output markdown-output">
                 {creativeOutput.split('\n').map((line, i) => (
                   <p key={i}>{line}</p>
@@ -233,11 +309,12 @@ const CreativePanel = ({
         <div className="image-output-section">
           <h4>Generated Image</h4>
           <div className="image-container">
-            <img src={`http://127.0.0.1:5000${generatedImage}`} alt="AI generated visual" />
+            <img src={`http://127.0.0.1:5000${generatedImage}`} alt="AI generated visual" onClick={()=>setLightbox({type:'image', src:`http://127.0.0.1:5000${generatedImage}`})} />
             <div className="image-actions">
               <a href={`http://127.0.0.1:5000${generatedImage}`} download="aion-creation.png" className="download-button">
                 Download
               </a>
+              <button className="view-button" onClick={()=>setLightbox({type:'image', src:`http://127.0.0.1:5000${generatedImage}`})}>View</button>
             </div>
           </div>
         </div>
@@ -247,11 +324,12 @@ const CreativePanel = ({
         <div className="video-output-section">
           <h4>Generated Video</h4>
           <div className="video-container">
-            <video controls src={generatedVideo} style={{ maxWidth: '100%', borderRadius: '8px' }} />
+            <video controls src={generatedVideo} style={{ maxWidth: '100%', borderRadius: '8px' }} onClick={()=>setLightbox({type:'video', src:generatedVideo})} />
             <div className="video-actions">
               <a href={generatedVideo} download="aion-generated-video.mp4" className="download-button">
                   Download Video
               </a>
+              <button className="view-button" onClick={()=>setLightbox({type:'video', src:generatedVideo})}>View</button>
             </div>
           </div>
         </div>
@@ -260,20 +338,25 @@ const CreativePanel = ({
 
       {history.length > 0 && (
         <div className="generation-history">
-          <h4>Recent Generations</h4>
-          <ul>
-            {history.map(h => (
-              <li key={h.id} className="history-item">
-                <div className="history-meta">
-                  <strong>{h.type}</strong> — <span className="prompt-snippet">{(h.prompt || '').slice(0,80)}</span>
-                </div>
-                <div className="history-actions">
-                  <button onClick={() => { setCustomPrompt(h.prompt); setSelectedType(h.type); }} className="action-button">Use Prompt</button>
-                  <button onClick={() => navigator.clipboard.writeText(h.output)} className="action-button">Copy Output</button>
-                </div>
-              </li>
-            ))}
-          </ul>
+          <div className="history-header">
+            <h4>Recent Generations</h4>
+            <button className="collapse-btn" onClick={()=>setHistoryCollapsed(h=>!h)}>{historyCollapsed? 'Expand' : 'Collapse'}</button>
+          </div>
+          {!historyCollapsed && (
+            <ul>
+              {history.map(h => (
+                <li key={h.id} className="history-item">
+                  <div className="history-meta">
+                    <strong>{h.type}</strong> — <span className="prompt-snippet">{(h.prompt || '').slice(0,80)}</span>
+                  </div>
+                  <div className="history-actions">
+                    <button onClick={() => { setCustomPrompt(h.prompt); setSelectedType(h.type); }} className="action-button">Use Prompt</button>
+                    <button onClick={() => navigator.clipboard.writeText(h.output)} className="action-button">Copy Output</button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
@@ -285,6 +368,17 @@ const CreativePanel = ({
           <li>For images & videos, include details about style, composition, and mood.</li>
         </ul>
       </div>
+      {lightbox && (
+        <div className="lightbox-backdrop" onClick={() => setLightbox(null)}>
+          <div className="lightbox-content" onClick={(e)=>e.stopPropagation()}>
+            {lightbox.type === 'image' ? (
+              <img src={lightbox.src} alt="preview" />
+            ) : (
+              <video controls src={lightbox.src} style={{maxWidth:'100%'}} />
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

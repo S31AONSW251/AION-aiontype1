@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import * as math from 'mathjs';
 import MathEngine from '../../core/math.js';
 import Icon from '../../components/ui/Icon';
+import './MathPanel.css';
 
 const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolveCustomProblem, setParentMathSolution }) => {
   const [customProblem, setCustomProblem] = useState('');
@@ -19,6 +20,43 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
     yMax: 10,
     step: 0.1
   });
+  const [showLatex, setShowLatex] = useState(true);
+  const [evaluateAt, setEvaluateAt] = useState('');
+  const [evalResult, setEvalResult] = useState(null);
+  const [stepsExpanded, setStepsExpanded] = useState(false);
+  const [replInput, setReplInput] = useState('');
+  const [replHistory, setReplHistory] = useState([]);
+  const [themeClass, setThemeClass] = useState('');
+
+  // load persisted repl history
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('aion_math_repl_history');
+      if (raw) setReplHistory(JSON.parse(raw));
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem('aion_math_repl_history', JSON.stringify(replHistory)); } catch (e) {}
+  }, [replHistory]);
+
+  useEffect(() => {
+    try {
+      if (typeof document !== 'undefined') {
+        if (document.documentElement.classList.contains('dark-theme') || document.body.classList.contains('dark-theme')) {
+          setThemeClass('dark-theme');
+        } else if (document.documentElement.classList.contains('light-theme') || document.body.classList.contains('light-theme')) {
+          setThemeClass('light-theme');
+        } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          setThemeClass('dark-theme');
+        } else {
+          setThemeClass('light-theme');
+        }
+      }
+    } catch (e) {
+      setThemeClass('light-theme');
+    }
+  }, []);
   const [plotExpression, setPlotExpression] = useState('');
   const [isPlotting, setIsPlotting] = useState(false);
   const [solveMode, setSolveMode] = useState('local'); // 'local' or 'remote'
@@ -26,6 +64,18 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
 
   // local override for solutions produced by MathEngine (won't change parent props)
   const [localMathSolution, setLocalMathSolution] = useState(null);
+
+  // load persisted input history from localStorage
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('aion_math_input_history');
+      if (raw) setInputHistory(JSON.parse(raw));
+    } catch (e) {}
+  }, []);
+
+  useEffect(() => {
+    try { localStorage.setItem('aion_math_input_history', JSON.stringify(inputHistory)); } catch(e){}
+  }, [inputHistory]);
 
   // Canvas pan/zoom state
   const panRef = useRef({ x: 0, y: 0 });
@@ -150,11 +200,36 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
     return (
       <div className="math-steps-container">
         <h4>Step-by-Step Solution:</h4>
+        <div className="steps-controls">
+          <div />
+          <div className="steps-controls-right">
+            <button className="btn-compact" onClick={() => setStepsExpanded(s => !s)}>{stepsExpanded ? 'Collapse All' : 'Expand All'}</button>
+            <button className="btn-compact" onClick={() => { navigator.clipboard && navigator.clipboard.writeText((sol.steps || []).join('\n')); }}>
+              {/* copy all svg */}
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1z" fill="currentColor"/><path d="M19 5H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2z" fill="currentColor"/></svg>
+              <span className="btn-label">Copy All</span>
+            </button>
+          </div>
+        </div>
         <ol className="math-steps-list">
-          {mathSolution.steps.map((step, index) => (
+          {(sol.steps || []).map((step, index) => (
             <li key={index} className="math-step">
               <div className="step-number">{index + 1}</div>
-              <div className="step-content">{step}</div>
+              <div className="step-content">
+                <div className="step-row">
+                  <div className="step-text">{stepsExpanded ? step : (String(step).length > 180 ? String(step).slice(0,180) + '…' : step)}</div>
+                  <div className="step-actions">
+                    <button className="icon-btn" onClick={() => { navigator.clipboard && navigator.clipboard.writeText(step); }} title="Copy step">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1z" fill="currentColor"/></svg>
+                      <span className="visually-hidden">Copy</span>
+                    </button>
+                    <button className="icon-btn" onClick={() => { try { setCustomProblem(step); } catch(e){} }} title="Use step as input">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" fill="currentColor"/></svg>
+                      <span className="visually-hidden">Use</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
             </li>
           ))}
         </ol>
@@ -612,6 +687,29 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
     }
   };
 
+  const applyPresetRange = (preset) => {
+    if (preset === 'wide') setGraphSettings({ xMin: -50, xMax: 50, yMin: -50, yMax: 50, step: 0.5 });
+    if (preset === 'medium') setGraphSettings({ xMin: -10, xMax: 10, yMin: -10, yMax: 10, step: 0.1 });
+    if (preset === 'small') setGraphSettings({ xMin: -5, xMax: 5, yMin: -5, yMax: 5, step: 0.05 });
+  };
+
+  const handleEvaluateAt = () => {
+    const sol = localMathSolution || mathSolution;
+    if (!sol || !sol.expression) return;
+    try {
+      const val = parseFloat(evaluateAt);
+      if (Number.isNaN(val)) {
+        setEvalResult('Invalid number');
+        return;
+      }
+      const compiled = math.compile(sol.expression);
+      const res = compiled.evaluate({ x: val });
+      setEvalResult(res);
+    } catch (e) {
+      setEvalResult('Error: ' + (e?.message || e));
+    }
+  };
+
   const handleGraphSettingChange = (setting, value) => {
     setGraphSettings(prev => ({
       ...prev,
@@ -696,26 +794,50 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
     ensureKatexLoaded();
   }, []);
 
+  useEffect(() => {
+    if (showLatex) ensureKatexLoaded();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showLatex]);
+
   return (
-    <div className="math-panel">
+    <div className={`math-panel ${themeClass}`}>
       <div className="math-header">
         <h3>Advanced Mathematical Problem Solver</h3>
         <button className="back-button" onClick={() => setActiveTab("chat")}>
-          <Icon name="arrow-left" size={16} /> <span style={{ marginLeft: 8 }}>Back to Chat</span>
+          <Icon name="arrow-left" size={16} /> <span className="back-text">Back to Chat</span>
         </button>
       </div>
 
-      <div className="math-top-controls" style={{ display: 'flex', gap: 12, alignItems: 'center' }}>
+  <div className="math-top-controls">
         <div>
-          <label style={{ marginRight: 8 }}>Solve Mode:</label>
+          <label className="math-label">Solve Mode:</label>
           <select value={solveMode} onChange={(e) => setSolveMode(e.target.value)}>
             <option value="local">Local (MathJS)</option>
             <option value="remote">Remote (Server)</option>
           </select>
         </div>
-        <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Canvas: drag to pan, scroll to zoom</div>
-        <div style={{ marginLeft: 'auto' }}>
+        <div className="math-hint">Canvas: drag to pan, scroll to zoom</div>
+        <div className="controls-right">
           <button onClick={resetView}>Reset View</button>
+        </div>
+      </div>
+
+      <div className="math-extra-controls">
+        <label className="checkbox-inline">
+          <input type="checkbox" checked={showLatex} onChange={() => setShowLatex(s => !s)} /> Show LaTeX
+        </label>
+        <div className="preset-buttons">
+          <button onClick={() => applyPresetRange('small')}>Preset: -5..5</button>
+          <button onClick={() => applyPresetRange('medium')}>Preset: -10..10</button>
+          <button onClick={() => applyPresetRange('wide')}>Preset: -50..50</button>
+        </div>
+        <div className="evaluate-area">
+          <input className="small-input" placeholder="Evaluate at x=" value={evaluateAt} onChange={(e) => setEvaluateAt(e.target.value)} />
+          <button className="icon-btn" onClick={handleEvaluateAt} title="Evaluate">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M3 12h18M3 6h18M3 18h18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+            <span className="btn-label">Eval</span>
+          </button>
+          {evalResult !== null && <div className="eval-result">Result: {String(evalResult)}</div>}
         </div>
       </div>
 
@@ -863,7 +985,7 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
                   <div className="math-answer">
                     <h4>Solution:</h4>
                     <p>{(localMathSolution || mathSolution).solution}</p>
-                    <div className="latex-render">{renderLatex((localMathSolution || mathSolution).solution)}</div>
+                    {showLatex && <div className="latex-render">{renderLatex((localMathSolution || mathSolution).solution)}</div>}
                   </div>
                 )}
                 
@@ -877,7 +999,7 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
                         <button onClick={() => copyLatexToClipboard((localMathSolution || mathSolution).simplified)}>Copy LaTeX</button>
                       </div>
                     </div>
-                    <div className="latex-render">{renderLatex((localMathSolution || mathSolution).simplified)}</div>
+                    {showLatex && <div className="latex-render">{renderLatex((localMathSolution || mathSolution).simplified)}</div>}
                   </div>
                 )}
                 
@@ -885,7 +1007,7 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
                   <div className="math-answer">
                     <h4>Derivative:</h4>
                     <p>{(localMathSolution || mathSolution).derivative}</p>
-                    <div className="latex-render">{renderLatex((localMathSolution || mathSolution).derivative)}</div>
+                    {showLatex && <div className="latex-render">{renderLatex((localMathSolution || mathSolution).derivative)}</div>}
                   </div>
                 )}
                 
@@ -893,7 +1015,7 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
                   <div className="math-answer">
                     <h4>Integral:</h4>
                     <p>{(localMathSolution || mathSolution).integral}</p>
-                    <div className="latex-render">{renderLatex((localMathSolution || mathSolution).integral)}</div>
+                    {showLatex && <div className="latex-render">{renderLatex((localMathSolution || mathSolution).integral)}</div>}
                   </div>
                 )}
                 
@@ -920,7 +1042,7 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
                   ref={mathCanvasRef}
                   width="600"
                   height="400"
-                  style={{ border: '1px solid #ccc', borderRadius: '5px', cursor: 'grab' }}
+                  className="math-canvas"
                 />
                 <div className="visualization-notes">
                   <p>Graphical representation of the mathematical problem and solution.</p>
@@ -934,6 +1056,29 @@ const MathPanel = ({ mathSolution, settings, mathCanvasRef, setActiveTab, onSolv
             {selectedTab === 'calculator' && (
               <div className="math-calculator">
                 <h4>Advanced Calculator</h4>
+                <div className="repl-row">
+                  <input className="repl-input" value={replInput} onChange={(e) => setReplInput(e.target.value)} placeholder="Enter expression (e.g., sin(pi/4)" />
+                  <button className="icon-btn" onClick={() => {
+                    try {
+                      const res = math.evaluate(replInput || '0');
+                      setReplHistory(prev => [ { expr: replInput, result: res }, ...prev ].slice(0,20));
+                      setReplInput('');
+                    } catch (e) {
+                      setReplHistory(prev => [ { expr: replInput, result: 'Error: ' + e.message }, ...prev ].slice(0,20));
+                    }
+                  }} title="Evaluate">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zm0 7.5L6.2 7 12 4.5 17.8 7 12 9.5zM2 17l10 5 10-5" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    <span className="btn-label">Eval</span>
+                  </button>
+                </div>
+                <div className="repl-history-wrap">
+                  <strong>REPL History</strong>
+                  <ul className="repl-history">
+                    {replHistory.map((r, i) => (
+                      <li key={i}><code>{r.expr}</code> =&gt; <strong>{String(r.result)}</strong></li>
+                    ))}
+                  </ul>
+                </div>
                 <div className="calculator-grid">
                   <button onClick={() => setCustomProblem(prev => prev + 'sin(')}>sin</button>
                   <button onClick={() => setCustomProblem(prev => prev + 'cos(')}>cos</button>

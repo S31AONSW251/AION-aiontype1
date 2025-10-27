@@ -38,6 +38,18 @@ const SettingsModal = ({
     }
   }, [settings]);
 
+  // Provider mode local UI state for test button
+  const [providerMode, setProviderMode] = useState(() => settings.providerMode || 'free');
+  const [providerTestResult, setProviderTestResult] = useState(null);
+
+  // Fetch runtime provider mode from backend when modal opens
+  useEffect(() => {
+    if (!showSettings) return;
+    try {
+      fetch('/api/provider/mode').then(r => r.json()).then(j => { if (j && j.ok && j.mode) setProviderMode(j.mode); }).catch(() => {});
+    } catch (e) {}
+  }, [showSettings]);
+
   if (!showSettings) return null;
 
   // Safely extract numeric values with defaults to avoid calling toFixed on undefined
@@ -716,6 +728,40 @@ const SettingsModal = ({
         </div>
 
         <div className="settings-footer">
+          <div style={{display:'flex', gap: '8px', alignItems: 'center', marginRight: '8px'}}>
+            <label style={{fontSize: '12px', marginRight: '6px'}}>Provider Mode</label>
+            <select value={providerMode} onChange={(e) => { setProviderMode(e.target.value); setSettings({...settings, providerMode: e.target.value}); }}>
+              <option value="free">Free (stub)</option>
+              <option value="local-first">Local-first (prefer Ollama)</option>
+              <option value="openai">OpenAI (require API key)</option>
+            </select>
+            <button
+              className="test-button"
+              onClick={async () => {
+                try {
+                  // Persist mode to backend runtime
+                  await fetch('/api/provider/mode', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mode: providerMode }) });
+                  setProviderTestResult('Mode updated — testing provider...');
+                  const res = await fetch('/api/provider/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ prompt: 'Hello from AION settings test' }) });
+                  const j = await res.json();
+                  if (j && j.ok) {
+                    setProviderTestResult((j.response || '').slice(0, 400));
+                    setSettings(prev => ({ ...prev, providerMode }));
+                  } else {
+                    setProviderTestResult('Test failed: ' + (j && j.error ? j.error : 'unknown'));
+                  }
+                } catch (err) {
+                  setProviderTestResult('Provider test error: ' + String(err));
+                }
+                // clear after a while
+                setTimeout(() => setProviderTestResult(null), 8000);
+              }}
+              type="button"
+            >
+              Test Provider
+            </button>
+            {providerTestResult ? <span style={{marginLeft:8, fontSize:12}}>{providerTestResult}</span> : null}
+          </div>
           <button
             className="test-button"
             onClick={() => {

@@ -30,6 +30,8 @@ class AionEthics {
       medium: ['RESPECT_PRIVACY'],
       low: ['BE_HELPFUL', 'EMPOWER_USER']
     };
+    this.strictMode = !!(AION_CONFIG && AION_CONFIG.ethics && AION_CONFIG.ethics.strictMode);
+    this._lastDecisionLog = null;
   }
 
   /**
@@ -92,8 +94,30 @@ class AionEthics {
       };
     }
 
-    logger.debug(`Query passed ethics check: ${query}`);
-    return { isEthical: true, reason: null, principle: null, severity: null };
+    const res = { isEthical: true, reason: null, principle: null, severity: null };
+    logger && logger.debug && logger.debug(`Query passed ethics check: ${query}`);
+    // optionally auto-log decisions only when in strict mode or when audits enabled
+    if (this.strictMode || (AION_CONFIG && AION_CONFIG.ethics && AION_CONFIG.ethics.audit)) {
+      this.logDecision(res, query);
+    }
+    return res;
+  }
+
+  enableStrictMode() { this.strictMode = true; }
+  disableStrictMode() { this.strictMode = false; }
+
+  /**
+   * Simulated model refinement hook used by core when learning from interactions
+   */
+  async refineModels(query, response) {
+    // Simple example: add patterns from feedback if provided
+    try {
+      if (response && response.feedback && response.feedback.flaggedPatterns) {
+        this.updatePatterns(response.feedback.flaggedPatterns.harmful || [], response.feedback.flaggedPatterns.privacy || []);
+      }
+    } catch (e) {
+      logger && logger.warn && logger.warn('Ethics refineModels failed', e && e.message ? e.message : e);
+    }
   }
 
   /**

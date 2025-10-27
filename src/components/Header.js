@@ -17,6 +17,7 @@ const Header = ({
 
   const [online, setOnline] = useState(navigator.onLine);
   const [queueCount, setQueueCount] = useState(0);
+  const [providerStatus, setProviderStatus] = useState({});
 
   useEffect(() => {
     const update = () => setOnline(navigator.onLine);
@@ -25,9 +26,27 @@ const Header = ({
     const refreshCount = async () => setQueueCount(await pendingCount());
     refreshCount();
     syncService.onQueueChange(refreshCount);
+
+    let stopped = false;
+    const fetchStatus = async () => {
+      try {
+        const res = await fetch('/api/status/providers');
+        if (!res.ok) return;
+        const j = await res.json();
+        if (j && j.providers) setProviderStatus(j.providers);
+      } catch (e) {
+        // ignore network errors
+      }
+    };
+    fetchStatus();
+    const pid = setInterval(() => { if (!stopped) fetchStatus(); }, 10000);
+
     return () => {
+      stopped = true;
+      clearInterval(pid);
       window.removeEventListener('online', update);
       window.removeEventListener('offline', update);
+      syncService.offQueueChange(refreshCount);
     };
   }, []);
 
@@ -70,6 +89,13 @@ const Header = ({
           <span className="sr-only">Settings</span>
         </button>
       </div>
+      {providerStatus && Object.keys(providerStatus).length > 0 && (
+        Object.values(providerStatus).some(s => !s.online) ? (
+          <div className="provider-banner" role="status" aria-live="polite">
+            <strong>Warning:</strong> One or more model providers are offline. Check the status page for details.
+          </div>
+        ) : null
+      )}
     </header>
   );
 };

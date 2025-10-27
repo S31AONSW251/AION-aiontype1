@@ -1,3 +1,209 @@
+/* ChatPanel.css - light-mode transparency overrides
+   Make the chat container fully transparent in light (white) mode while
+   preserving text color and accessibility. This file intentionally keeps
+   specificity narrow and targets only the light-theme variant applied by
+   the ChatPanel component (it adds `light-theme` or `dark-theme` to the
+   root `.chat-container`).
+*/
+
+
+/* Light-mode: fully transparent surfaces with sci-fi accents
+   - Fully transparent panels so background art shows through
+   - Dark text for readability in light mode (overlaid on background)
+   - Futuristic accents: neon top accent, subtle scanlines, hover glow
+*/
+.chat-container.light-theme {
+  background: transparent !important;
+  color: var(--text-dark, #09121a) !important;
+  position: relative;
+  z-index: 20; /* above background artwork */
+}
+
+/* Core surfaces transparent */
+.chat-container.light-theme .chat-header,
+.chat-container.light-theme .conversation-history,
+.chat-container.light-theme .chat-composer-area,
+.chat-container.light-theme .chat-composer,
+.chat-container.light-theme .chat-footer,
+.chat-container.light-theme .jump-to-bottom-wrap {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Message wrappers: transparent but with subtle neon outline for legibility */
+.chat-container.light-theme .message-wrapper,
+.chat-container.light-theme .message-content,
+.chat-container.light-theme .message-body,
+.chat-container.light-theme .aion-message,
+.chat-container.light-theme .message.user,
+.chat-container.light-theme .message.aion {
+  background: transparent !important;
+  border: 1px solid transparent !important;
+  box-shadow: none !important;
+  color: var(--text-dark, #09121a) !important;
+  position: relative;
+}
+
+/* Neon accent stripe at top of header to give sci-fi identity */
+.chat-container.light-theme .chat-header::after {
+  content: '';
+  position: absolute;
+  left: 12px; right: 12px; top: 8px; height: 4px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, rgba(124,58,237,0.95), rgba(0,246,255,0.95));
+  box-shadow: 0 6px 28px rgba(124,58,237,0.12), 0 0 18px rgba(0,246,255,0.06);
+  pointer-events: none;
+}
+
+/* Subtle scanline overlay for futuristic texture */
+.chat-container.light-theme::before {
+  content: '';
+  position: absolute; inset: 0; pointer-events: none;
+  background-image: linear-gradient(transparent 92%, rgba(0,0,0,0.02));
+  background-size: 100% 6px;
+  mix-blend-mode: multiply; opacity: 0.28;
+}
+
+/* Message hover: faint glow ring to separate from background */
+.chat-container.light-theme .message-wrapper:hover::before {
+  content: '';
+  position: absolute; inset: -6px; border-radius: 12px; pointer-events: none;
+  box-shadow: 0 12px 40px rgba(124,58,237,0.06), 0 6px 24px rgba(0,246,255,0.04) inset;
+}
+
+/* Keep text and inline controls readable on light transparent background */
+.chat-container.light-theme,
+.chat-container.light-theme .message-content,
+.chat-container.light-theme .message-body,
+.chat-container.light-theme .message-header,
+.chat-container.light-theme .message-actions,
+.chat-container.light-theme .message-id,
+.chat-container.light-theme .username,
+.chat-container.light-theme .time,
+.chat-container.light-theme .message * {
+  color: var(--text-dark, #09121a) !important;
+  text-shadow: 0 1px 0 rgba(255,255,255,0.02);
+}
+
+/* Composer inputs: visually integrated but with readable dark text */
+.chat-container.light-theme .composer-middle .composer-input,
+.chat-container.light-theme .composer-middle textarea,
+.chat-container.light-theme .composer-middle input {
+  background: rgba(255,255,255,0.0) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  color: var(--text-dark, #09121a) !important;
+}
+
+.chat-container.light-theme .primary-cta,
+.chat-container.light-theme .action-btn,
+.chat-container.light-theme .icon-btn,
+.chat-container.light-theme .reaction-btn {
+  background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  color: var(--text-dark, #09121a) !important;
+}
+
+/* Light mode: tone down orb/ambient so background art doesn't wash out text */
+.chat-container.light-theme .orb-core,
+.chat-container.light-theme .orb-glow,
+.chat-container.light-theme .splash-orb,
+.chat-container.light-theme .bg-ambient {
+  opacity: 0.4 !important;
+}
+
+/* Accessibility: visible focus outlines */
+.chat-container.light-theme .action-btn:focus,
+.chat-container.light-theme .primary-cta:focus,
+.chat-container.light-theme .icon-btn:focus {
+  outline: 3px solid rgba(2,100,210,0.12);
+  box-shadow: 0 0 0 6px rgba(2,100,210,0.04);
+}
+
+/* Panels/cards fallback for light theme: transparent but with faint border when needed */
+.chat-container.light-theme .panel,
+.chat-container.light-theme .card,
+.chat-container.light-theme .panel-card {
+  background: transparent !important;
+  border: 1px solid rgba(0,0,0,0.04) !important;
+}
+
+/* Respect reduced motion by reducing shimmer/animations when system preference set */
+@media (prefers-reduced-motion: reduce) {
+  .chat-container.light-theme .typing-dots span,
+  .chat-container.light-theme .wave-animation div {
+    animation: none !important;
+  }
+}
+
+/* Dark-mode readability fixes: ensure text and controls are visible when using dark-theme */
+.chat-container.dark-theme {
+  color: var(--text, #e6f6ff) !important;
+}
+
+.chat-container.dark-theme .message-content,
+.chat-container.dark-theme .message-body,
+.chat-container.dark-theme .message-header,
+.chat-container.dark-theme .username,
+.chat-container.dark-theme .time,
+.chat-container.dark-theme .message-id,
+.chat-container.dark-theme .message * {
+  color: var(--text, #e6f6ff) !important;
+}
+
+/* Give messages a subtle dark glass so they remain legible over background mascots */
+.chat-container.dark-theme .aion-message,
+.chat-container.dark-theme .message.user,
+.chat-container.dark-theme .message.aion,
+.chat-container.dark-theme .message-wrapper,
+.chat-container.dark-theme .message-content {
+  background: linear-gradient(180deg, rgba(6,8,12,0.48), rgba(8,10,14,0.32)) !important;
+  border: 1px solid rgba(255,255,255,0.03) !important;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.6) !important;
+}
+
+.chat-container.dark-theme .message .prov-badge,
+.chat-container.dark-theme .message .confidence-value,
+.chat-container.dark-theme .message .emotion-value,
+.chat-container.dark-theme .message .stat-value {
+  color: var(--text-muted, rgba(255,255,255,0.68)) !important;
+}
+
+/* Composer & inputs in dark theme should be visible */
+.chat-container.dark-theme .composer-middle .composer-input,
+.chat-container.dark-theme .composer-middle textarea,
+.chat-container.dark-theme .composer-middle input {
+  background: var(--bg-surface, rgba(10,12,14,0.6)) !important;
+  color: var(--text, #e6f6ff) !important;
+  border: 1px solid rgba(255,255,255,0.04) !important;
+}
+
+.chat-container.dark-theme .primary-cta,
+.chat-container.dark-theme .action-btn,
+.chat-container.dark-theme .icon-btn,
+.chat-container.dark-theme .reaction-btn {
+  color: var(--text, #e6f6ff) !important;
+  border-color: rgba(255,255,255,0.04) !important;
+}
+
+/* Code blocks and inline code inside messages */
+.chat-container.dark-theme pre,
+.chat-container.dark-theme code,
+.chat-container.dark-theme .code-block-container,
+.chat-container.dark-theme .code-block-container * {
+  color: var(--text, #e6f6ff) !important;
+}
+
+/* Ensure placeholder text is readable */
+.chat-container.dark-theme ::placeholder { color: rgba(255,255,255,0.5) !important; }
+
+/* If any global panels remain opaque, force them to use dark panel surfaces */
+.chat-container.dark-theme .panel,
+.chat-container.dark-theme .card,
+.chat-container.dark-theme .panel-card {
+  background: var(--bg-surface, rgba(8,10,14,0.6)) !important;
+  border: 1px solid rgba(255,255,255,0.03) !important;
+}
 /* ChatPanel styles - deduplicated. Full definitions appear below; earlier thin/partial duplicates removed to avoid repetition. */
 
 /* Constrain images, videos and iframes inside messages to avoid full-page previews */
@@ -963,6 +1169,126 @@
   --user-message-color: #ffffff;
   --aion-avatar-bg: #6b7280;
 }
+
+/* Light Theme Support (explicit overrides to avoid heavy dark panels on white appearance) */
+.light-theme .chat-container,
+.light-theme .chat-header,
+.light-theme .conversation-history,
+.light-theme .chat-composer,
+.light-theme .message-content,
+.light-theme .aion-message,
+.light-theme .message-wrapper.user .message-content {
+  --bg-primary: #ffffff;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f7f9fb;
+  --text-primary: #0b1a28;
+  --text-secondary: #556370;
+  --text-tertiary: #8b98a6;
+  --border-color: rgba(15,23,35,0.06);
+  --primary-color: #0b63d6;
+  --primary-dark: #094fb0;
+  --user-message-bg: #0b63d6;
+  --user-message-color: #ffffff;
+  --aion-avatar-bg: #0f1724;
+}
+
+/* Specific light-theme tweaks for components that looked too dark on white backgrounds */
+.light-theme .conversation-history {
+  background: linear-gradient(180deg, rgba(246,249,252,1), rgba(240,244,249,1));
+  border: 1px solid var(--border-color);
+  box-shadow: none;
+}
+
+.light-theme .message-content,
+.light-theme .aion-message {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  box-shadow: 0 6px 18px rgba(12,18,25,0.04);
+}
+
+.light-theme .message-wrapper::after { opacity: 0.12; }
+
+.light-theme .message-header .username,
+.light-theme .message-header .mood-indicator {
+  background: transparent !important;
+  color: var(--text-primary) !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.light-theme .message-wrapper.user .message-content {
+  background: linear-gradient(90deg, var(--user-message-bg), #0a4fb8);
+  color: var(--user-message-color);
+  border: 1px solid rgba(11,99,214,0.12);
+}
+
+/* Make code header lighter in light theme */
+.light-theme .code-block-header {
+  background: #f4f6f8;
+  color: #0b1a28;
+}
+
+/* Jump-to-bottom and reactions styling for light UI */
+.jump-to-bottom-wrap { position: sticky; bottom: 90px; display: flex; justify-content: center; pointer-events: auto; }
+.jump-to-bottom {
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(11,63,150,0.12);
+  cursor: pointer;
+}
+.reaction-btn {
+  background: rgba(11,26,38,0.04);
+  border: 1px solid rgba(11,26,38,0.06);
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.reaction-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(11,26,38,0.06); }
+
+/* Lightbox tweaks for white UI */
+.light-theme .lightbox-overlay { background: rgba(10,12,16,0.65); }
+.light-theme .lightbox-content { background: #fff; }
+
+/* MathPanel light-theme adjustments */
+.math-panel.light-theme {
+  background: transparent;
+  color: var(--text-primary, #0b1a28);
+}
+.math-panel.light-theme .math-header {
+  display:flex; align-items:center; gap:12px; justify-content:space-between; padding:12px 16px; background:transparent; color:var(--text-primary);
+}
+.math-panel.light-theme .math-top-controls,
+.math-panel.light-theme .math-description,
+.math-panel.light-theme .custom-math-section,
+.math-panel.light-theme .graph-controls-section,
+.math-panel.light-theme .math-solution-container,
+.math-panel.light-theme .math-capabilities {
+  background: #fff; border: 1px solid rgba(15,23,35,0.06); box-shadow: 0 8px 30px rgba(12,18,25,0.04); border-radius: 10px; padding: 12px; color: var(--text-primary);
+}
+.math-panel.light-theme .math-input-container textarea {
+  background: #ffffff; border: 1px solid rgba(15,23,35,0.08); color: var(--text-primary); padding: 10px; border-radius: 8px; box-shadow:none;
+}
+.math-panel.light-theme input[type="text"],
+.math-panel.light-theme input[type="number"],
+.math-panel.light-theme select {
+  background: #ffffff; border: 1px solid rgba(15,23,35,0.08); color: var(--text-primary); padding: 8px; border-radius: 8px;
+}
+.math-panel.light-theme button {
+  background: linear-gradient(90deg, var(--primary-color, #0b63d6), var(--primary-dark, #094fb0)); color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; box-shadow: 0 8px 24px rgba(11,63,150,0.08);
+}
+.math-panel.light-theme button[disabled] { opacity: 0.5; cursor: default; }
+.math-panel.light-theme .math-visualization canvas { border: 1px solid rgba(15,23,35,0.06); background: #fbfdff; }
+.math-panel.light-theme .math-solution .math-answer p { color: var(--text-primary); }
+.math-panel.light-theme .latex-render { background: #fbfdff; padding: 8px; border-radius: 6px; border: 1px solid rgba(15,23,35,0.04); }
+.math-panel.light-theme .math-steps-container { background: transparent; }
+.math-panel.light-theme .math-calculator { background: transparent; }
+
+
 
 /* Responsive Design */
 @media (max-width: 768px) {

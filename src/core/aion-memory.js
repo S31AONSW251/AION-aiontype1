@@ -1,4 +1,11 @@
 // advanced-aion-memory.js - Ultra-advanced memory system with holographic recall and quantum entanglement
+// Enhancements added:
+// - Async persistence batching (enqueue + flush) to reduce DB I/O
+// - Pin/unpin memories to protect from cleanup
+// - Tiered promote/demote helpers for memory lifecycle control
+// - In-memory normalized vector cache (simple ANN-like) for fast similarity
+// - Incremental, non-blocking index updates to avoid startup stalls
+// Exporting AdvancedAionMemory class for testability and instance control
 import { db } from '../services/AionDB';
 import { logger } from './logger.js';
 import { AION_CONFIG } from './config.js';
@@ -228,7 +235,18 @@ class AdvancedAionMemory {
     
     this.knowledgeGraph = new MultidimensionalKnowledgeGraph();
     this.memoryIndex = new Map();   // Fast lookup index
-    
+    this._maintenanceInterval = null;
+    // Persistence batching queue to avoid frequent DB writes
+    this._persistQueue = new Map(); // id -> memory snapshot
+    this._persistTimer = null;
+    this._persistDebounceMs = (AION_CONFIG && AION_CONFIG.memory && AION_CONFIG.memory.persistDebounceMs) || 2000;
+    // Pinned memories will be protected from cleanup
+    this._pinnedMemories = new Set();
+    // Simple in-memory ANN cache for faster similarity searches
+    this._annIndex = {
+      normalized: new Map(), // id -> normalized vector
+      dimensions: (AION_CONFIG && AION_CONFIG.memory && AION_CONFIG.memory.embeddingDimensions) || 512
+    };
     this.initializeMemorySystems();
   }
 
@@ -238,9 +256,31 @@ class AdvancedAionMemory {
     for (const memory of existingMemories) {
       this.indexMemory(memory);
     }
-    
+    // Build ANN index asynchronously to avoid blocking init
+    setTimeout(() => {
+      this.buildAnnIndex().catch(e => logger.warn('buildAnnIndex failed during init', e));
+    }, 0);
     // Start periodic maintenance
-    setInterval(() => this.performMemoryMaintenance(), 5 * 60 * 1000); // Every 5 minutes
+    // store interval id so we can clean up in tests or shutdown
+    try {
+      this._maintenanceInterval = setInterval(() => this.performMemoryMaintenance(), 5 * 60 * 1000); // Every 5 minutes
+      if (typeof this._maintenanceInterval.unref === 'function') this._maintenanceInterval.unref();
+    } catch (e) {
+      // ignore in restricted environments
+    }
+  }
+
+  // Clean up timers and background resources
+  dispose() {
+    try {
+      if (this._maintenanceInterval) clearInterval(this._maintenanceInterval);
+      if (this._persistTimer) clearTimeout(this._persistTimer);
+    } catch (e) {}
+    // If underlying engines expose dispose, call them safely
+    try { this.quantumEngine && typeof this.quantumEngine.dispose === 'function' && this.quantumEngine.dispose(); } catch(e) {}
+    try { this.neuralMapper && typeof this.neuralMapper.dispose === 'function' && this.neuralMapper.dispose(); } catch(e) {}
+    // Flush pending persistence
+    try { this._flushPersistQueueSync(); } catch (e) {}
   }
 
   /**
@@ -578,6 +618,26 @@ class AdvancedAionMemory {
     } catch (e) {
       logger.warn('knowledgeGraph.addNode failed', e);
     }
+    // Incrementally update ANN index and other secondary indexes asynchronously
+    try {
+      setTimeout(() => {
+        try {
+          // update category index
+          if (!this.categoryIndex) this.categoryIndex = new Map();
+          if (!this.categoryIndex.has(memory.category)) this.categoryIndex.set(memory.category, []);
+          this.categoryIndex.get(memory.category).push(memory.id);
+
+          // temporal index
+          if (!this.temporalIndex) this.temporalIndex = new Map();
+          const timeKey = new Date(memory.timestamp).toISOString().slice(0, 13);
+          if (!this.temporalIndex.has(timeKey)) this.temporalIndex.set(timeKey, []);
+          this.temporalIndex.get(timeKey).push(memory.id);
+
+          // update normalized vector cache for ANN
+          try { this._updateAnnIndexForMemory(memory); } catch (e) { /* ignore */ }
+        } catch (e) { logger.warn('async indexMemory update failed', e); }
+      }, 0);
+    } catch (e) {}
   }
 
   async snapshotMemory(memory) {
@@ -589,7 +649,12 @@ class AdvancedAionMemory {
         category: memory.category,
         importance: memory.importance
       };
-      await db.memories.put(toSave);
+      // For very important memories, persist immediately; otherwise enqueue for batched persistence
+      if (memory.importance && memory.importance > 0.8) {
+        await db.memories.put(toSave);
+      } else {
+        this._enqueuePersist(toSave);
+      }
       return true;
     } catch (e) {
       logger.warn('snapshotMemory failed', e);
@@ -783,6 +848,19 @@ class AdvancedAionMemory {
     return Math.tanh((positive - negative) * 0.5);
   }
 
+  // Find memory by id using in-memory index or DB fallback
+  findMemoryById(id) {
+    if (!id) return null;
+    if (this.memoryIndex && this.memoryIndex.has(id)) return this.memoryIndex.get(id);
+    try {
+      // synchronous DB get may not be available; return null and allow async callers to fetch
+      if (db && db.memories && typeof db.memories.get === 'function') {
+        return db.memories.get(id);
+      }
+    } catch (e) {}
+    return null;
+  }
+
   calculateStrategicValue(memory, options) {
     // Calculate strategic value based on current context and goals
     let value = memory.importance;
@@ -869,9 +947,10 @@ class AdvancedAionMemory {
         return { ...mem, retentionScore };
       });
       
-      // Remove lowest scoring memories
-      scoredMemories.sort((a, b) => a.retentionScore - b.retentionScore);
-      const toDelete = scoredMemories.slice(0, memories.length - maxMemories);
+  // Remove lowest scoring memories, but respect pinned memories
+  const filtered = scoredMemories.filter(m => !this._pinnedMemories.has(m.id));
+  filtered.sort((a, b) => a.retentionScore - b.retentionScore);
+  const toDelete = filtered.slice(0, Math.max(0, memories.length - maxMemories));
       
       for (const memory of toDelete) {
         await this.episodicMemory.delete(memory.id);
@@ -909,14 +988,24 @@ class AdvancedAionMemory {
   }
 
   async reindexMemories() {
-    // Rebuild indexes for optimal performance
-    this.memoryIndex.clear();
-    this.categoryIndex.clear();
-    this.temporalIndex.clear();
-    
+    // Rebuild indexes for optimal performance (incremental, non-blocking)
+    this.memoryIndex = new Map();
+    this.categoryIndex = new Map();
+    this.temporalIndex = new Map();
+    this._annIndex.normalized.clear();
+
     const memories = await this.episodicMemory.toArray();
-    for (const memory of memories) {
-      this.indexMemory(memory);
+    // Populate indexes in small batches to avoid blocking
+    const batchSize = 50;
+    for (let i = 0; i < memories.length; i += batchSize) {
+      const batch = memories.slice(i, i + batchSize);
+      for (const memory of batch) {
+        this.memoryIndex.set(memory.id, memory);
+        // schedule secondary index updates asynchronously
+        setTimeout(() => this.indexMemory(memory), 0);
+      }
+      // yield to event loop
+      await new Promise(res => setTimeout(res, 0));
     }
   }
 
@@ -1103,6 +1192,7 @@ class AdvancedAionMemory {
 }
 
 export const advancedAionMemory = new AdvancedAionMemory();
+export { AdvancedAionMemory };
 
 // --- SUPERHUMAN EXTENSIONS ---
 AdvancedAionMemory.prototype.ingestExternalKnowledge = async function(url, options = {}) {
@@ -1159,4 +1249,186 @@ AdvancedAionMemory.prototype.distributeMemory = async function(memory, nodeAddre
   });
   logger.info(`Distributed memory to nodes: ${nodeAddresses.join(', ')}`);
   return true;
+};
+
+/**
+ * Persistence batching: enqueue snapshots and flush in batches to reduce DB I/O.
+ */
+AdvancedAionMemory.prototype._enqueuePersist = function(memory) {
+  try {
+    if (!memory || !memory.id) return;
+    this._persistQueue.set(memory.id, {
+      id: memory.id,
+      text: memory.text?.slice(0, 2000) || '',
+      timestamp: memory.timestamp || Date.now(),
+      category: memory.category,
+      importance: memory.importance
+    });
+
+    if (this._persistTimer) clearTimeout(this._persistTimer);
+    this._persistTimer = setTimeout(() => this._flushPersistQueue(), this._persistDebounceMs);
+  } catch (e) {
+    logger.warn('enqueuePersist failed', e);
+  }
+};
+
+AdvancedAionMemory.prototype._flushPersistQueue = async function() {
+  if (!this._persistQueue || this._persistQueue.size === 0) return;
+  const items = Array.from(this._persistQueue.values());
+  this._persistQueue.clear();
+  try {
+    // Attempt bulk write; fall back to individual puts
+    if (db && db.memories && typeof db.memories.bulkPut === 'function') {
+      await db.memories.bulkPut(items);
+    } else {
+      await Promise.all(items.map(it => db.memories.put(it).catch(e => { logger.warn('bulk persist item failed', e); })));
+    }
+  } catch (e) {
+    logger.error('flushPersistQueue failed', e);
+  }
+};
+
+// best-effort synchronous flush (no await)
+AdvancedAionMemory.prototype._flushPersistQueueSync = function() {
+  try {
+    if (!this._persistQueue || this._persistQueue.size === 0) return;
+    const items = Array.from(this._persistQueue.values());
+    this._persistQueue.clear();
+    items.forEach(it => {
+      try { db.memories.put(it); } catch (e) { /* swallow */ }
+    });
+  } catch (e) {}
+};
+
+// Pin/unpin memories to avoid cleanup
+AdvancedAionMemory.prototype.pinMemory = function(memoryId) {
+  if (!memoryId) return false;
+  this._pinnedMemories.add(memoryId);
+  return true;
+};
+
+AdvancedAionMemory.prototype.unpinMemory = function(memoryId) {
+  if (!memoryId) return false;
+  this._pinnedMemories.delete(memoryId);
+  return true;
+};
+
+// Promote/demote memory between tiers (working, episodic, semantic)
+AdvancedAionMemory.prototype.promoteMemory = async function(memoryId, target = 'episodic') {
+  const mem = this.findMemoryById ? this.findMemoryById(memoryId) : this.memoryIndex.get(memoryId);
+  if (!mem) return false;
+  try {
+    if (target === 'episodic') {
+      await this.storeLongTermMemory(mem);
+    } else if (target === 'semantic') {
+      this.semanticMemory.push(mem);
+      await this._enqueuePersist(mem);
+    }
+    return true;
+  } catch (e) {
+    logger.warn('promoteMemory failed', e);
+    return false;
+  }
+};
+
+AdvancedAionMemory.prototype.demoteMemory = function(memoryId, target = 'working') {
+  const mem = this.memoryIndex.get(memoryId);
+  if (!mem) return false;
+  try {
+    if (target === 'working') {
+      this.workingMemory.push(mem);
+    } else if (target === 'sensory') {
+      this.sensoryBuffer.push(mem);
+    }
+    return true;
+  } catch (e) {
+    logger.warn('demoteMemory failed', e);
+    return false;
+  }
+};
+
+// Build a simple in-memory ANN-like normalized vector cache for fast similarity
+AdvancedAionMemory.prototype.buildAnnIndex = async function() {
+  try {
+    const memories = await this.episodicMemory.toArray();
+    this._annIndex.normalized.clear();
+    for (const mem of memories) {
+      if (mem.vector && mem.vector.length) {
+        const norm = Math.sqrt(mem.vector.reduce((s, v) => s + v * v, 0)) || 1;
+        this._annIndex.normalized.set(mem.id, mem.vector.map(v => v / norm));
+      }
+    }
+  } catch (e) {
+    logger.warn('buildAnnIndex failed', e);
+  }
+};
+
+// Find similar memories using the in-memory normalized cache for fast cosine similarity
+AdvancedAionMemory.prototype.findSimilarMemories = async function(text, topK = 5) {
+  try {
+    const qVec = await this.getVectorEmbedding(text);
+    if (!qVec || qVec.length === 0) return [];
+    const qNorm = Math.sqrt(qVec.reduce((s, v) => s + v * v, 0)) || 1;
+    const qNormalized = qVec.map(v => v / qNorm);
+
+    // Ensure ann index exists
+    if (!this._annIndex || !this._annIndex.normalized || this._annIndex.normalized.size === 0) {
+      await this.buildAnnIndex();
+    }
+
+    const scores = [];
+    for (const [id, vec] of this._annIndex.normalized) {
+      // dot product for cosine (vectors are normalized)
+      let dot = 0;
+      const n = Math.min(vec.length, qNormalized.length);
+      for (let i = 0; i < n; i++) dot += vec[i] * qNormalized[i];
+      scores.push({ id, similarity: dot });
+    }
+
+    scores.sort((a, b) => b.similarity - a.similarity);
+    const top = scores.slice(0, topK);
+    const result = [];
+    for (const s of top) {
+      const mem = this.memoryIndex.get(s.id) || (await this.episodicMemory.get(s.id));
+      if (mem) result.push({ ...mem, similarity: s.similarity });
+    }
+    return result;
+  } catch (e) {
+    logger.warn('findSimilarMemories failed, falling back', e);
+    // fallback: naive scan
+    const all = await this.episodicMemory.toArray();
+    const qVec = await this.getVectorEmbedding(text);
+    const scored = all.map(m => ({ ...m, similarity: this.calculateSimilarity(qVec, m.vector || []) }));
+    scored.sort((a, b) => b.similarity - a.similarity);
+    return scored.slice(0, topK);
+  }
+};
+
+// Update ANN cache for a single memory (normalized vector)
+AdvancedAionMemory.prototype._updateAnnIndexForMemory = function(memory) {
+  try {
+    if (!memory || !memory.vector || !memory.vector.length) return;
+    const norm = Math.sqrt(memory.vector.reduce((s, v) => s + v * v, 0)) || 1;
+    this._annIndex.normalized.set(memory.id, memory.vector.map(v => v / norm));
+  } catch (e) {
+    logger.warn('_updateAnnIndexForMemory failed', e);
+  }
+};
+
+AdvancedAionMemory.prototype.forcePersist = async function() {
+  await this._flushPersistQueue();
+};
+
+AdvancedAionMemory.prototype.forceConsolidate = async function() {
+  await this.consolidateMemories();
+};
+
+AdvancedAionMemory.prototype.tuneMaintenanceInterval = function(ms) {
+  try {
+    if (this._maintenanceInterval) clearInterval(this._maintenanceInterval);
+    this._maintenanceInterval = setInterval(() => this.performMemoryMaintenance(), ms);
+    if (typeof this._maintenanceInterval.unref === 'function') this._maintenanceInterval.unref();
+  } catch (e) {
+    logger.warn('tuneMaintenanceInterval failed', e);
+  }
 };

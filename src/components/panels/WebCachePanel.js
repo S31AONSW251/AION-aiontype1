@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 
 export default function WebCachePanel({ apiBase='' , apiFetch }){
   const [items, setItems] = useState([]);
@@ -7,16 +7,16 @@ export default function WebCachePanel({ apiBase='' , apiFetch }){
 
   useEffect(()=>{ localStorage.setItem('aion_session', sessionId); }, [sessionId]);
 
-  async function load(){
-    try{
-      const res = await fetch((apiBase||'') + '/webcache');
-      if(!res.ok) return;
+  const load = useCallback(async () => {
+    try {
+      const res = await fetch((apiBase || '') + '/webcache');
+      if (!res.ok) return;
       const j = await res.json();
-      if(j && j.items) setItems(j.items);
-    }catch(e){ console.warn(e); }
-  }
+      if (j && j.items) setItems(j.items);
+    } catch (e) { console.warn(e); }
+  }, [apiBase]);
 
-  useEffect(()=>{ load(); }, []);
+  useEffect(() => { load(); }, [load]);
 
   async function setSessionConsent(v){
     try{
