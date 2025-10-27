@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import ErrorBoundary from './ErrorBoundary';
 import "./App.css";
+import "./theme-compat.css";
 import syncService from './services/syncService';
 import { enqueue } from './lib/offlineQueue';
 

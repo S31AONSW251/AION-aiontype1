@@ -799,6 +799,82 @@
 /* Keep user message username styling intact for 'You' */
 .message-wrapper.user .username { background: transparent !important; color: var(--user-message-color, white) !important; box-shadow: none !important; padding: 0 !important; }
 
+/* ----------------------------- Compatibility aliases ----------------------------- */
+/* Small compatibility layer so older/other panel CSS that uses slightly different
+   class names (e.g. `.message.user`, `.action-button`, `.reaction-emoji`) will
+   still work with the structure used by ChatPanel.js (which uses
+   `.message-wrapper`, `.message-content`, `.action-btn`, `.reaction-btn`).
+   Keep this block minimal and non-invasive — it only provides visual parity
+   and lightweight layout fallbacks. */
+
+/* alias old wrapper selectors to the newer ones used in components */
+.message.user, .message.aion {
+  /* allow older code to target wrappers without breaking layout */
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+/* map username/time/id pills inside older wrappers to current styling */
+.message.user .username, .message.aion .username,
+.message.user .time, .message.aion .time,
+.message.user .message-id, .message.aion .message-id {
+  color: inherit;
+  font-size: 0.85rem;
+}
+
+/* ensure message-body within legacy wrappers behaves like modern variant */
+.message.user .message-body, .message.aion .message-body {
+  line-height: 1.5;
+  font-size: 15px;
+  word-wrap: break-word;
+}
+
+/* Make older `.message.*` background rules fall back to `.message-content` styles */
+.message.user .message-content, .message.aion .message-content {
+  background: inherit;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+/* action button name aliasing: copy key affordances from .action-button */
+.action-btn {
+  padding: 6px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+.action-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+/* keep parity with .action-button.active */
+.action-btn.active { color: var(--accent-color); background: var(--accent-bg); }
+
+/* reaction button alias */
+.reaction-btn {
+  padding: 6px;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.12s ease;
+  font-size: 1.1em;
+}
+.reaction-btn:hover { transform: scale(1.08); background: var(--bg-hover); }
+
+/* small alias so MessageActions styles that use .reaction-emoji / .reaction-badge
+   still visually match reaction-btn usage in ChatPanel.js */
+.reaction-emoji, .reaction-badge { box-sizing: border-box; }
+
+/* Keep older `.action-button` mapped to .action-btn visuals as well */
+.action-button { padding: 6px; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.15s ease; }
+
+/* end compatibility aliases */
+
 /* Allow selecting the AION username and mood label with mouse/text selection */
 .message-wrapper .aion-message .message-header .username,
 .message-wrapper .aion-message .message-header .mood-indicator {

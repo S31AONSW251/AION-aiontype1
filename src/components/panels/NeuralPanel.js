@@ -1,4 +1,5 @@
 import React from 'react';
+import './NeuralPanel.css';
 
 const NeuralPanel = ({ soulState, neuralOutput, runNeuralSimulation, neuralCanvasRef, setActiveTab, randomNeuralTest }) => {
     
