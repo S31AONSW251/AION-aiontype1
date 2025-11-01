@@ -1,0 +1,185 @@
+/* SoulPanel.css — enhanced visual polish for SoulPanel
+    - refined grid and card elevation
+    - richer gradients, neon accents and soft glow
+    - animated stat fills and subtle shimmer
+    - responsive and accessible tweaks
+*/
+
+.soul-panel { padding: 18px; }
+.soul-panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.soul-title { display:flex; gap:14px; align-items:center; }
+.soul-logo { width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:900; color:var(--text-primary); background: linear-gradient(135deg, rgba(0,240,255,0.12), rgba(159,107,255,0.10)); box-shadow: 0 18px 48px rgba(0,0,0,0.55); transform: translateZ(0); }
+.soul-title h2 { margin:0; font-size:1.15rem; letter-spacing:0.2px; }
+.soul-sub { font-size:0.88rem; color:var(--text-muted); }
+
+.soul-grid { display:grid; grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); gap:16px; }
+.soul-stat {
+   /* Use theme-aware surface color (fallback to a dark glass if variable missing) */
+   background: linear-gradient(180deg, var(--bg-surface, rgba(8,10,14,0.64)), rgba(0,0,0,0.18));
+   border-radius:14px;
+   padding:14px;
+   border:1px solid var(--glass-border, rgba(255,255,255,0.03));
+   box-shadow: 0 12px 40px rgba(0,0,0,0.52);
+   color:var(--text);
+   min-height:120px;
+   display:flex;
+   flex-direction:column;
+   gap:10px;
+   position:relative;
+   overflow:hidden;
+   transition: transform .28s cubic-bezier(.2,.9,.2,1), box-shadow .28s ease, border-color .28s ease;
+}
+.soul-stat:hover { transform: translateY(-6px) scale(1.01); box-shadow: 0 26px 80px rgba(0,0,0,0.6); border-color: rgba(0,240,255,0.06); }
+
+.soul-stat::before {
+   content: '';
+   position: absolute;
+   left: -40%;
+   top: -40%;
+   width: 200%;
+   height: 200%;
+   background: radial-gradient(circle at 20% 20%, rgba(0,240,255,0.035), transparent 6%);
+   transform: rotate(12deg);
+   pointer-events:none;
+   opacity:0.35;
+}
+
+.stat-head { display:flex; align-items:center; gap:12px; }
+.stat-icon { display:inline-flex; width:44px; height:44px; align-items:center; justify-content:center; border-radius:10px; background: linear-gradient(90deg, rgba(0,240,255,0.08), rgba(159,107,255,0.06)); color:var(--accent-3); font-weight:700; box-shadow: inset 0 -3px 8px rgba(0,0,0,0.25); }
+.stat-head h4 { margin:0; font-size:1rem; color:var(--text); }
+
+.stat-value { font-size:1.12rem; font-weight:800; color:var(--text-primary); letter-spacing:0.2px; }
+.stat-bar { height:12px; background: rgba(255,255,255,0.02); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,0.02); position:relative; }
+.stat-fill {
+   height:100%;
+   background: linear-gradient(90deg,var(--accent),var(--accent-2));
+   width:0%;
+   transition: width 900ms cubic-bezier(.22,.9,.14,1);
+   box-shadow: 0 8px 30px rgba(0,0,0,0.45) inset;
+   transform-origin: left center;
+}
+
+/* animated fill helper: add .fill-animate to trigger */
+.stat-fill.fill-animate { animation: fillGrow 900ms cubic-bezier(.22,.9,.14,1) both; }
+
+@keyframes fillGrow {
+   from { width: 0%; }
+   to   { width: var(--target, 60%); }
+}
+
+/* specialized fills (energy) */
+.energy-fill { background: linear-gradient(90deg,#ffd54a,#ff8a65); }
+
+.soul-values { grid-column: span 2; background: transparent; padding: 12px; }
+.value-item { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.value-fill { height:10px; background: linear-gradient(90deg,var(--color-primary),var(--color-secondary)); border-radius:6px; width:0%; transition: width .95s cubic-bezier(.2,.9,.15,1); position:relative; }
+
+.soul-emotional-state { grid-column: span 2; padding:12px; }
+.emotion-item { display:flex; align-items:center; gap:12px; margin-bottom:8px; }
+.emotion-bar { flex:1; height:10px; background: rgba(255,255,255,0.02); border-radius:6px; overflow:hidden; position:relative; }
+.emotion-fill { height:100%; background: linear-gradient(90deg,#7efcff,#9f6bff); width:0%; transition: width .8s cubic-bezier(.2,.9,.15,1); }
+.emotion-value { width:44px; text-align:right; color:var(--text-muted); font-size:0.87rem; }
+
+.soul-actions { display:flex; flex-direction:column; gap:10px; padding:12px; }
+.soul-action-button { padding:10px 14px; border-radius:12px; background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)); border:1px solid rgba(255,255,255,0.03); color:var(--text); font-weight:800; cursor:pointer; transition: transform .18s ease, box-shadow .18s ease; }
+.soul-action-button:hover { transform:translateY(-4px); box-shadow:0 18px 46px rgba(0,0,0,0.5); }
+.soul-action-button.positive-feedback { background: linear-gradient(90deg,#9fffb9,#4ce18d); color:#032; }
+.soul-action-button.negative-feedback { background: linear-gradient(90deg,#ffd7d7,#ff9a9a); color:#2b0a0a; }
+
+/* system health variant */
+.soul-stat.system-health.optimal { border-left: 6px solid var(--status-success); }
+.soul-stat.system-health.disconnected { border-left: 6px solid var(--status-warning); }
+.soul-stat.system-health.error { border-left: 6px solid var(--status-error); }
+
+/* shimmer for value bars (subtle) */
+.stat-bar::after, .value-fill::after { content: ''; position: absolute; pointer-events: none; left:0; top:0; height:100%; width:40%; background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.06), rgba(255,255,255,0.02)); transform: translateX(-110%); opacity:0.8; border-radius:999px; }
+.soul-stat:hover .stat-bar::after, .soul-stat:hover .value-fill::after { animation: shimmer 1.8s linear infinite; }
+@keyframes shimmer { 0%{transform:translateX(-120%)} 100%{transform:translateX(220%)} }
+
+/* Responsive tweaks */
+@media (max-width: 900px) {
+   .soul-grid { grid-template-columns: repeat(auto-fill,minmax(200px,1fr)); }
+   .soul-values, .soul-emotional-state { grid-column: span 1; }
+   .soul-logo { width:48px; height:48px; }
+}
+
+/* Accessibility: ensure reduced-motion preserves instant state */
+@media (prefers-reduced-motion: reduce) {
+   .stat-fill, .value-fill, .emotion-fill, .stat-fill.fill-animate { animation: none !important; transition: none !important; }
+   .soul-stat:hover { transform: none; }
+}
+
+/* --- Futuristic / sci-fi accents --- */
+.soul-panel { position: relative; }
+.soul-panel::after {
+   /* subtle scanline / holographic overlay */
+   content: '';
+   position: absolute;
+   inset: 0;
+   pointer-events: none;
+   background-image: linear-gradient(transparent 90%, rgba(255,255,255,0.008));
+   background-size: 100% 4px;
+   mix-blend-mode: overlay;
+   opacity: 0.7;
+   z-index: 2;
+}
+
+.stat-icon { position: relative; }
+.stat-icon::after {
+   content: '';
+   position: absolute;
+   inset: -6px;
+   border-radius: 12px;
+   background: radial-gradient(circle at 30% 20%, rgba(0,240,255,0.06), transparent 18%);
+   filter: blur(6px);
+   opacity: 0.9;
+   pointer-events: none;
+}
+
+.stat-value { position: relative; z-index: 4; }
+.stat-value.flicker { animation: flickerText 1.2s linear infinite; }
+@keyframes flickerText {
+   0%,100%{opacity:1;filter:brightness(1)}
+   50%{opacity:0.85;filter:brightness(1.12) saturate(1.1)}
+}
+
+/* Neon glow on strong fills */
+.stat-fill.glow, .value-fill.glow, .emotion-fill.glow { box-shadow: 0 10px 40px currentColor, 0 0 18px rgba(255,255,255,0.06) inset; }
+.stat-fill.glow { filter: drop-shadow(0 8px 28px rgba(0,240,255,0.12)); }
+
+/* Slight inner grid on stat cards for tech feel */
+.soul-stat::after {
+   content: '';
+   position: absolute;
+   inset: 0;
+   background-image: linear-gradient(to right, rgba(255,255,255,0.002) 1px, transparent 1px), linear-gradient(to bottom, rgba(255,255,255,0.002) 1px, transparent 1px);
+   background-size: 40px 40px, 40px 40px;
+   opacity: 0.06;
+   pointer-events: none;
+}
+
+/* make the logo slightly holographic */
+.soul-logo { position: relative; overflow: visible; }
+.soul-logo::before { content: ''; position: absolute; inset: 6px; border-radius: 9px; background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)); transform: rotate(-6deg); filter: blur(6px); opacity:0.6; pointer-events:none; }
+
+/* subtle scanline swipe on hover */
+.soul-stat:hover::before { transform: rotate(-6deg) translateX(6px); opacity:0.08; }
+
+/* make glow color derive from element color where possible */
+.stat-fill { color: var(--accent, #7efcff); }
+
+/* Dark-mode specific adjustments to avoid bright white cards */
+@media (prefers-color-scheme: dark) {
+   .soul-stat {
+      background: linear-gradient(180deg, rgba(8,10,14,0.72), rgba(12,14,18,0.5));
+      border: 1px solid rgba(255,255,255,0.03);
+   }
+   .soul-panel::after {
+      /* reduce white overlay in dark */
+      mix-blend-mode: multiply;
+      opacity: 0.04;
+   }
+   .stat-bar, .emotion-bar { background: rgba(255,255,255,0.02); }
+   .soul-stat::after { opacity: 0.03; }
+}
+

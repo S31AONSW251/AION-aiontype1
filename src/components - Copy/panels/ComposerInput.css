@@ -1,0 +1,255 @@
+.composer-wrapper {
+  position: relative;
+  width: 100%;
+  transition: all 0.2s ease;
+}
+
+.composer-wrapper.dragging {
+  border: 2px dashed rgba(255,255,255,0.06);
+  border-radius: 12px;
+  background: var(--bg-hover);
+}
+
+.drag-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255,255,255,0.02);
+  border-radius: 12px;
+  z-index: 10;
+}
+
+.drag-overlay i {
+  font-size: 2.5em;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 12px;
+}
+
+.drag-overlay span {
+  font-size: 1.1em;
+  color: var(--text-primary);
+}
+
+/* Rich text toolbar */
+.rich-text-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-surface);
+  border-radius: 12px 12px 0 0;
+}
+
+.rich-text-button,
+.file-upload-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.rich-text-button:hover,
+.file-upload-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.rich-text-button i,
+.file-upload-button i {
+  font-size: 1.2em;
+}
+
+.composer-input-wrapper {
+  position: relative;
+  background: rgba(16,18,20,0.55);
+  border: 1px solid rgba(255,255,255,0.02);
+  border-radius: 0 0 12px 12px;
+  transition: all 0.2s ease;
+}
+
+.composer-input-wrapper:focus-within {
+  border-color: rgba(255,255,255,0.04);
+  box-shadow: 0 0 0 2px var(--focus-ring);
+}
+
+.composer-input {
+  width: 100%;
+  min-height: 56px; /* slightly bigger typing bar */
+  max-height: 260px;
+  padding: 16px 16px 18px 18px;
+  padding-right: 48px; /* Space for file upload / send button */
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 1.05rem;
+  line-height: 1.4;
+  resize: none;
+  outline: none;
+  transition: height 0.12s ease, box-shadow 0.12s ease;
+  border-radius: 12px;
+}
+
+.composer-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* Typing indicator */
+.typing-indicator {
+  position: absolute;
+  top: -24px;
+  left: 12px;
+  font-size: 0.9em;
+  color: var(--text-secondary);
+}
+
+.typing-indicator span {
+  animation: typing-dots 1.4s infinite;
+  opacity: 0.5;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+/* Suggestions dropdown */
+.suggestions-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  margin-bottom: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+  background: var(--bg-hover);
+}
+
+/* Command suggestions */
+.commands-dropdown .suggestion-item i {
+  font-size: 1.2em;
+  color: var(--accent-color);
+  width: 24px;
+  text-align: center;
+}
+
+.command-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.command-description {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+}
+
+/* Mention suggestions */
+.mention-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.mention-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.mention-description {
+  margin-left: auto;
+  color: var(--text-secondary);
+  font-size: 0.9em;
+}
+
+/* Disabled state */
+.composer-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+/* Feeling / express bar styles */
+.feeling-bar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px 4px 12px;
+  margin-top: 8px;
+}
+
+.feeling-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.03);
+  background: rgba(255,255,255,0.01);
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.feeling-btn:hover { transform: translateY(-2px); background: rgba(255,255,255,0.02); }
+.feeling-btn.selected { box-shadow: 0 6px 18px rgba(0,0,0,0.45); background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.008)); }
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  .composer-input {
+    font-size: 16px; /* Prevent zoom on mobile */
+  }
+
+  .suggestions-dropdown {
+    position: fixed;
+    bottom: auto;
+    top: 50%;
+    left: 16px;
+    right: 16px;
+    transform: translateY(-50%);
+    max-height: 60vh;
+  }
+}

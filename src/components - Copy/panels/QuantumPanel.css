@@ -1,0 +1,165 @@
+/* QuantumPanel.css - modern glassmorphism and subtle motion for QuantumPanel */
+
+.quantum-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 18px;
+  border-radius: 14px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.06);
+  box-shadow: 0 20px 50px rgba(2,6,23,0.5), inset 0 1px 0 rgba(255,255,255,0.02);
+  min-height: 380px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle animated background accent */
+.quantum-panel::before {
+  content: '';
+  position: absolute;
+  right: -20%;
+  top: -30%;
+  width: 60%;
+  height: 160%;
+  background: radial-gradient(circle at 30% 30%, rgba(0,212,255,0.06), transparent 30%), radial-gradient(circle at 70% 70%, rgba(124,58,237,0.04), transparent 40%);
+  transform: rotate(18deg);
+  filter: blur(22px);
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0.9;
+}
+
+.quantum-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quantum-header h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  letter-spacing: 0.6px;
+  color: var(--text-primary, #e6f6ff);
+  text-shadow: 0 6px 18px rgba(0,160,255,0.06);
+}
+
+.back-button {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  color: var(--text-primary, #e6f6ff);
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.back-button:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
+.back-button:focus { outline: 3px solid rgba(2,100,210,0.08); }
+
+.quantum-description p {
+  margin: 0;
+  color: var(--text-secondary, rgba(230,246,255,0.85));
+  font-size: 0.98rem;
+}
+
+.quantum-state-container {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.008));
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,0.03);
+}
+
+.quantum-state {
+  margin: 0;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.45);
+  color: #dff6ff;
+  border-radius: 8px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, 'Roboto Mono', monospace;
+  font-size: 0.82rem;
+  max-width: 68%;
+  overflow: auto;
+}
+
+.quantum-sim-button {
+  align-self: flex-start;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(90deg, rgba(124,58,237,0.98), rgba(0,212,255,0.98));
+  color: white;
+  font-weight: 800;
+  box-shadow: 0 12px 30px rgba(124,58,237,0.12), 0 6px 18px rgba(0,212,255,0.08);
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+.quantum-sim-button:hover { transform: translateY(-3px); filter: brightness(1.02); }
+.quantum-sim-button:active { transform: translateY(-1px); }
+
+.quantum-visualization {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+}
+
+.quantum-visualization canvas {
+  width: 100%;
+  max-width: 720px;
+  height: auto;
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: linear-gradient(180deg, rgba(6,8,12,0.48), rgba(8,10,14,0.32));
+  box-shadow: 0 18px 40px rgba(2,6,23,0.6);
+}
+
+.quantum-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.quantum-action-button {
+  padding: 8px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.04);
+  background: rgba(255,255,255,0.02);
+  color: var(--text-primary, #e6f6ff);
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+.quantum-action-button:hover { transform: translateY(-3px); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); }
+
+/* small finish: floating entanglement meter */
+.quantum-panel .entanglement-meter {
+  position: absolute;
+  left: 14px;
+  top: 14px;
+  background: rgba(0,0,0,0.36);
+  color: #cfeffd;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  border: 1px solid rgba(255,255,255,0.02);
+}
+
+/* Responsive tweaks */
+@media (max-width: 880px) {
+  .quantum-state { max-width: 100%; }
+  .quantum-panel { padding: 12px; }
+  .quantum-header h3 { font-size: 1.05rem; }
+}
+
+/* accessible focus helpers */
+.quantum-action-button:focus, .quantum-sim-button:focus, .back-button:focus { outline: 3px solid rgba(2,100,210,0.08); }

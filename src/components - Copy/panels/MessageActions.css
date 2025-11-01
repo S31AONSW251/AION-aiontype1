@@ -1,0 +1,128 @@
+.message-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.message-content:hover .message-actions {
+  opacity: 1;
+}
+
+.message-buttons {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.action-button {
+  padding: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-button:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.action-button.active {
+  color: var(--accent-color);
+  background: var(--accent-bg);
+}
+
+.action-button.delete:hover {
+  color: var(--error-color);
+  background: var(--error-bg);
+}
+
+.reaction-container {
+  position: relative;
+}
+
+.reaction-picker {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 8px;
+  display: flex;
+  gap: 4px;
+  box-shadow: var(--shadow-lg);
+  margin-bottom: 8px;
+  z-index: 1000;
+}
+
+.reaction-emoji {
+  padding: 6px;
+  border: none;
+  background: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: transform 0.2s ease;
+  font-size: 1.2em;
+}
+
+.reaction-emoji:hover {
+  transform: scale(1.2);
+  background: var(--bg-hover);
+}
+
+.message-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.reaction-badge {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--bg-muted);
+  border: 1px solid var(--border-soft);
+  color: var(--text-secondary);
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.reaction-badge:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-color);
+}
+
+.reaction-badge.active {
+  background: var(--accent-bg);
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+/* Icon styles */
+.icon-reply,
+.icon-emoji,
+.icon-pin,
+.icon-edit,
+.icon-trash {
+  font-size: 1.1em;
+  width: 1.1em;
+  height: 1.1em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-pin.pinned {
+  transform: rotate(45deg);
+}

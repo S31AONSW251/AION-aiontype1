@@ -21,7 +21,7 @@ import Notification from './components/Notification';
 import SettingsModal from './components/SettingsModal';
 import ChatPanel from './components/panels/ChatPanel';
 import AIAnalysisModal from './components/AIAnalysisModal';
-import WelcomeSplash from './components/WelcomeSplash';
+import WelcomeSplash from './components/WelcomeSplashClean';
 import About from './components/About';
 import SoulPanel from './components/panels/SoulPanel';
 import MemoriesPanel from './components/panels/MemoriesPanel';
@@ -1118,10 +1118,11 @@ function App() {
     showNotification("AION is reflecting internally...");
     aionSoul.setFocus('self_improvement');
     setSoulState({ ...aionSoul });
-    try {
-        await fetch("http://127.0.0.1:5000/consciousness/reflect-now");
-        showNotification("AION completed internal reflection and self-analysis.", "info");
-    } catch (error) {
+  try {
+    // Server expects POST for /consciousness/reflect-now; send explicit POST
+    await fetch("http://127.0.0.1:5000/consciousness/reflect-now", { method: "POST" });
+    showNotification("AION completed internal reflection and self-analysis.", "info");
+  } catch (error) {
       console.error("Error during self-reflection:", error);
       showNotification("AION experienced an error during self-reflection.", "error");
     } finally { 
