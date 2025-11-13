@@ -137,7 +137,22 @@ async function processStreamedResponse(response, onPiece) {
       // Attempt to parse as JSON. If that fails, treat as raw text chunk
       try {
         const parsed = JSON.parse(line);
-        if (typeof onPiece === 'function') await onPiece({ type: 'json', data: parsed });
+        // If server already emits a typed piece, use it directly
+        if (parsed && typeof parsed === 'object' && parsed.type) {
+          if (typeof onPiece === 'function') await onPiece(parsed);
+        } else if (parsed && typeof parsed === 'object') {
+          // Prefer common text fields if present
+          const textField = parsed.response || parsed.text || parsed.data || parsed.token || parsed.chunk;
+          if (textField !== undefined) {
+            if (typeof onPiece === 'function') await onPiece({ type: 'text', data: String(textField), meta: parsed });
+          } else {
+            // Generic JSON blob
+            if (typeof onPiece === 'function') await onPiece({ type: 'json', data: parsed });
+          }
+        } else {
+          // Primitive JSON (string/number) -> text
+          if (typeof onPiece === 'function') await onPiece({ type: 'text', data: String(parsed) });
+        }
       } catch (err) {
         if (typeof onPiece === 'function') await onPiece({ type: 'text', data: line });
       }
@@ -149,7 +164,18 @@ async function processStreamedResponse(response, onPiece) {
     const last = buffer.trim();
     try {
       const parsed = JSON.parse(last);
-      if (typeof onPiece === 'function') await onPiece({ type: 'json', data: parsed });
+      if (parsed && typeof parsed === 'object' && parsed.type) {
+        if (typeof onPiece === 'function') await onPiece(parsed);
+      } else if (parsed && typeof parsed === 'object') {
+        const textField = parsed.response || parsed.text || parsed.data || parsed.token || parsed.chunk;
+        if (textField !== undefined) {
+          if (typeof onPiece === 'function') await onPiece({ type: 'text', data: String(textField), meta: parsed });
+        } else {
+          if (typeof onPiece === 'function') await onPiece({ type: 'json', data: parsed });
+        }
+      } else {
+        if (typeof onPiece === 'function') await onPiece({ type: 'text', data: String(parsed) });
+      }
     } catch (err) {
       if (typeof onPiece === 'function') await onPiece({ type: 'text', data: last });
     }
@@ -392,7 +418,20 @@ function App() {
   }, []);
 
   // API base for internal calls (empty string uses same origin)
-  const apiBase = '';
+  // API base for internal calls. In development, prefer the local backend at 127.0.0.1:5000
+  // Use REACT_APP_API_BASE to override in environments (e.g., cloud or containers).
+  const apiBase = (() => {
+    try {
+      if (process && process.env && process.env.REACT_APP_API_BASE) return process.env.REACT_APP_API_BASE;
+    } catch (e) { /* ignore */ }
+    // When running the CRA dev server (port 3000), forward to local backend
+    try {
+      if (typeof window !== 'undefined' && window.location && (window.location.port === '3000' || window.location.hostname === 'localhost')) {
+        return 'http://127.0.0.1:5000';
+      }
+    } catch (e) { /* ignore */ }
+    return '';
+  })();
 
   // convenience for WebCachePanel
   const apiFetchWrapper = async (path, opts) => apiFetch(path, opts);
@@ -1021,7 +1060,8 @@ function App() {
       setIsThinking(false);
       setIsImageGenerating(false);
     }
-  }, [settings.enableImageGeneration, userInput, showNotification]);
+  }, [settings.enableImageGeneration, userInput, showNotification, apiBase]);
+  
 
   // NEW: Video generation function
   const generateVideo = useCallback(async (customPrompt = "") => {
@@ -1090,7 +1130,7 @@ function App() {
     } finally {
       setIsThinking(false);
       setIsVideoGenerating(false);
-    }}, [settings.enableVideoGeneration, settings.videoDuration, settings.videoResolution, userInput, showNotification]);
+  }}, [settings.enableVideoGeneration, settings.videoDuration, settings.videoResolution, userInput, showNotification, apiBase]);
 
 
   // Enhanced memory processing
@@ -1846,7 +1886,7 @@ function App() {
       aionSoul.setFocus('idle'); // Ensure focus is reset
       setSoulState({ ...aionSoul });
     }
-  }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand, findRelevantEpisodes, logEpisodicEvent, handleProceduralRequest, callOllamaGenerate, getMoodBasedResponse]);
+  }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand, findRelevantEpisodes, logEpisodicEvent, handleProceduralRequest, callOllamaGenerate, getMoodBasedResponse, streamingResponse]);
   
   // You might need this helper function in App.js scope if it's not imported
   const getHostname = useCallback((url) => {

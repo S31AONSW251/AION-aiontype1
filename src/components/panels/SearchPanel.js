@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import * as d3 from 'd3';
 import AssetsLibrary from './AssetsLibrary';
 import styles from './SearchPanel.module.css';
+import LazyImage from '../LazyImage';
 
 // Helper function to safely extract hostname from URLs
 const getHostname = (url) => {
@@ -139,13 +140,7 @@ const ImageGallery = ({ images, query }) => {
               aria-label={`Open image ${img.title || index + 1}`}
             >
               <div className={styles.imageWrapper}>
-                <img
-                  src={img.src}
-                  alt={img.alt || `Visual result for ${query}`}
-                  loading="lazy"
-                  className={styles.lazyImg}
-                  onError={(e) => e.target.style.display = 'none'}
-                />
+                <LazyImage src={img.src} alt={img.alt || `Visual result for ${query}`} className={styles.galleryImg} />
                 {img.title && <p className={styles.imageCaption}>{img.title}</p>}
               </div>
             </div>
@@ -250,7 +245,7 @@ const VideoGallery = ({ videos, query }) => {
             >
               <div className={styles.videoThumb}>
                 {v.thumbnail ? (
-                  <img src={v.thumbnail} alt={v.title || `Video ${i+1}`} loading="lazy" onError={(e)=> e.target.style.display='none'} className={styles.lazyImg} />
+                  <LazyImage src={v.thumbnail} alt={v.title || `Video ${i+1}`} className={styles.galleryImg} />
                 ) : (
                   <video src={v.src || v.url} preload="metadata" muted playsInline style={{ maxWidth: '100%' }} />
                 )}
@@ -755,14 +750,14 @@ const MediaPanel = ({ images = [], videos = [], query }) => {
       <div className="media-grid">
         {images.map((img) => (
           <div key={`img-${img.id}`} className="media-thumb">
-            <img src={img.src} alt={img.alt || query} loading="lazy" onError={(e) => e.target.style.display = 'none'} />
+            <LazyImage src={img.src} alt={img.alt || query} />
           </div>
         ))}
 
         {videos.map((v, i) => (
           <div key={`vid-${i}`} className="media-thumb video">
             {v.thumbnail ? (
-              <img src={v.thumbnail} alt={v.title || query} loading="lazy" onError={(e) => e.target.style.display = 'none'} />
+              <LazyImage src={v.thumbnail} alt={v.title || query} />
             ) : (
               <video src={v.src} preload="metadata" muted playsInline />
             )}
@@ -1166,6 +1161,18 @@ const SearchResultItem = ({ result, index, onSave, onShare, onCite }) => {
   return (
     <div className={`search-result ${expanded ? 'expanded' : ''}`}>
       <div className="result-main" onClick={() => setExpanded(!expanded)}>
+        {/* Left thumbnail (prominent preview) */}
+        {(result._media && (result._media.image || result._media.thumbnail || result._media.video)) && (
+          <div className="result-thumb" onClick={(e) => { e.stopPropagation(); openMedia(e); }}>
+            {result._media.image || result._media.thumbnail ? (
+              <LazyImage src={result._media.image || result._media.thumbnail} alt={result.title} />
+            ) : (
+              <div style={{width:'100%',height:'100%',display:'flex',alignItems:'center',justifyContent:'center',background:'linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006))'}}>
+                <span style={{fontSize:'20px',opacity:0.95}}>▶</span>
+              </div>
+            )}
+          </div>
+        )}
         <div className="result-header">
           <img
             src={`https://www.google.com/s2/favicons?domain=${getHostname(result.url)}&sz=32`}
@@ -1252,7 +1259,7 @@ const SearchResultItem = ({ result, index, onSave, onShare, onCite }) => {
           {/* Media preview (image or video thumbnail) - use normalized media keys */}
           {result._media && (result._media.image || result._media.thumbnail) && (
             <div className="result-media">
-              <img src={result._media.image || result._media.thumbnail} alt={result.title} loading="lazy" onError={(e)=> e.target.style.display='none'} />
+              <LazyImage src={result._media.image || result._media.thumbnail} alt={result.title} />
               {result._media.video && (
                 <div className="play-overlay">▶</div>
               )}
@@ -1355,7 +1362,7 @@ const SearchResultItem = ({ result, index, onSave, onShare, onCite }) => {
 };
 
 // Enhanced List View
-const ListView = ({ results }) => {
+const ListView = ({ results, displayMode = 'list' }) => {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const total = results.length;
@@ -1368,7 +1375,7 @@ const ListView = ({ results }) => {
   const pageResults = results.slice(start, start + pageSize);
 
   return (
-    <div className="search-results">
+    <div className={`search-results ${displayMode === 'grid' ? 'grid' : 'list'}`}>
       <div className="pagination-controls">
         <div className="pagination-left">
           <label>Results per page:</label>
@@ -1544,7 +1551,7 @@ const SearchPanel = ({
   const [query, setQuery] = useState("");
   const [sortOption, setSortOption] = useState("relevance");
   // plan visibility state removed (not used)
-  const [thoughtsVisible, setThoughtsVisible] = useState(false);
+  const [thoughtsVisible, setThoughtsVisible] = useState(true);
   const [filters, setFilters] = useState({});
   const [providers, setProviders] = useState({
     aion: true,
@@ -1556,6 +1563,7 @@ const SearchPanel = ({
   });
   // current step index state removed (not used)
   const [viewMode, setViewMode] = useState('list');
+  const [displayMode, setDisplayMode] = useState('list'); // 'list' or 'grid' (compact)
   const [savedSessions, setSavedSessions] = useState([]);
   const [, setSelectedSession] = useState(null);
   const [summaryMode, setSummaryMode] = useState('detailed'); // 'brief', 'detailed', 'comprehensive'
@@ -1812,7 +1820,7 @@ const SearchPanel = ({
       case 'timeline':
         return <TimelineView results={normalizedResults} />;
       default:
-        return <ListView results={normalizedResults} />;
+        return <ListView results={normalizedResults} displayMode={displayMode} />;
     }
   };
 
@@ -2087,6 +2095,15 @@ const SearchPanel = ({
                                 <option value="date">Sort by Date</option>
                                 <option value="title">Sort by Title</option>
                             </select>
+
+                            <div className="display-mode-controls">
+                              <button className={displayMode === 'list' ? 'active' : ''} onClick={() => setDisplayMode('list')} title="List view">
+                                <i className="icon-list"></i>
+                              </button>
+                              <button className={displayMode === 'grid' ? 'active' : ''} onClick={() => setDisplayMode('grid')} title="Grid (compact) view">
+                                <i className="icon-grid"></i>
+                              </button>
+                            </div>
 
                             <div className="view-mode-selector">
                               <button

@@ -240,6 +240,7 @@ body.light-theme mark {
 /* Ensure pinned strip previews are readable on light theme too */
 body.light-theme .memory-manager .pinned-card { background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.96)); color: var(--text); border: 1px solid rgba(3,9,14,0.06); }
 
+
 @media (prefers-reduced-motion: no-preference) {
   body.light-theme .bg-ambient, body.light-theme .bg-particles { will-change: transform, background-position; }
 }
@@ -456,6 +457,7 @@ body.light-theme .brand-logo { color: var(--text-primary); }
 .orb-core { width:240px; height:240px; border-radius:999px; background: radial-gradient(circle at 30% 30%, rgba(255,209,102,0.06), rgba(128,90,213,0.04)); filter: blur(18px) }
 .orb-glow { position:absolute; width:320px; height:320px; border-radius:999px; box-shadow: 0 40px 120px rgba(128,90,213,0.06) }
 .orb-ring { position:absolute; border-radius:999px; border:1px solid rgba(255,255,255,0.03) }
+
 
 /* subtle particle field using repeating-radial-gradient animated by background-position */
 .bg-particles{
@@ -697,6 +699,8 @@ body.light-theme .settings-modal .card {
   color: #08141b !important;
   border: 1px solid rgba(3,9,14,0.06) !important;
 }
+
+
 
 /* ---------------------------
    Icon & Action Buttons
@@ -1030,6 +1034,7 @@ body.modal-open { overflow: hidden; padding-right: 12px; }
 /* Focus ring for interactive elements inside modal */
 .rich-modal-content :focus { outline: 3px solid var(--focus-ring); outline-offset: 2px; }
 
+
 .chat-input { width:100%; min-height:56px; max-height:220px; padding:14px 120px 14px 25px; border-radius:999px; background:var(--bg-surface); color:var(--text-primary); border:1px solid var(--border-strong); resize:none; font-size:1rem; }
 .chat-input:focus { box-shadow: 0 0 0 4px var(--focus-ring); border-color: var(--border-focus); outline:none; }
 .input-actions { position:absolute; right:10px; top:50%; transform: translateY(-50%); display:flex; gap:8px; align-items:center; }
@@ -1281,6 +1286,7 @@ body.modal-open { overflow: hidden; padding-right: 12px; }
   .result-media { width:100%; max-width:100%; }
   .result-actions { margin-top:8px; }
 }
+
 
 /* =================================================================== */
 /* Math Panel Styles                                                     */
@@ -1835,6 +1841,7 @@ body.light-theme .welcome-logo {
   .quick-prompts { gap:6px; }
 }
 
+
 /* =================================================================== */
 /* 8. ADVANCED SEARCH PANEL                                            */
 /* =================================================================== */
@@ -1936,6 +1943,7 @@ body.light-theme .welcome-logo {
 
 /* Accessibility: focus outlines */
 .icon-button:focus, .send-button:focus, .tab-button:focus, .action-button:focus { outline: 3px solid rgba(0,212,255,0.12); outline-offset: 2px; }
+
 
 :root {
   /* Search panel tokens should reference global accents so the sitewide
@@ -2046,6 +2054,7 @@ body.light-theme .welcome-logo {
   .search-input-container { flex-direction: column; align-items: stretch; }
   .filter-panel { width: calc(100vw - 16px); left:8px; right:8px; }
 }
+
 
 /* =================================================================== */
 /* Math Panel Styles - integrates with root theme variables               */
@@ -2439,34 +2448,7 @@ body.light-theme .welcome-logo {
 .skeleton.img { height:110px; width:100%; display:block; }
 
 /* Lazy image helper */
-.aion-lazy-wrapper{
-  position:relative;
-  width:100%;
-  min-height:56px;
-  display:block;
-  border-radius:8px;
-  overflow:hidden;
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.008));
-}
-.aion-shimmer{
-  position:absolute;
-  inset:0;
-  background: linear-gradient(90deg, rgba(255,255,255,0.02) 0%, rgba(255,255,255,0.035) 50%, rgba(255,255,255,0.02) 100%);
-  transform: translateX(-120%);
-  animation: aion-shimmer 1.4s linear infinite;
-}
-.aion-placeholder-svg{ display:flex; align-items:center; justify-content:center; width:100%; height:100%; }
-.aion-lazy-img{ width:100%; height:auto; display:block; opacity:0; transition: opacity .28s ease, transform .28s ease; }
-.aion-lazy-img.loaded{ opacity:1; transform: none; }
-.aion-gallery-img{ width:100%; height:220px; object-fit:cover; display:block; border-radius:8px; }
-
-/* Pinned-card shimmer (moved here from MemoriesPanel.css) */
-.pinned-card.shimmer { position:relative; overflow:hidden; }
-.pinned-card.shimmer::after { content:''; position:absolute; inset:0; background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.06) 50%, rgba(255,255,255,0) 100%); transform:translateX(-120%); animation: aion-shimmer 2.4s linear infinite; pointer-events:none; }
-
-@keyframes aion-shimmer { from { transform:translateX(-120%);} to { transform:translateX(120%);} }
-
-.aion-lazy-img, .lazy-img { background: #f3f6f9; display:block; }
+.lazy-img { background: #f3f6f9; display:block; }
 
 /* Visually-hidden helper for accessibility */
 .sr-only { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
@@ -2475,6 +2457,7 @@ body.light-theme .welcome-logo {
 .gap-small { gap:8px; }
 .gap-medium { gap:12px; }
 .gap-large { gap:18px; }
+
 
 /* === SearchPanel: Visual Results, Galleries, Lightboxes, and Result Cards === */
 
@@ -2599,6 +2582,7 @@ body.light-theme .welcome-logo {
 .muted { color:#6b7280; }
 .tiny { font-size:12px; }
 
+
 /* conversation history list */
 /* ...existing code... */
 
@@ -2700,12 +2684,14 @@ body.light-theme .welcome-logo {
 .notification.warning { border-left: 3px solid var(--status-warning); }
 .notification.error { border-left: 3px solid var(--status-error); }
 
+
 /* Animations */
 @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
 @keyframes slideUp { from { transform: translate(-50%, 30px); opacity:0; } to { transform: translate(-50%, 0); opacity:1; } }
 @keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
 @keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--color-secondary); } 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
 @keyframes wave { 0%, 60%, 100% { transform: initial; } 30% { transform: translateY(-8px); } }
+
 
 /* shared panel card style */
 .panel-card, .agent-card {
@@ -3500,6 +3486,7 @@ body.light-theme .welcome-logo {
   cursor: not-allowed;
 }
 
+
 /* =================================================================== */
 /* QUANTUM PANEL                                                          */
 /* =================================================================== */
@@ -4102,6 +4089,7 @@ body.light-theme .welcome-logo {
 /* Fallback for icon fonts */
 .icon-mic::before { content: ''; }
 .icon-spinner::before { content: ''; }
+
 
 /* =================================================================== */
 /* 8. PANELS (Soul, Memories, Search, etc.)                            */
@@ -5393,6 +5381,7 @@ body.light-theme .welcome-logo {
 .notification.warning { background-color: var(--status-warning); color: var(--text-primary); }
 .notification.error { background-color: var(--status-error); }
 
+
 /* =================================================================== */
 /* 10. ANIMATIONS & KEYFRAMES                                          */
 /* =================================================================== */
@@ -5418,6 +5407,7 @@ body.light-theme .welcome-logo {
   40% { transform: scale(1.0); }
 }
 
+
 /* =================================================================== */
 /* 11. RESPONSIVE DESIGN                                               */
 /* =================================================================== */
@@ -5437,6 +5427,7 @@ body.light-theme .welcome-logo {
   .chat-input { padding: 15px 50px 15px 15px; }
   .input-actions { right: 5px; bottom: 5px; }
 }
+
 
 /* Base Styles */
 .empty-chat-container {
@@ -5501,6 +5492,7 @@ body.light-theme .welcome-logo {
 .light-theme .example-prompts span:hover {
   background-color: rgba(0, 0, 0, 0.05);
 }
+
 
 /* Message Bubbles & Layout */
 .message-wrapper {
@@ -6294,6 +6286,7 @@ body.light-theme .welcome-logo {
 
 .theme-hud--full .chat-input::placeholder { color: rgba(255,255,255,0.55) !important; }
 
+
 .quick-feelings {
   margin-bottom: 20px;
 }
@@ -6334,6 +6327,7 @@ body.light-theme .welcome-logo {
 .icon-arrow-left::before { content: ''; }
 .icon-send::before { content: ''; }
 
+
 /* Feeling button colors - Changed to grayscale/monochromatic shades */
 .feeling-button.love {
   background-color: rgba(180, 180, 180, 0.2);
@@ -6369,6 +6363,7 @@ body.light-theme .welcome-logo {
   .result-favicon { margin-bottom:8px; }
   .result-actions { margin-top:8px; }
 }
+
 
 .feeling-button.love:hover {
   background-color: rgba(180, 180, 180, 0.3);
@@ -6509,6 +6504,7 @@ body.light-theme .welcome-logo {
 .soul-stat .stat-fill[style*="background-color: var(--primary-color)"] {
   background: var(--primary-color); /* For ethicalAlignment high */
 }
+
 
 /* Soul Values */
 .soul-values {
@@ -8779,111 +8775,3 @@ input:checked + .slider:before {
 
 /* Small responsive tweak */
 @media (max-width:720px){ .power-toggle { flex-direction: column; align-items: flex-start } }
-
-/* ------------------------------------------------------------------ */
-/* GoalsPanel styles: polished, premium look matching the app theme       */
-/* Appended to keep component styles centralized; safe, non-breaking     */
-/* ------------------------------------------------------------------ */
-.goals-panel {
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.004));
-  border: 1px solid var(--glass-border);
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: 0 18px 60px rgba(2,6,23,0.6);
-  color: var(--text);
-}
-.goals-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}
-.goals-header h3{margin:0;font-size:1.05rem;font-weight:800;color:var(--text)}
-.goals-header .back-button{background:transparent;border:1px solid var(--glass-border);padding:8px 10px;border-radius:10px;color:var(--text);cursor:pointer}
-
-.goals-description p{color:var(--muted);margin:0 0 12px 0}
-
-.add-goal-section h4{margin:0 0 8px 0;color:var(--text)}
-.goal-input-container{display:flex;gap:8px;align-items:center}
-.goal-input-container input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border-soft);background:transparent;color:var(--text)}
-.goal-input-container button{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#061016;padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:700}
-
-.goals-stats{display:flex;gap:18px;margin:14px 0}
-.goals-stats .stat{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));padding:12px;border-radius:10px;border:1px solid var(--glass-border);min-width:110px;text-align:center}
-.stat-number{display:block;font-size:1.4rem;font-weight:900;color:var(--text)}
-.stat-label{font-size:0.85rem;color:var(--muted)}
-
-.goals-list h4{margin:6px 0 10px 0;color:var(--text)}
-.goals-container{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
-.goal-item{padding:12px;border-radius:12px;background:linear-gradient(180deg, rgba(0,0,0,0.28), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.02);box-shadow:0 8px 28px rgba(0,0,0,0.6);display:flex;flex-direction:column;gap:8px}
-.goal-item.completed{opacity:0.85;filter:grayscale(0.05)}
-.goal-content{display:flex;flex-direction:column;gap:6px}
-.goal-description{font-weight:700;color:var(--text)}
-.goal-meta{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.status-badge{padding:6px 10px;border-radius:999px;font-weight:800;font-size:0.8rem}
-.status-badge.active{background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#061016}
-.status-badge.in-progress{background:linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006));color:var(--muted);border:1px solid var(--glass-border)}
-.status-badge.completed{background:linear-gradient(90deg, rgba(0,200,120,0.12), rgba(0,200,120,0.06));color:var(--text)}
-
-.goal-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;margin-top:6px}
-.goal-actions select{padding:8px;border-radius:8px;border:1px solid var(--border-soft);background:transparent;color:var(--text)}
-.goal-actions button{background:transparent;border:1px solid var(--glass-border);padding:8px;border-radius:8px;cursor:pointer}
-
-.empty-state{padding:18px;border-radius:10px;border:1px dashed rgba(255,255,255,0.03);color:var(--muted);background:transparent}
-
-.goals-insights h4{margin:12px 0 8px 0;color:var(--text)}
-.insights-content{background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.004));padding:12px;border-radius:10px;border:1px solid var(--glass-border);color:var(--muted)}
-
-@media (max-width:900px){
-  .goals-container{grid-template-columns:1fr}
-  .goals-stats{flex-direction:column}
-}
-
-/* ------------------------------------------------------------------ */
-/* SearchPanel visuals: thumbnails, media cards, related topics chips     */
-/* Enhances discoverability with image/video previews and polished list   */
-/* ------------------------------------------------------------------ */
-.search-panel {
-  margin-top: 18px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.008), rgba(255,255,255,0.004));
-  border: 1px solid var(--glass-border);
-  border-radius: 12px;
-  padding: 14px;
-  box-shadow: 0 20px 60px rgba(2,6,23,0.6);
-  color: var(--text);
-}
-.search-panel .search-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-.search-panel .search-header h3{margin:0;font-size:1.05rem;color:var(--text);font-weight:800}
-.search-panel .search-actions{display:flex;gap:8px;align-items:center}
-
-.search-results-list{display:grid;gap:10px}
-.result-item{
-  display:flex;gap:12px;align-items:center;padding:12px;border-radius:10px;
-  background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.006));
-  border: 1px solid rgba(255,255,255,0.02);
-  transition: transform .16s var(--ease-in-out), box-shadow .16s var(--ease-in-out);
-}
-.result-item:hover{transform:translateY(-6px);box-shadow:0 28px 100px rgba(0,0,0,0.6)}
-.result-thumb{flex:0 0 120px;height:72px;border-radius:8px;overflow:hidden;background:linear-gradient(180deg, rgba(0,0,0,0.2), rgba(0,0,0,0.1));display:flex;align-items:center;justify-content:center}
-.result-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.result-body{flex:1;display:flex;flex-direction:column;gap:6px}
-.result-title{font-weight:800;color:var(--text);font-size:0.98rem}
-.result-snippet{color:var(--muted);font-size:0.9rem;line-height:1.25}
-.result-meta{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:0.85rem}
-.result-actions{display:flex;gap:8px;align-items:center}
-
-/* Media panel grid (images/videos) */
-.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-top:8px}
-.media-thumb{position:relative;border-radius:8px;overflow:hidden;border:1px solid var(--border-soft);background:var(--bg-surface);box-shadow:var(--elev-1)}
-.media-thumb img, .media-thumb video{width:100%;height:110px;object-fit:cover;display:block}
-.media-thumb.video::after{content:'▶';position:absolute;right:8px;top:8px;background:linear-gradient(90deg,var(--accent),var(--accent-2));color:#041316;padding:6px 8px;border-radius:8px;font-weight:800}
-.media-thumb .play-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:2rem;color:rgba(255,255,255,0.9);background:linear-gradient(180deg, rgba(0,0,0,0.0), rgba(0,0,0,0.16));opacity:0;transition:opacity .18s}
-.media-thumb:hover .play-overlay{opacity:1}
-
-/* Related topics / chips */
-.related-topics{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.topic-chip{padding:6px 10px;border-radius:999px;background:linear-gradient(90deg,var(--accent-2),var(--accent));color:#041316;font-weight:700;border:1px solid var(--glass-border);cursor:pointer;box-shadow:0 10px 36px rgba(0,0,0,0.45)}
-.topic-chip:hover{transform:translateY(-3px)}
-
-/* Compact list variant used in smaller areas */
-.compact-results .result-item{padding:10px}
-
-@media (max-width:900px){
-  .result-item{flex-direction:row}
-  .result-thumb{flex:0 0 84px;height:56px}
-}

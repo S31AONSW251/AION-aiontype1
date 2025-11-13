@@ -39,9 +39,6 @@ const MemoryManager = ({
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('relevance');
 
-  // Keep stats in sync when soulState changes
-  useEffect(() => updateMemoryStats(), [soulState]);
-
   // Enhanced memory retrieval with semantic search
   // Update memory statistics
   const updateMemoryStats = useCallback(() => {
@@ -60,6 +57,10 @@ const MemoryManager = ({
     
     setMemoryStats(stats);
   }, [soulState]);
+
+  // Keep stats in sync when soulState changes
+  // include updateMemoryStats in deps to satisfy exhaustive-deps lint rule
+  useEffect(() => { updateMemoryStats(); }, [soulState, updateMemoryStats]);
 
   // persist pinned ids
   useEffect(() => {

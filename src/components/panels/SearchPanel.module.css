@@ -288,4 +288,30 @@
 .progressBar{ height:8px; background: rgba(255,255,255,0.02); border-radius:6px; overflow:hidden; border:1px solid rgba(255,255,255,0.02); }
 .progressFill{ height:100%; background: linear-gradient(90deg,var(--accent),var(--accent-2)); transition: width .28s ease; }
 
+/* Lazy image styling was migrated to the global shared stylesheet `src/App.css`.
+   Use the shared classes there (e.g. .aion-lazy-wrapper, .aion-shimmer, .aion-lazy-img,
+   .aion-gallery-img) so all panels share a single implementation. */
+
+/* Grid (compact) mode for search results - global because JSX uses plain class names */
+:global(.search-results.grid){
+  display:grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap:12px;
+}
+:global(.search-results.grid .search-result){
+  background: linear-gradient(180deg, rgba(8,10,12,0.9), rgba(6,8,10,0.92));
+  padding:12px;
+  border-radius:10px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.6);
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+
+/* Lightbox open animation */
+:global(.lightboxContent){
+  animation: popIn .16s cubic-bezier(.2,.9,.3,1) both;
+}
+@keyframes popIn{ from { transform: scale(.96); opacity:0 } to { transform: scale(1); opacity:1 } }
+
 

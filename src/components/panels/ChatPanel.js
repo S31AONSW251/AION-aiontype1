@@ -640,7 +640,19 @@ const ChatPanel = React.memo(({
   }, []);
 
   return (
-    <div className={`chat-container ${themeClass}`} ref={chatContainerRef}>
+    <div
+      className={`chat-container ${themeClass}`}
+      ref={chatContainerRef}
+      style={{
+        // map legacy accent variables to the new cp variables so avatars and
+        // decorative elements pick up the updated palette without changing
+        // every place that references --accent / --accent-2 in CSS.
+        '--accent': 'var(--cp-accent-1)',
+        '--accent-2': 'var(--cp-accent-2)'
+      }}
+    >
+      {/* decorative art element (purely visual, aria-hidden) */}
+      <div className="decorative-art" aria-hidden="true" />
       <div className="chat-header brand-premium">
             <div className="chat-title-row">
               <div className="title-left">

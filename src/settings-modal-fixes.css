@@ -111,6 +111,29 @@ body:not(.light-theme) .settings-modal .settings-content .media-item,
   opacity: 1 !important;
 }
 
+/* ALSO target the settings-group tiles specifically (these are the small
+   white-like boxes shown in Settings). Force them to use dark/glass surfaces
+   in dark theme so the whole modal reads as a cohesive dark panel. */
+body:not(.light-theme) .settings-modal .settings-content .settings-group,
+body:not(.light-theme) .settings-modal .settings-content .settings-grid .settings-group {
+  background-image: none !important;
+  background-color: rgba(12,16,24,0.78) !important; /* solid dark glass */
+  border: 1px solid rgba(255,255,255,0.032) !important;
+  color: var(--text, #eaf6ff) !important;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.6) !important;
+}
+
+/* Light-theme: ensure settings tiles remain light/white so the modal reads
+   consistently in light mode. This explicitly undoes the dark-theme rules. */
+body.light-theme .settings-modal .settings-content .settings-group,
+body.light-theme .settings-modal .settings-content .settings-grid .settings-group {
+  background-image: none !important;
+  background-color: #ffffff !important;
+  border: 1px solid rgba(3,9,14,0.06) !important;
+  color: #08141b !important;
+  box-shadow: 0 8px 20px rgba(2,6,23,0.06) !important;
+}
+
 /* Ensure headings and small labels inside these cards are visible */
 .settings-modal .settings-content .card h3,
 .settings-modal .settings-content .card h4,
