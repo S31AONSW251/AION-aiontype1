@@ -618,12 +618,18 @@ const ChatPanel = React.memo(({
   }, [chatContainerRef]);
 
   // Determine theme class for this panel so CSS can adapt to light/dark appearances.
+  // This effect now watches for changes to the document's theme classes and
+  // system-level prefers-color-scheme so the panel updates if the app theme
+  // or OS theme changes after mount.
   const [themeClass, setThemeClass] = useState('');
   useEffect(() => {
-    try {
-      // If a global theme class is set on <html> or <body>, use that. Otherwise
-      // fallback to the user's system preference.
-      if (typeof document !== 'undefined') {
+    if (typeof document === 'undefined') {
+      setThemeClass('light-theme');
+      return;
+    }
+
+    const determine = () => {
+      try {
         if (document.documentElement.classList.contains('dark-theme') || document.body.classList.contains('dark-theme')) {
           setThemeClass('dark-theme');
         } else if (document.documentElement.classList.contains('light-theme') || document.body.classList.contains('light-theme')) {
@@ -633,10 +639,44 @@ const ChatPanel = React.memo(({
         } else {
           setThemeClass('light-theme');
         }
+      } catch (e) {
+        setThemeClass('light-theme');
       }
-    } catch (e) {
-      setThemeClass('light-theme');
+    };
+
+    determine();
+
+    // Listen for system theme changes
+    const mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
+    const onMqlChange = () => determine();
+    if (mql) {
+      if (typeof mql.addEventListener === 'function') mql.addEventListener('change', onMqlChange);
+      else if (typeof mql.addListener === 'function') mql.addListener(onMqlChange);
     }
+
+    // Observe class changes on <html> and <body> so JS-driven theme toggles update the panel
+    const obs = new MutationObserver((mutations) => {
+      for (const m of mutations) {
+        if (m.attributeName === 'class') {
+          determine();
+          break;
+        }
+      }
+    });
+    try {
+      obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+      obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    } catch (e) {
+      // ignore if observe is not permitted in some environments
+    }
+
+    return () => {
+      if (mql) {
+        if (typeof mql.removeEventListener === 'function') mql.removeEventListener('change', onMqlChange);
+        else if (typeof mql.removeListener === 'function') mql.removeListener(onMqlChange);
+      }
+      try { obs.disconnect(); } catch (e) {}
+    };
   }, []);
 
   return (

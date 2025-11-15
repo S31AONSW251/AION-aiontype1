@@ -47,6 +47,16 @@
   --cp-radius: 16px;
   --cp-ui-font: var(--font-sans);
 
+  /* ChatPanel theme tokens - dark mode defaults (ChatPanel.css will override as needed) */
+  --chat-text-primary: #e6f6ff;
+  --chat-text-secondary: rgba(230, 246, 255, 0.7);
+  --chat-bg-message: rgba(15, 18, 24, 0.85);
+  --chat-bg-aion: rgba(8, 12, 18, 0.9);
+  --chat-border-color: rgba(255, 255, 255, 0.08);
+  --chat-shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.4);
+  --chat-shadow-medium: 0 12px 36px rgba(0, 0, 0, 0.5);
+  --chat-shadow-elevated: 0 24px 60px rgba(0, 0, 0, 0.6);
+
   /* Core typography & layout tokens */
   --font-sans: Inter, 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial;
   --font-display: 'Poppins', var(--font-sans);
@@ -154,6 +164,16 @@ body.light-theme{
   --accent-2: var(--cp-accent-2);
   --border:rgba(3,9,14,0.06);
   --focus:rgba(0,119,204,0.12);
+
+  /* ChatPanel light theme tokens override to ensure ChatPanel visuals match app theme */
+  --chat-text-primary: #0f1419 !important;
+  --chat-text-secondary: #666d7a !important;
+  --chat-bg-message: rgba(255, 255, 255, 0.95) !important;
+  --chat-bg-aion: rgba(245, 248, 252, 0.98) !important;
+  --chat-border-color: rgba(0, 0, 0, 0.08) !important;
+  --chat-shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.08) !important;
+  --chat-shadow-medium: 0 12px 36px rgba(0, 0, 0, 0.12) !important;
+  --chat-shadow-elevated: 0 24px 60px rgba(0, 0, 0, 0.16) !important;
 }
 
 /* Ensure header brand/logo is clearly visible in light theme (override conflicting rules) */
@@ -422,32 +442,14 @@ body.light-theme .brand-logo { color: var(--text-primary); }
 .prompt-chip { background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)); border-radius:999px; padding:6px 10px; border:1px solid var(--glass-border); color:var(--muted); cursor:pointer }
 
 /* Chat / Message compat */
-.message-wrapper { display:flex; gap:12px; align-items:flex-start; position:relative }
-.aion-avatar, .user-avatar { width:42px; height:42px; border-radius:999px; background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006)); display:flex; align-items:center; justify-content:center; font-weight:700; color:var(--text); box-shadow:var(--elev-1) }
-.avatar-pulse { position:absolute; inset:auto; width:56px; height:56px; border-radius:999px; filter: blur(6px); background: linear-gradient(90deg,var(--accent),var(--accent-2)); opacity:0.06 }
-.avatar-icon { font-weight:900; font-size:1.05rem }
-.aion-message, .message-content { background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.004)); padding:10px 12px; border-radius:12px; border:1px solid var(--glass-border); color:var(--text); box-shadow:var(--elev-1); max-width:78% }
-.aion-message.streaming { box-shadow: 0 20px 80px rgba(0,0,0,0.6); }
-.message-header { display:flex; gap:8px; align-items:center; font-size:0.9rem; color:var(--muted) }
-.username { font-weight:800; color:var(--text); }
-.time, .message-id { color:var(--muted); font-size:0.8rem }
-.message-body { margin-top:8px }
-.typing-indicator { width:48px; height:18px; display:flex; align-items:center; justify-content:center }
-.typing-dots { display:flex; gap:4px }
-.typing-dots > span { width:6px; height:6px; background:var(--muted); border-radius:999px; display:inline-block; animation: blink 1s infinite }
-@keyframes blink { 0% { opacity:0.2 } 50% { opacity:1 } 100% { opacity:0.2 } }
+/* Chat panel visuals (messages, avatars, typing indicator) are managed by
+  `ChatPanel.css` to keep the premium, theme-aware appearance isolated.
+  App.css intentionally does not define message/typing/avatar styles
+  to avoid overriding ChatPanel's specialized rules. */
 
-/* Welcome / Hero */
-.welcome-hero { padding:18px; border-radius:12px; background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.004)); border:1px solid var(--glass-border); }
-.hero-left { flex:1 }
-.brand-compact .brand-mark { width:56px; height:56px; border-radius:999px; background: linear-gradient(90deg,var(--accent),var(--accent-2)); filter: blur(10px); opacity:0.9 }
-.brand-logo-large { font-family:var(--font-display); font-weight:900; font-size:2.2rem; letter-spacing:1px; background:linear-gradient(90deg,var(--accent),var(--accent-2)); -webkit-background-clip:text; background-clip:text; color:transparent }
-.brand-tag { color:var(--muted); margin-top:6px }
-.hero-title { font-size:1.35rem; font-weight:800; margin:6px 0 }
-.hero-subtitle { color:var(--muted); margin-bottom:8px }
-.hero-ctas { display:flex; gap:10px; margin-top:12px }
-.hero-stats { display:flex; gap:18px; margin-top:12px }
-.stat-item { text-align:center }
+/* Welcome/hero visuals are handled by ChatPanel.css's .welcome-hero and
+  related classes. App.css does not provide duplicate welcome/hero rules
+  to avoid conflicts with the panel's premium styling. */
 .stat-value { font-weight:900; font-size:1.5rem; color:var(--text) }
 .stat-label { font-size:0.85rem; color:var(--muted) }
 
@@ -783,28 +785,12 @@ body.light-theme .settings-modal .card {
 /* ---------------------------
    Chat: messages & input
    --------------------------- */
-.chat-container { display:flex; flex-direction:column; gap:10px; flex:1 1 auto; overflow-y:auto; padding-right:6px; margin-bottom:18px; }
-.conversation-history { display:flex; flex-direction:column; gap:18px; padding-bottom:10px; }
-.message-wrapper { display:flex; gap:12px; align-items:flex-start; animation: fadeIn .35s ease; width:100%; }
-.message-wrapper.user { justify-content:flex-end; align-items:flex-end; }
-.avatar, .aion-avatar, .user-avatar { width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; box-shadow:var(--shadow-sm); }
-.aion-avatar { background: linear-gradient(45deg,#fff,#eaeaea); color:#111; }
-
-.message-content, .aion-message { max-width:78%; background: var(--bg-card); border-radius:14px; padding:12px 16px; position:relative; border:1px solid var(--border-soft); color:var(--text-primary); word-wrap:break-word; box-shadow: 0 8px 24px rgba(0,0,0,0.45); }
-.message-wrapper.user .message-content { background: linear-gradient(90deg,#222,#eee); color: #111; border-radius: 14px 14px 0 14px; border: 1px solid #222; }
-.message-header { display:flex; justify-content:space-between; align-items:center; gap:10px; margin-bottom:8px; font-size:.8rem; color:var(--text-muted); }
-.message-body { line-height:1.7; color:inherit; }
-.message-body pre { background: rgba(0,0,0,0.25); padding:14px; border-radius:8px; overflow-x:auto; font-family:var(--font-mono); font-size:.92rem; margin:0.75em 0; }
-.message-body code { font-family:var(--font-mono); background: rgba(255,255,255,0.04); padding:2px 6px; border-radius:4px; }
-
-.message-actions { position:absolute; top:8px; right:8px; display:flex; gap:6px; padding:4px; border-radius:8px; background: rgba(0,0,0,0.12); opacity:0; transform: translateY(-2px); transition: all .12s ease; }
-.aion-message:hover .message-actions { opacity:1; transform: translateY(0); }
-.action-btn { display:inline-flex; align-items:center; justify-content:center; width:30px; height:30px; border-radius:6px; border:none; background:transparent; color:var(--text-primary); cursor:pointer; }
-.action-btn:hover { background: var(--bg-hover); transform: translateY(-2px); }
-
-/* Typing indicator */
-.typing-indicator { display:flex; gap:8px; align-items:center; padding:8px 0; color:var(--text-muted); }
-.typing-indicator .dot { width:8px; height:8px; border-radius:50%; background: var(--text-muted); animation: bounce .9s infinite ease-in-out; }
+/* Chat panel layout and interactive elements are controlled in
+  `ChatPanel.css`. App.css intentionally avoids defining
+  `.chat-container`, `.message-wrapper`, `.message-content`,
+  `.aion-avatar`, `.message-actions`, and `.typing-indicator` so the
+  ChatPanel component can provide a consistent premium look without
+  being overridden by global app styles. */
 
 /* Empty state */
 .empty-chat-container { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; gap:12px; color:var(--text-muted); text-align:center; }
@@ -2700,11 +2686,13 @@ body.light-theme .welcome-logo {
 .notification.warning { border-left: 3px solid var(--status-warning); }
 .notification.error { border-left: 3px solid var(--status-error); }
 
-/* Animations */
-@keyframes fadeIn { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
-@keyframes slideUp { from { transform: translate(-50%, 30px); opacity:0; } to { transform: translate(-50%, 0); opacity:1; } }
-@keyframes spin { from { transform: rotate(0); } to { transform: rotate(360deg); } }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 var(--color-secondary); } 70% { box-shadow: 0 0 0 10px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+/* Canonical animation keyframes used by the app and ChatPanel.
+  We keep a single definition here to avoid duplicates overriding each other. */
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideUp { from { transform: translate(-50%, 20px); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+@keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1.0); } }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); } }
 @keyframes wave { 0%, 60%, 100% { transform: initial; } 30% { transform: translateY(-8px); } }
 
 /* shared panel card style */
