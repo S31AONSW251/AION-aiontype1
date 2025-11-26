@@ -1,0 +1,229 @@
+/* ============================================
+   FLOATING DASHBOARD BUTTON STYLES
+   Premium floating action button with animations
+   ============================================ */
+
+.floating-button-container {
+  position: fixed;
+  bottom: 2.5rem;
+  right: 2rem;
+  z-index: 9998;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Main Floating Button */
+.floating-button {
+  position: relative;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4),
+              0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  overflow: visible;
+}
+
+.floating-button:hover {
+  transform: scale(1.15) translateY(-4px);
+  box-shadow: 0 12px 32px rgba(102, 126, 234, 0.6),
+              0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.floating-button.hovered {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+.floating-button:active {
+  transform: scale(1.05) translateY(-2px);
+}
+
+/* Icon inside button */
+.floating-icon {
+  width: 1.5rem;
+  height: 1.5rem;
+  animation: pulseIcon 3s ease-in-out infinite;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+@keyframes pulseIcon {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+  }
+  50% {
+    transform: scale(1.1);
+    filter: drop-shadow(0 4px 8px rgba(102, 126, 234, 0.4));
+  }
+}
+
+/* Pulse Rings */
+.pulse-ring {
+  position: absolute;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: 50%;
+  border: 2px solid rgba(102, 126, 234, 0.4);
+  animation: pulsing 2s ease-out infinite;
+  pointer-events: none;
+}
+
+.pulse-ring-2 {
+  animation-delay: 0.6s;
+  opacity: 0.8;
+}
+
+@keyframes pulsing {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Tooltip */
+.floating-tooltip {
+  position: absolute;
+  right: calc(100% + 1rem);
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(20, 20, 20, 0.95);
+  color: #fff;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.5px;
+}
+
+.floating-button:hover .floating-tooltip {
+  opacity: 1;
+}
+
+/* Badge */
+.floating-badge {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  width: 1.5rem;
+  height: 1.5rem;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #fff;
+  box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.5px;
+}
+
+.badge-text {
+  position: relative;
+  z-index: 2;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+.badge-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(245, 87, 108, 0.4), transparent);
+  animation: badgeGlow 2s ease-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+@keyframes badgeGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 87, 108, 0.7);
+  }
+  100% {
+    box-shadow: 0 0 0 0.5rem rgba(245, 87, 108, 0);
+  }
+}
+
+/* Accessibility */
+.floating-button:focus {
+  outline: 2px solid rgba(102, 126, 234, 0.5);
+  outline-offset: 2px;
+}
+
+.floating-button:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .floating-button-container {
+    bottom: 1.5rem;
+    right: 1rem;
+  }
+
+  .floating-button {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .pulse-ring {
+    width: 3rem;
+    height: 3rem;
+  }
+
+  .floating-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+  }
+
+  .floating-tooltip {
+    font-size: 0.7rem;
+    padding: 0.375rem 0.625rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .floating-button-container {
+    bottom: 1rem;
+    right: 0.75rem;
+  }
+
+  .floating-button {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .pulse-ring {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+
+  .floating-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}

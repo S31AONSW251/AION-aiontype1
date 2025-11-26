@@ -1,0 +1,297 @@
+/**
+ * ════════════════════════════════════════════════════════════════════════════════
+ *  FLOATING BRAIN ICON - Premium Floating Action Button
+ * ════════════════════════════════════════════════════════════════════════════════
+ */
+
+.floating-brain-container {
+  position: fixed;
+  bottom: 32px;
+  right: 32px;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.floating-brain-button {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: linear-gradient(135deg, #00d4ff 0%, #b24bff 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  font-weight: bold;
+  box-shadow: 
+    0 8px 32px rgba(0, 212, 255, 0.5),
+    0 0 25px rgba(178, 75, 255, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.15);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  pointer-events: all;
+  overflow: hidden;
+}
+
+.floating-brain-button:hover {
+  transform: scale(1.1);
+  box-shadow: 
+    0 12px 32px rgba(0, 212, 255, 0.6),
+    0 0 30px rgba(178, 75, 255, 0.5),
+    inset 0 0 30px rgba(255, 255, 255, 0.15);
+}
+
+.floating-brain-button.hovered {
+  transform: scale(1.1);
+}
+
+.floating-brain-button.active {
+  transform: scale(0.95);
+  box-shadow: 
+    0 4px 16px rgba(0, 212, 255, 0.3),
+    0 0 15px rgba(178, 75, 255, 0.25);
+}
+
+.brain-icon {
+  width: 44px;
+  height: 44px;
+  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 4px rgba(0, 212, 255, 0.3));
+  animation: brainPulse 2.5s ease-in-out infinite;
+}
+
+@keyframes brainPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+  }
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.6));
+  }
+}
+
+.floating-brain-button:hover .brain-icon {
+  animation: brainPulse 1.5s ease-in-out infinite;
+}
+
+/* Pulse Rings */
+.brain-pulse-ring {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border: 2px solid rgba(0, 212, 255, 0.6);
+  border-radius: 50%;
+  top: 0;
+  left: 0;
+  animation: brainRingPulse 2s ease-out infinite;
+}
+
+.brain-pulse-ring-2 {
+  animation: brainRingPulse 2s ease-out 0.5s infinite;
+}
+
+.brain-pulse-ring-3 {
+  animation: brainRingPulse 2s ease-out 1s infinite;
+}
+
+@keyframes brainRingPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.8);
+    opacity: 0;
+  }
+}
+
+/* Tooltip */
+.brain-tooltip {
+  position: absolute;
+  background: rgba(0, 0, 0, 0.9);
+  color: #00d4ff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  bottom: 100%;
+  right: 0;
+  margin-bottom: 8px;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  z-index: 10;
+}
+
+.floating-brain-button:hover .brain-tooltip {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Status Badge */
+.brain-badge {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(0, 212, 255, 0.2);
+  border: 2px solid #00d4ff;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.3s ease;
+  pointer-events: none;
+}
+
+.brain-badge.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #00d4ff;
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+  0%, 100% {
+    box-shadow: 0 0 4px rgba(0, 212, 255, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 8px rgba(0, 212, 255, 0.8);
+  }
+}
+
+/* Dashboard Modal Overlay */
+.dashboard-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.3s ease-out;
+  padding: 20px;
+}
+
+.dashboard-modal-container {
+  position: relative;
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.95) 0%, rgba(10, 10, 30, 0.95) 100%);
+  border: 2px solid rgba(0, 212, 255, 0.3);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 1100px;
+  width: 95%;
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 
+    0 0 40px rgba(0, 212, 255, 0.4),
+    0 20px 60px rgba(0, 212, 255, 0.2),
+    inset 0 0 60px rgba(0, 212, 255, 0.05),
+    0 0 100px rgba(178, 75, 255, 0.1);
+  animation: slideUpModal 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes slideUpModal {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.dashboard-close-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border: 2px solid rgba(0, 212, 255, 0.5);
+  background: rgba(0, 0, 0, 0.8);
+  color: #00d4ff;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+  font-weight: bold;
+  box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+}
+
+.dashboard-close-button:hover {
+  background: rgba(0, 0, 0, 0.95);
+  box-shadow: 0 0 20px rgba(0, 212, 255, 0.6);
+  transform: scale(1.15);
+  border-color: #00d4ff;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .floating-brain-container {
+    bottom: 20px;
+    right: 20px;
+  }
+
+  .floating-brain-button {
+    width: 56px;
+    height: 56px;
+  }
+
+  .brain-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .brain-pulse-ring {
+    width: 56px;
+    height: 56px;
+  }
+
+  .dashboard-modal-overlay {
+    padding: 10px;
+  }
+
+  .dashboard-modal-container {
+    padding: 16px;
+  }
+
+  .brain-tooltip {
+    font-size: 11px;
+    padding: 4px 8px;
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

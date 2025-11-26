@@ -33,7 +33,7 @@ export default function AIONUltraDashboard() {
           marginBottom: '0.5rem',
           fontSize: '0.9rem'
         }}>
-          <span style={{ color: '#1c1d1dff', fontWeight: '600' }}>{label}</span>
+          <span style={{ color: '#00d4ff', fontWeight: '600' }}>{label}</span>
           <span style={{ color: '#b24bff', fontWeight: '700' }}>{value}/{max}</span>
         </div>
         <div style={{

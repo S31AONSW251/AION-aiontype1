@@ -46,7 +46,7 @@ import FileUploadPanel from './components/panels/FileUploadPanel';
 import ProceduresPanel from './components/panels/ProceduresPanel';
 import StatusPanel from './components/panels/StatusPanel';
 import WebCachePanel from './components/panels/WebCachePanel';
-import AIONUltraDashboard from './components/AIONUltraDashboard';
+import FloatingBrainIcon from './components/FloatingBrainIcon';
 
 
 import "./App.css";
@@ -3055,8 +3055,8 @@ function App() {
         onClose={() => setAnalysisModal({ open: false, analysis: null, fileName: '' })}
       />
       
-      {/* AION ULTRA Dashboard - Display Advanced Systems Status */}
-      <AIONUltraDashboard />
+      {/* Floating Brain Icon with Dashboard - Single component */}
+      <FloatingBrainIcon />
     </div>
   );
 }
