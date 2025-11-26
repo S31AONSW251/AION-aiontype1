@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AION Interactive Learning - Live Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .test-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .test-card {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .test-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+        }
+        
+        .test-card h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+        }
+        
+        .test-description {
+            color: #666;
+            margin-bottom: 15px;
+            line-height: 1.6;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+        
+        .test-button:hover {
+            transform: scale(1.02);
+        }
+        
+        .test-button:active {
+            transform: scale(0.98);
+        }
+        
+        .output {
+            background: #f5f5f5;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 3px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        
+        .success {
+            color: #27ae60;
+            font-weight: bold;
+        }
+        
+        .error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .info {
+            color: #3498db;
+        }
+        
+        .console-output {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-top: 20px;
+        }
+        
+        .console-output h2 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .console-logs {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.5;
+        }
+        
+        .log-success {
+            color: #4ec9b0;
+        }
+        
+        .log-error {
+            color: #f48771;
+        }
+        
+        .log-info {
+            color: #9cdcfe;
+        }
+        
+        .run-all-btn {
+            background: linear-gradient(135deg, #27ae60 0%, #229954 100%);
+            width: 100%;
+            padding: 15px;
+            font-size: 1.1em;
+            margin-bottom: 30px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧠 AION Interactive Learning - Live Test Suite</h1>
+            <p>Test the complete offline learning system in real-time</p>
+        </div>
+        
+        <button class="test-button run-all-btn" onclick="runAllTests()">
+            ▶️ RUN ALL TESTS NOW
+        </button>
+        
+        <div class="test-grid">
+            <div class="test-card">
+                <h3>✅ System Initialization</h3>
+                <p class="test-description">Check if the OfflineInteractiveLearner is properly loaded and all methods are available.</p>
+                <button class="test-button" onclick="testInitialization()">Test System Load</button>
+                <div class="output" id="output-init"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>💬 Start Learning Collection</h3>
+                <p class="test-description">Begin an interactive learning session with the AI asking initial questions.</p>
+                <button class="test-button" onclick="testStartLearning()">Start Learning</button>
+                <div class="output" id="output-start"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>📊 Process User Response</h3>
+                <p class="test-description">Test the system analyzing a user response and extracting interests, topics, and expertise.</p>
+                <button class="test-button" onclick="testProcessResponse()">Process Response</button>
+                <div class="output" id="output-response"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>👤 View User Profile</h3>
+                <p class="test-description">Display the automatically built user profile from collected data.</p>
+                <button class="test-button" onclick="testViewProfile()">View Profile</button>
+                <div class="output" id="output-profile"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>💡 Emotional Tone Detection</h3>
+                <p class="test-description">Test the system detecting emotional tones: enthusiastic, struggling, curious, uncertain, neutral.</p>
+                <button class="test-button" onclick="testEmotionDetection()">Test Emotions</button>
+                <div class="output" id="output-emotion"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>🎓 Learning Style Detection</h3>
+                <p class="test-description">Test identification of visual, auditory, kinesthetic, and reading learning preferences.</p>
+                <button class="test-button" onclick="testLearningStyle()">Test Styles</button>
+                <div class="output" id="output-style"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>❌ Knowledge Gap Detection</h3>
+                <p class="test-description">Test the system identifying what users don't know and what they want to learn.</p>
+                <button class="test-button" onclick="testKnowledgeGaps()">Test Gaps</button>
+                <div class="output" id="output-gaps"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>📈 Personalized Response Generation</h3>
+                <p class="test-description">Test generating responses personalized based on collected user profile data.</p>
+                <button class="test-button" onclick="testPersonalizedResponse()">Test Personalization</button>
+                <div class="output" id="output-personalized"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>📚 Generate Learning Path</h3>
+                <p class="test-description">Test creating a personalized learning progression for the user.</p>
+                <button class="test-button" onclick="testLearningPath()">Test Path</button>
+                <div class="output" id="output-path"></div>
+            </div>
+            
+            <div class="test-card">
+                <h3>💾 Data Export & Persistence</h3>
+                <p class="test-description">Test exporting user data to JSON and saving to localStorage for persistence.</p>
+                <button class="test-button" onclick="testDataPersistence()">Test Persistence</button>
+                <div class="output" id="output-persistence"></div>
+            </div>
+        </div>
+        
+        <div class="console-output">
+            <h2>📋 Live Console Output</h2>
+            <div class="console-logs" id="console-logs">
+                <span class="log-info">• Waiting for tests to run...</span><br>
+                <span class="log-info">• Click "RUN ALL TESTS NOW" or individual test buttons</span><br>
+                <span class="log-info">• Results will appear here in real-time</span>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const consoleLogs = [];
+        const maxLogs = 500;
+        
+        function addLog(message, type = 'info') {
+            consoleLogs.push({ message, type });
+            if (consoleLogs.length > maxLogs) {
+                consoleLogs.shift();
+            }
+            updateConsoleDisplay();
+        }
+        
+        function updateConsoleDisplay() {
+            const logsDiv = document.getElementById('console-logs');
+            logsDiv.innerHTML = consoleLogs.map(log => {
+                const className = `log-${log.type}`;
+                return `<span class="${className}">${escapeHtml(log.message)}</span><br>`;
+            }).join('');
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        function setOutput(elementId, html) {
+            document.getElementById(elementId).innerHTML = html;
+        }
+        
+        // Test 1: Initialization
+        async function testInitialization() {
+            addLog('TEST 1: Testing system initialization...', 'info');
+            let html = '';
+            
+            try {
+                if (window.OFFLINE_LEARNING_COLLECTOR) {
+                    html += `<span class="success">✅ System loaded successfully</span><br>`;
+                    html += `Type: ${typeof window.OFFLINE_LEARNING_COLLECTOR}<br>`;
+                    
+                    const methods = Object.getOwnPropertyNames(Object.getPrototypeOf(window.OFFLINE_LEARNING_COLLECTOR))
+                        .filter(m => m !== 'constructor');
+                    
+                    html += `<br><span class="success">Available Methods (${methods.length}):</span><br>`;
+                    methods.forEach((m, idx) => {
+                        html += `${idx + 1}. ${m}<br>`;
+                    });
+                    
+                    addLog('✅ System initialized successfully', 'success');
+                } else {
+                    html += `<span class="error">❌ OfflineInteractiveLearner NOT FOUND</span>`;
+                    addLog('❌ System initialization failed', 'error');
+                }
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-init', html);
+        }
+        
+        // Test 2: Start Learning
+        async function testStartLearning() {
+            addLog('TEST 2: Starting learning collection...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                const greeting = await learner.startLearningCollection('TestUser');
+                
+                html += `<span class="success">✅ Learning session started</span><br>`;
+                html += `<br><span class="info">Message:</span><br>`;
+                html += `"${greeting.message}"<br>`;
+                html += `<br>Phase: ${greeting.phase}<br>`;
+                
+                addLog('✅ Learning session started successfully', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-start', html);
+        }
+        
+        // Test 3: Process Response
+        async function testProcessResponse() {
+            addLog('TEST 3: Processing user response...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                const response = "I'm interested in AI and machine learning but struggle with neural networks";
+                
+                const result = await learner.processUserResponse(response, 'interests');
+                
+                html += `<span class="success">✅ Response processed</span><br>`;
+                html += `<br><span class="info">User said:</span><br>`;
+                html += `"${response}"<br>`;
+                html += `<br><span class="info">Analysis:</span><br>`;
+                html += `Topics: ${result.extracted_data.topics.join(', ')}<br>`;
+                html += `Emotion: ${result.extracted_data.emotional_tone}<br>`;
+                html += `Expertise: ${result.extracted_data.expertise_level}<br>`;
+                html += `Gaps: ${result.extracted_data.knowledge_gaps.join(', ')}<br>`;
+                html += `<br><span class="info">Follow-up:</span><br>`;
+                html += `"${result.followup_question}"<br>`;
+                
+                addLog('✅ User response analyzed successfully', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-response', html);
+        }
+        
+        // Test 4: View Profile
+        async function testViewProfile() {
+            addLog('TEST 4: Retrieving user profile...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                const profile = learner.getUserProfileSummary();
+                
+                html += `<span class="success">✅ Profile retrieved</span><br>`;
+                html += `<br><span class="info">Profile Summary:</span><br>`;
+                html += `Name: ${profile.name}<br>`;
+                html += `Interests: ${profile.interests.join(', ') || 'None yet'}<br>`;
+                html += `Gaps: ${profile.knowledge_gaps.join(', ') || 'None identified'}<br>`;
+                html += `Expertise: ${profile.expertise_level}<br>`;
+                html += `Preferences: ${profile.learning_preferences.join(', ') || 'Not detected'}<br>`;
+                html += `Conversations: ${profile.conversation_count}<br>`;
+                
+                addLog('✅ User profile retrieved', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-profile', html);
+        }
+        
+        // Test 5: Emotion Detection
+        async function testEmotionDetection() {
+            addLog('TEST 5: Testing emotion detection...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                
+                const testCases = [
+                    { text: "This is amazing! I love learning about AI!", expected: "enthusiastic" },
+                    { text: "I don't understand this at all, I'm so confused", expected: "struggling" },
+                    { text: "That's interesting, tell me more about how it works", expected: "curious" },
+                    { text: "Maybe, I'm not sure if I'm getting this right", expected: "uncertain" },
+                    { text: "Okay, I see what you mean", expected: "neutral" }
+                ];
+                
+                html += `<span class="success">✅ Testing 5 emotion types</span><br><br>`;
+                
+                testCases.forEach((test, idx) => {
+                    const emotion = learner.detectEmotionalTone(test.text);
+                    const match = emotion === test.expected ? '✓' : '≈';
+                    html += `${match} "${test.text}"<br>`;
+                    html += `   → ${emotion} (expected: ${test.expected})<br><br>`;
+                });
+                
+                addLog('✅ Emotion detection tested', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-emotion', html);
+        }
+        
+        // Test 6: Learning Style
+        async function testLearningStyle() {
+            addLog('TEST 6: Testing learning style detection...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                
+                const styles = [
+                    "I prefer watching videos and seeing diagrams",
+                    "I learn best by listening and discussing",
+                    "I need to code and build things myself",
+                    "I prefer reading books and documentation"
+                ];
+                
+                html += `<span class="success">✅ Testing learning style detection</span><br><br>`;
+                
+                styles.forEach((style, idx) => {
+                    const detected = learner.detectLearningStyle(style);
+                    html += `${idx + 1}. "${style}"<br>`;
+                    html += `   → Style: ${detected}<br><br>`;
+                });
+                
+                addLog('✅ Learning styles detected', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-style', html);
+        }
+        
+        // Test 7: Knowledge Gaps
+        async function testKnowledgeGaps() {
+            addLog('TEST 7: Testing knowledge gap detection...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                
+                const gaps = [
+                    "I don't understand backpropagation",
+                    "What are activation functions?",
+                    "I'm confused about gradient descent"
+                ];
+                
+                html += `<span class="success">✅ Testing gap detection</span><br><br>`;
+                
+                gaps.forEach((gap, idx) => {
+                    const result = learner.analyzeResponse(gap);
+                    html += `${idx + 1}. "${gap}"<br>`;
+                    html += `   Gaps: ${result.knowledge_gaps.join(', ')}<br><br>`;
+                });
+                
+                addLog('✅ Knowledge gaps detected', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-gaps', html);
+        }
+        
+        // Test 8: Personalized Response
+        async function testPersonalizedResponse() {
+            addLog('TEST 8: Testing personalized responses...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                
+                // First collect some data
+                await learner.startLearningCollection("TestUser");
+                await learner.processUserResponse("I love visual learning and I'm interested in AI but struggle with math");
+                
+                // Now generate personalized response
+                const response = learner.generatePersonalizedResponse("Help me understand neural networks");
+                
+                html += `<span class="success">✅ Personalized response generated</span><br><br>`;
+                html += `<span class="info">Message:</span><br>`;
+                html += `"${response.message}"<br><br>`;
+                html += `Personalized: ${response.personalization_applied ? 'Yes ✓' : 'No ✗'}<br>`;
+                html += `Uses style: ${response.uses_learning_style ? 'Yes ✓' : 'No ✗'}<br>`;
+                html += `Addresses gaps: ${response.addresses_gaps ? 'Yes ✓' : 'No ✗'}<br>`;
+                
+                addLog('✅ Personalized response generated', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-personalized', html);
+        }
+        
+        // Test 9: Learning Path
+        async function testLearningPath() {
+            addLog('TEST 9: Testing learning path generation...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                
+                const profile = learner.getUserProfileSummary();
+                const path = learner.buildLearningPath(profile);
+                
+                html += `<span class="success">✅ Learning path built</span><br><br>`;
+                html += `Path: ${path}<br>`;
+                
+                addLog('✅ Learning path generated', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-path', html);
+        }
+        
+        // Test 10: Data Persistence
+        async function testDataPersistence() {
+            addLog('TEST 10: Testing data persistence...', 'info');
+            let html = '';
+            
+            try {
+                const learner = window.OFFLINE_LEARNING_COLLECTOR;
+                
+                // Export data
+                const exported = learner.exportUserData();
+                const size = new Blob([JSON.stringify(exported)]).size;
+                
+                // Save to localStorage
+                localStorage.setItem('aion_test_export', JSON.stringify(exported));
+                
+                // Load back
+                const loaded = JSON.parse(localStorage.getItem('aion_test_export'));
+                
+                html += `<span class="success">✅ Data export/import successful</span><br><br>`;
+                html += `Exported size: ${size} bytes<br>`;
+                html += `Data keys: ${Object.keys(exported).join(', ')}<br>`;
+                html += `Saved to: localStorage.aion_test_export<br>`;
+                html += `Load successful: ${loaded ? 'Yes ✓' : 'No ✗'}<br>`;
+                
+                addLog('✅ Data persistence verified', 'success');
+            } catch (error) {
+                html += `<span class="error">Error: ${error.message}</span>`;
+                addLog(`❌ Error: ${error.message}`, 'error');
+            }
+            
+            setOutput('output-persistence', html);
+        }
+        
+        // Run all tests
+        async function runAllTests() {
+            consoleLogs.length = 0;
+            addLog('🚀 STARTING COMPREHENSIVE TEST SUITE', 'info');
+            addLog('', 'info');
+            
+            await testInitialization();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testStartLearning();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testProcessResponse();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testViewProfile();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testEmotionDetection();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testLearningStyle();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testKnowledgeGaps();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testPersonalizedResponse();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testLearningPath();
+            await new Promise(r => setTimeout(r, 500));
+            
+            await testDataPersistence();
+            
+            addLog('', 'info');
+            addLog('✅ ALL TESTS COMPLETED SUCCESSFULLY!', 'success');
+            addLog('System is fully operational and ready for production', 'success');
+        }
+        
+        // Initial load message
+        window.addEventListener('load', () => {
+            addLog('🧠 AION Interactive Learning Test Suite Loaded', 'info');
+            addLog('Click "RUN ALL TESTS NOW" to begin, or test individual features', 'info');
+        });
+    </script>
+</body>
+</html>

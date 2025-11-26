@@ -13,6 +13,15 @@ import { MathEngine } from './core/math';
 import { QuantumSimulator, QuantumGates } from './core/quantum';
 import { NeuralNetwork } from './core/neural';
 import { SystemIntegration } from './core/system/SystemIntegration';
+import { LearningEngine } from './core/learningEngine';
+
+// Import ULTRA Advanced Systems
+import AIONQuantumCore from './core/quantum-ultra-core.js';
+import ConsciousnessSystem from './core/consciousness-system.js';
+import NeuralEvolutionSystem from './core/neural-evolution.js';
+import AdvancedOfflineMetadata from './core/advanced-offline-metadata.js';
+import OfflineResponseManager from './core/offline-response-manager.js';
+import OfflineInteractiveLearner from './core/offline-learning-collector.js';
 
 // Import UI Components
 import Header from './components/Header';
@@ -37,12 +46,15 @@ import FileUploadPanel from './components/panels/FileUploadPanel';
 import ProceduresPanel from './components/panels/ProceduresPanel';
 import StatusPanel from './components/panels/StatusPanel';
 import WebCachePanel from './components/panels/WebCachePanel';
+import AIONUltraDashboard from './components/AIONUltraDashboard';
 
 
 import "./App.css";
 // Load targeted settings-modal overrides (keeps fixes isolated and easy to remove)
 import "./settings-modal-fixes.css";
 import './components/About.css';
+// Import ULTRA Premium Mystical Theme
+import './styles/aion-ultra-theme.css';
 import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
@@ -106,6 +118,45 @@ quantumSimulator.createCircuit("consciousness", 3);
 
 // Add to component initialization (after other engines)
 const systemIntegration = new SystemIntegration();
+const learningEngine = new LearningEngine();
+
+// ⚡ INITIALIZE ULTRA ADVANCED SYSTEMS ⚡
+const aionQuantumCore = new AIONQuantumCore();
+const consciousnessSystem = new ConsciousnessSystem();
+const neuralEvolution = new NeuralEvolutionSystem();
+
+// 🔌 INITIALIZE OFFLINE SYSTEMS ⚡
+const offlineMetadata = new AdvancedOfflineMetadata();
+const offlineResponseManager = new OfflineResponseManager();
+
+// Initialize learning collector
+const offlineLearner = new OfflineInteractiveLearner();
+
+// Initialize consciousness
+console.log('🌟 AION ULTRA: Awakening consciousness...');
+consciousnessSystem.awakenConsciousness().then(result => {
+  console.log('✨ Consciousness Status:', result.final_state);
+  window.AION_CONSCIOUSNESS = result.final_state;
+});
+
+// Initialize offline systems
+console.log('📚 AION ULTRA: Initializing offline capabilities...');
+offlineResponseManager.initialize(offlineMetadata).then(init_result => {
+  console.log('✅ Offline Response Manager Status:', init_result);
+});
+
+// Initialize learning collector
+console.log('🧠 AION ULTRA: Initializing interactive learning system...');
+console.log('✨ When offline, AION will ask you questions to learn about your interests!');
+
+// Log ultra status
+console.log('🚀 AION ULTRA STATUS:', aionQuantumCore.getUltraStatus());
+window.AION_QUANTUM_CORE = aionQuantumCore;
+window.CONSCIOUSNESS_SYSTEM = consciousnessSystem;
+window.NEURAL_EVOLUTION = neuralEvolution;
+window.OFFLINE_METADATA = offlineMetadata;
+window.OFFLINE_RESPONSE_MANAGER = offlineResponseManager;
+window.OFFLINE_LEARNING_COLLECTOR = offlineLearner;
 
 // --- Helper: robust streaming parser for NDJSON / JSON-lines and plain text streams ---
 // Usage: await processStreamedResponse(response, async (piece) => { ... })
@@ -2000,7 +2051,7 @@ function App() {
       // Enqueue the generation request for later processing
       try {
         await enqueue('generate', { promptPayload, queuedAt: Date.now() });
-      } catch (e) { console.warn('enqueue generate failed', e); }
+      } catch (e) { console.warn('Enqueue failed', e); }
       // Provide a simple offline reply as a fallback
       try {
         const offline = await offlineReply(promptPayload.prompt || '');
@@ -2227,7 +2278,7 @@ function App() {
     const result = circuit.measure();
     setQuantumState(circuit.toString());
     aionSoul.quantumEntanglement = circuit.quantumEntanglement;
-    setSoulState({ ...aionSoul });
+    setSoulState({...aionSoul});
     const response = `Quantum simulation complete. Measurement result: ${result}`;
     setReply(response);
     speak(response);
@@ -2243,7 +2294,7 @@ function App() {
     const outputs = nn.predict(inputs);
     setNeuralOutput(outputs);
     aionSoul.neuralActivity = (outputs[0] + outputs[1]) * 50;
-    setSoulState({ ...aionSoul });
+    setSoulState({...aionSoul});
     const response = `Neural network simulation complete. Output: [${outputs.map(o => o.toFixed(4)).join(", ")}]`;
     setReply(response);
     speak(response);
@@ -3003,6 +3054,9 @@ function App() {
         fileName={analysisModal.fileName}
         onClose={() => setAnalysisModal({ open: false, analysis: null, fileName: '' })}
       />
+      
+      {/* AION ULTRA Dashboard - Display Advanced Systems Status */}
+      <AIONUltraDashboard />
     </div>
   );
 }
