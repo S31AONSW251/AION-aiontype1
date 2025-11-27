@@ -18,6 +18,21 @@ export class SystemIntegration {
       fileAccess: false,
       processManagement: false // Remains simulated for security
     };
+    this.modules = {}; // Registry for system modules
+  }
+
+  registerModule(name, module) {
+    this.modules[name] = module;
+    console.log(`Module registered: ${name}`);
+    return this;
+  }
+
+  getModule(name) {
+    return this.modules[name];
+  }
+
+  getAllModules() {
+    return this.modules;
   }
 
   detectResources() {

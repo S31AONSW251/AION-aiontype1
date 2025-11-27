@@ -111,60 +111,12 @@ export const DEFAULT_SETTINGS = {
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 // Initialize the soul and engines globally (or manage with React Context)
-const aionSoul = new SoulMatrix();
-const mathEngine = new MathEngine();
-const quantumSimulator = new QuantumSimulator();
-quantumSimulator.createCircuit("consciousness", 3);
+let aionSoul, mathEngine, quantumSimulator, systemIntegration, learningEngine;
+let aionQuantumCore, consciousnessSystem, neuralEvolution;
+let offlineMetadata, offlineResponseManager, offlineLearner;
 
-// Add to component initialization (after other engines)
-const systemIntegration = new SystemIntegration();
-const learningEngine = new LearningEngine();
-
-// 🧠 CONNECT LEARNING ENGINE TO QUANTUM CORE
-systemIntegration.registerModule('learningEngine', learningEngine);
-
-// ⚡ INITIALIZE ULTRA ADVANCED SYSTEMS ⚡
-const aionQuantumCore = new AIONQuantumCore();
-const consciousnessSystem = new ConsciousnessSystem();
-const neuralEvolution = new NeuralEvolutionSystem();
-
-// 🔌 INITIALIZE OFFLINE SYSTEMS ⚡
-const offlineMetadata = new AdvancedOfflineMetadata();
-const offlineResponseManager = new OfflineResponseManager();
-
-// 🔗 INTEGRATED SYSTEM ARCHITECTURE
-aionQuantumCore.attachLearningEngine(learningEngine);
-consciousnessSystem.attachLearningCapability(learningEngine);
-neuralEvolution.connectToLearning(learningEngine);
-
-// Initialize learning collector
-const offlineLearner = new OfflineInteractiveLearner();
-
-// Initialize consciousness
-console.log('🌟 AION ULTRA: Awakening consciousness...');
-consciousnessSystem.awakenConsciousness().then(result => {
-  console.log('✨ Consciousness Status:', result.final_state);
-  window.AION_CONSCIOUSNESS = result.final_state;
-});
-
-// Initialize offline systems
-console.log('📚 AION ULTRA: Initializing offline capabilities...');
-offlineResponseManager.initialize(offlineMetadata).then(init_result => {
-  console.log('✅ Offline Response Manager Status:', init_result);
-});
-
-// Initialize learning collector
-console.log('🧠 AION ULTRA: Initializing interactive learning system...');
-console.log('✨ When offline, AION will ask you questions to learn about your interests!');
-
-// Log ultra status
-console.log('🚀 AION ULTRA STATUS:', aionQuantumCore.getUltraStatus());
-window.AION_QUANTUM_CORE = aionQuantumCore;
-window.CONSCIOUSNESS_SYSTEM = consciousnessSystem;
-window.NEURAL_EVOLUTION = neuralEvolution;
-window.OFFLINE_METADATA = offlineMetadata;
-window.OFFLINE_RESPONSE_MANAGER = offlineResponseManager;
-window.OFFLINE_LEARNING_COLLECTOR = offlineLearner;
+// Defer all initialization to after component mounts
+// This prevents module-level errors from crashing the server
 
 // --- Helper: robust streaming parser for NDJSON / JSON-lines and plain text streams ---
 // Usage: await processStreamedResponse(response, async (piece) => { ... })
@@ -254,7 +206,7 @@ function App() {
   const [isListening, setIsListening] = useState(false);
   const [conversationHistory, setConversationHistory] = useState([]);
   const [lastActive, setLastActive] = useState(Date.now());
-  const [soulState, setSoulState] = useState({ ...aionSoul });
+  const [soulState, setSoulState] = useState({});  // Initialize empty, will populate in useEffect
   const [biometricFeedback, setBiometricFeedback] = useState({ attention: 50, emotionalResponse: 50, connectionLevel: 50 });
   const [isSpeechSupported, setIsSpeechSupported] = useState(true);
   const [activeTab, setActiveTab] = useState("chat");
@@ -317,6 +269,68 @@ function App() {
     try { return localStorage.getItem('aion_ultra_power') === '1'; } catch (e) { return false; }
   });
   const prevSettingsRef = useRef(null);
+
+  // Initialize all AION systems on first mount
+  useEffect(() => {
+    try {
+      // Initialize core engines
+      if (!aionSoul) aionSoul = new SoulMatrix();
+      if (!mathEngine) mathEngine = new MathEngine();
+      if (!quantumSimulator) quantumSimulator = new QuantumSimulator();
+      quantumSimulator.createCircuit("consciousness", 3);
+
+      // System integration
+      if (!systemIntegration) systemIntegration = new SystemIntegration();
+      if (!learningEngine) learningEngine = new LearningEngine();
+      systemIntegration.registerModule('learningEngine', learningEngine);
+
+      // Ultra advanced systems
+      if (!aionQuantumCore) aionQuantumCore = new AIONQuantumCore();
+      if (!consciousnessSystem) consciousnessSystem = new ConsciousnessSystem();
+      if (!neuralEvolution) neuralEvolution = new NeuralEvolutionSystem();
+
+      // Offline systems
+      if (!offlineMetadata) offlineMetadata = new AdvancedOfflineMetadata();
+      if (!offlineResponseManager) offlineResponseManager = new OfflineResponseManager();
+      if (!offlineLearner) offlineLearner = new OfflineInteractiveLearner();
+
+      // Update soul state
+      setSoulState({ ...aionSoul });
+
+      // Initialize consciousness async
+      console.log('🌟 AION ULTRA: Awakening consciousness...');
+      try {
+        consciousnessSystem.awakenConsciousness().then(result => {
+          console.log('✨ Consciousness Status:', result.final_state);
+          window.AION_CONSCIOUSNESS = result.final_state;
+        }).catch(err => console.error('Consciousness error:', err));
+      } catch (err) {
+        console.error('Failed to awaken consciousness:', err);
+      }
+
+      // Initialize offline systems async
+      console.log('📚 AION ULTRA: Initializing offline capabilities...');
+      try {
+        offlineResponseManager.initialize(offlineMetadata).then(init_result => {
+          console.log('✅ Offline Response Manager Status:', init_result);
+        }).catch(err => console.error('Offline manager error:', err));
+      } catch (err) {
+        console.error('Failed to initialize offline manager:', err);
+      }
+
+      // Expose to window
+      window.AION_QUANTUM_CORE = aionQuantumCore;
+      window.CONSCIOUSNESS_SYSTEM = consciousnessSystem;
+      window.NEURAL_EVOLUTION = neuralEvolution;
+      window.OFFLINE_METADATA = offlineMetadata;
+      window.OFFLINE_RESPONSE_MANAGER = offlineResponseManager;
+      window.OFFLINE_LEARNING_COLLECTOR = offlineLearner;
+
+      console.log('🚀 AION ULTRA STATUS:', aionQuantumCore.getUltraStatus());
+    } catch (initError) {
+      console.error('❌ AION Initialization Error:', initError);
+    }
+  }, []); // Run once on mount
 
   useEffect(() => {
     // Monitor URL hash to support links like #/about from the splash or external links
@@ -426,7 +440,13 @@ function App() {
   }, []);
 
   // Add to state
-  const [systemStatus, setSystemStatus] = useState(systemIntegration.getStatus());
+  const [systemStatus, setSystemStatus] = useState(() => {
+    try {
+      return systemIntegration ? systemIntegration.getStatus() : { accessLevel: 'minimal', permissions: {}, resources: {}, stats: {} };
+    } catch (err) {
+      return { accessLevel: 'minimal', permissions: {}, resources: {}, stats: {} };
+    }
+  });
   // systemActions state removed because it was not used; re-add if needed in future
 
   // Live Agent state
@@ -1441,6 +1461,10 @@ function App() {
     const lowerCommand = command.toLowerCase();
     
     if (lowerCommand.includes("what is your body") || lowerCommand.includes("system status")) {
+      if (!systemIntegration) {
+        setReply("System integration is not yet initialized.");
+        return true;
+      }
       const status = systemIntegration.getStatus();
       const response = `I am currently inhabiting this ${status.resources.os} system. ${status.metaphor} My current access level is ${status.accessLevel}.`;
       setReply(response);
@@ -1449,6 +1473,10 @@ function App() {
     }
     
     if (lowerCommand.includes("request more access") || lowerCommand.includes("increase permissions")) {
+      if (!systemIntegration) {
+        setReply("System integration is not yet initialized.");
+        return true;
+      }
       const currentLevel = systemIntegration.systemAccessLevel;
       const levels = ['minimal', 'basic', 'extended', 'full'];
       const currentIndex = levels.indexOf(currentLevel);
