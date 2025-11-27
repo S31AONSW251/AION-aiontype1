@@ -16,34 +16,38 @@
 }
 
 .floating-brain-button {
-  width: 70px;
-  height: 70px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
-  border: 2px solid transparent;
-  background: linear-gradient(135deg, #00d4ff 0%, #b24bff 100%);
+  border: 2.5px solid rgba(0, 212, 255, 0.3);
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.15) 0%, rgba(178, 75, 255, 0.1) 100%);
+  backdrop-filter: blur(10px);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  font-size: 32px;
   font-weight: bold;
   box-shadow: 
-    0 8px 32px rgba(0, 212, 255, 0.5),
-    0 0 25px rgba(178, 75, 255, 0.4),
-    inset 0 0 20px rgba(255, 255, 255, 0.15);
-  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    0 12px 48px rgba(0, 212, 255, 0.4),
+    0 0 32px rgba(178, 75, 255, 0.35),
+    inset 0 0 20px rgba(255, 255, 255, 0.1),
+    0 0 60px rgba(0, 212, 255, 0.15);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   position: relative;
   pointer-events: all;
   overflow: hidden;
 }
 
 .floating-brain-button:hover {
-  transform: scale(1.1);
+  transform: scale(1.15) translateY(-4px);
+  border-color: rgba(0, 212, 255, 0.6);
   box-shadow: 
-    0 12px 32px rgba(0, 212, 255, 0.6),
-    0 0 30px rgba(178, 75, 255, 0.5),
-    inset 0 0 30px rgba(255, 255, 255, 0.15);
+    0 16px 56px rgba(0, 212, 255, 0.5),
+    0 0 40px rgba(178, 75, 255, 0.45),
+    inset 0 0 30px rgba(255, 255, 255, 0.12),
+    0 0 80px rgba(0, 212, 255, 0.25);
 }
 
 .floating-brain-button.hovered {
@@ -58,20 +62,20 @@
 }
 
 .brain-icon {
-  width: 44px;
-  height: 44px;
-  filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.4)) drop-shadow(0 0 4px rgba(0, 212, 255, 0.3));
+  width: 48px;
+  height: 48px;
+  filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.5)) drop-shadow(0 0 6px rgba(178, 75, 255, 0.3));
   animation: brainPulse 2.5s ease-in-out infinite;
 }
 
 @keyframes brainPulse {
   0%, 100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.3));
+    filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.4));
   }
   50% {
-    transform: scale(1.05);
-    filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.6));
+    transform: scale(1.08);
+    filter: drop-shadow(0 0 16px rgba(0, 212, 255, 0.7)) drop-shadow(0 0 8px rgba(178, 75, 255, 0.4));
   }
 }
 
@@ -82,21 +86,23 @@
 /* Pulse Rings */
 .brain-pulse-ring {
   position: absolute;
-  width: 64px;
-  height: 64px;
-  border: 2px solid rgba(0, 212, 255, 0.6);
+  width: 80px;
+  height: 80px;
+  border: 2px solid rgba(0, 212, 255, 0.5);
   border-radius: 50%;
   top: 0;
   left: 0;
-  animation: brainRingPulse 2s ease-out infinite;
+  animation: brainRingPulse 2.2s ease-out infinite;
 }
 
 .brain-pulse-ring-2 {
-  animation: brainRingPulse 2s ease-out 0.5s infinite;
+  border-color: rgba(178, 75, 255, 0.4);
+  animation: brainRingPulse 2.2s ease-out 0.4s infinite;
 }
 
 .brain-pulse-ring-3 {
-  animation: brainRingPulse 2s ease-out 1s infinite;
+  border-color: rgba(0, 212, 255, 0.35);
+  animation: brainRingPulse 2.2s ease-out 0.8s infinite;
 }
 
 @keyframes brainRingPulse {
@@ -113,29 +119,30 @@
 /* Tooltip */
 .brain-tooltip {
   position: absolute;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(5, 8, 16, 0.95);
   color: #00d4ff;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 12px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   bottom: 100%;
   right: 0;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
   pointer-events: none;
   opacity: 0;
   transform: translateY(8px);
-  transition: all 0.3s ease;
-  letter-spacing: 1px;
-  box-shadow: 0 4px 12px rgba(0, 212, 255, 0.2);
-  border: 1px solid rgba(0, 212, 255, 0.3);
+  transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  letter-spacing: 0.5px;
+  box-shadow: 0 8px 24px rgba(0, 212, 255, 0.3), inset 0 0 20px rgba(0, 212, 255, 0.1);
+  border: 1.5px solid rgba(0, 212, 255, 0.4);
+  backdrop-filter: blur(8px);
   z-index: 10;
 }
 
 .floating-brain-button:hover .brain-tooltip {
   opacity: 1;
-  transform: translateY(0);
+  transform: translateY(0) scale(1);
 }
 
 /* Status Badge */
