@@ -181,10 +181,12 @@ body.light-theme .app-header .brand-logo,
 body.light-theme .app-header .brand .logo,
 body.light-theme .brand-logo,
 body.light-theme .brand .logo {
-  color: var(--text) !important;
-  background: transparent !important;
+  color: #0a5a7a !important;
+  background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
   text-shadow: none !important;
-  -webkit-text-fill-color: var(--text) !important; /* ensure SVG/text uses fill */
 }
 
 /* Light-theme: make ambient/particles subtle so they don't wash out UI */
@@ -775,8 +777,13 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:var(--font
 .brand-glass .brand-logo { color: var(--text-primary); }
 
 /* Ensure brand is visible in light-theme too */
-/* Light theme typographic fallback */
-body.light-theme .brand-logo { color: var(--text-primary); }
+/* Light theme gradient fallback */
+body.light-theme .brand-logo {
+  background: linear-gradient(135deg, #0077b6 0%, #00b4d8 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
 
 /* Ambient animated background + particles */
 
