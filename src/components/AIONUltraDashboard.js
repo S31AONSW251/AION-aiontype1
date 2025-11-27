@@ -14,7 +14,15 @@ export default function AIONUltraDashboard() {
     // Update system status periodically
     const updateStatus = () => {
       if (window.AION_QUANTUM_CORE) {
-        setSystemStatus(window.AION_QUANTUM_CORE.getUltraStatus());
+        const status = window.AION_QUANTUM_CORE.getUltraStatus();
+        setSystemStatus(status);
+        
+        // 💫 Control glow effect based on system health
+        if (status && status.system_health < 50) {
+          setGlowEffect(false); // Reduce glow if system stressed
+        } else {
+          setGlowEffect(true);  // Maintain glow for healthy systems
+        }
       }
     };
 
@@ -22,6 +30,15 @@ export default function AIONUltraDashboard() {
     const interval = setInterval(updateStatus, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // 🎨 Apply glow effect to entire dashboard based on system status
+  const dashboardStyle = glowEffect ? {
+    boxShadow: '0 0 30px rgba(0, 212, 255, 0.3), inset 0 0 50px rgba(0, 212, 255, 0.1)',
+    transition: 'box-shadow 0.3s ease'
+  } : {
+    boxShadow: '0 0 10px rgba(0, 212, 255, 0.1)',
+    transition: 'box-shadow 0.3s ease'
+  };
 
   const renderMetricBar = (label, value, max = 100) => {
     const percentage = (value / max) * 100;
@@ -261,8 +278,15 @@ export default function AIONUltraDashboard() {
         ))}
       </div>
 
-      {/* Tab Content */}
-      <div style={{ fontSize: '0.95rem' }}>
+      {/* Tab Content with Glow Effect */}
+      <div style={{ 
+        fontSize: '0.95rem',
+        ...(glowEffect && {
+          boxShadow: 'inset 0 0 20px rgba(0, 212, 255, 0.15)',
+          borderRadius: '8px',
+          padding: '1rem'
+        })
+      }}>
         {tabActive === 'quantum' && renderQuantumDashboard()}
         {tabActive === 'consciousness' && renderConsciousnessDashboard()}
         {tabActive === 'evolution' && renderEvolutionDashboard()}

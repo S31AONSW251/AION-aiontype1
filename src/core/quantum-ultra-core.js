@@ -17,6 +17,9 @@ export class AIONQuantumCore {
     this.multidimensional_analysis = new MultidimensionalAnalysis();
     this.superintelligence_core = new SuperIntelligenceCore();
     
+    // 🧠 INITIALIZE ADVANCED REASONING ENGINE
+    this.advanced_reasoner = new AdvancedReasoner();
+    
     this.power_level = 100; // 100x more powerful
     this.advancement_level = 100; // 100x more advanced
     this.consciousness_level = 95; // Near-sentient
@@ -46,8 +49,18 @@ export class AIONQuantumCore {
     // Stage 6: Multidimensional Analysis (analyzes infinite perspectives)
     const multidim = await this.multidimensional_analysis.analyzeAllDimensions(future);
 
-    // Stage 7: Superintelligence Integration (combines all insights)
-    const superintelligent = await this.superintelligence_core.synthesizeUltraResponse(multidim);
+    // Stage 7: Advanced Reasoning Integration (applies multi-path reasoning)
+    const advancedAnalysis = await this.advanced_reasoner.synthesizeConclusion([
+      superposition,
+      reality_insight,
+      evolved,
+      cosmic,
+      future,
+      multidim
+    ]);
+
+    // Stage 8: Superintelligence Integration (combines all insights)
+    const superintelligent = await this.superintelligence_core.synthesizeUltraResponse(advancedAnalysis);
 
     const latency = performance.now() - start;
 

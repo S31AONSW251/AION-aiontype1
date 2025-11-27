@@ -120,6 +120,9 @@ quantumSimulator.createCircuit("consciousness", 3);
 const systemIntegration = new SystemIntegration();
 const learningEngine = new LearningEngine();
 
+// 🧠 CONNECT LEARNING ENGINE TO QUANTUM CORE
+systemIntegration.registerModule('learningEngine', learningEngine);
+
 // ⚡ INITIALIZE ULTRA ADVANCED SYSTEMS ⚡
 const aionQuantumCore = new AIONQuantumCore();
 const consciousnessSystem = new ConsciousnessSystem();
@@ -128,6 +131,11 @@ const neuralEvolution = new NeuralEvolutionSystem();
 // 🔌 INITIALIZE OFFLINE SYSTEMS ⚡
 const offlineMetadata = new AdvancedOfflineMetadata();
 const offlineResponseManager = new OfflineResponseManager();
+
+// 🔗 INTEGRATED SYSTEM ARCHITECTURE
+aionQuantumCore.attachLearningEngine(learningEngine);
+consciousnessSystem.attachLearningCapability(learningEngine);
+neuralEvolution.connectToLearning(learningEngine);
 
 // Initialize learning collector
 const offlineLearner = new OfflineInteractiveLearner();

@@ -239,14 +239,37 @@ export class AdvancedReasoner {
       analogical: 0.1
     };
 
-    // Combine evidence
+    // 🧠 INTEGRATE ALL REASONING PATHWAYS
+    const decompositionalInsight = decomposition?.patterns || [];
+    const knowledgeBase = knowledge?.integrated || {};
+    const hypothesisList = hypotheses?.primary || [];
+    const causalChains = causal?.chains || [];
+    const analogousReferences = analogy?.references || [];
+
+    // Apply weights to each reasoning method
+    const weightedReasons = {
+      decomposition: decompositionalInsight.length * weights.deductive,
+      knowledge: Object.keys(knowledgeBase).length * weights.inductive,
+      hypotheses: hypothesisList.length * weights.abductive,
+      causal: causalChains.length * weights.causal,
+      analogy: analogousReferences.length * weights.analogical
+    };
+
+    // Combine evidence with reasoning synthesis
     const conclusion = {
       answer: this.aggregateAnswers(validations.supported),
       reasoning: this.buildReasoningNarrative(stages),
       supporting_evidence: validations.supported,
       alternative_interpretations: validations.partially_supported,
       limitations: this.identifyLimitations(stages),
-      next_steps: this.suggestNextSteps(stages)
+      next_steps: this.suggestNextSteps(stages),
+      // 🔗 INTEGRATED REASONING METRICS
+      reasoning_weights: weightedReasons,
+      decomposition_patterns: decompositionalInsight,
+      knowledge_integration: knowledgeBase,
+      causal_relationships: causalChains,
+      analogous_mappings: analogousReferences,
+      synthesis_confidence: this.calculateSynthesisConfidence(weightedReasons)
     };
 
     return conclusion;
