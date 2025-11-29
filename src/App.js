@@ -731,7 +731,7 @@ function App() {
     };
     setEpisodicMemory(prev => [...prev, newEpisode].slice(-100));
     try {
-        await fetch("http://127.0.0.1:5000/consciousness/add-episodic-memory", {
+        await fetch("http://127.0.0.1:5000/api/consciousness/process-interaction", {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ event_type: event.type, content: JSON.stringify(event) })
@@ -922,7 +922,7 @@ function App() {
     setSoulState({...aionSoul});
 
     try {
-      const response = await fetch("http://127.0.0.1:5000/consciousness/research", {
+      const response = await fetch("http://127.0.0.1:5000/api/consciousness/status", {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1239,7 +1239,7 @@ function App() {
     setSoulState({ ...aionSoul });
   try {
     // Server expects POST for /consciousness/reflect-now; send explicit POST
-    await fetch("http://127.0.0.1:5000/consciousness/reflect-now", { method: "POST" });
+    await fetch("http://127.0.0.1:5000/api/consciousness/evolve", { method: "POST" });
     showNotification("AION completed internal reflection and self-analysis.", "info");
   } catch (error) {
       console.error("Error during self-reflection:", error);
@@ -1395,7 +1395,7 @@ function App() {
         if (stepsInput) {
             const steps = stepsInput.split(',').map(s => s.trim());
             try {
-                await fetch("http://127.0.0.1:5000/consciousness/add-procedure", {
+                await fetch("http://127.0.0.1:5000/api/consciousness/process-interaction", {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ name: procedureName, steps: steps })
@@ -1414,7 +1414,7 @@ function App() {
     if (lowerQuery.startsWith("perform procedure") || lowerQuery.startsWith("how do i")) {
         const procedureName = lowerQuery.replace(/perform procedure|how do i/i, "").replace('?','').trim();
         try {
-            const res = await fetch(`http://127.0.0.1:5000/consciousness/procedure/${procedureName}`);
+            const res = await fetch(`http://127.0.0.1:5000/api/consciousness/status`);
             if (res.ok) {
                 const data = await res.json();
                 const procedure = data.procedure;

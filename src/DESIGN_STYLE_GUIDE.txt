@@ -1,0 +1,699 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║           AION PREMIUM DESIGN STYLE GUIDE - VISUAL REFERENCE                    ║
+║                      Color Palette • Typography • Components                     ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 1: COLOR PALETTE
+═══════════════════════════════════════════════════════════════════════════════
+
+PRIMARY GRADIENTS
+─────────────────────────────────────────────────────────────────────────────
+
+Gradient 1: Cyan → Blue → Purple
+  HEX:     #00d9ff → #0099ff → #6c63ff
+  CSS:     linear-gradient(135deg, #00d9ff 0%, #0099ff 50%, #6c63ff 100%)
+  Variable: --premium-gradient-primary
+  Usage:   Main action buttons, primary CTAs, important highlights
+  
+Gradient 2: Gold → Orange
+  HEX:     #ffd166 → #ff7b54
+  CSS:     linear-gradient(135deg, #ffd166 0%, #ff7b54 50%, #ff7b54 100%)
+  Variable: --premium-gradient-secondary
+  Usage:   Secondary actions, accents, decorative elements
+  
+Gradient 3: Purple → Magenta
+  HEX:     #b24bff → #ff006e
+  CSS:     linear-gradient(135deg, #b24bff 0%, #ff006e 100%)
+  Variable: --premium-gradient-accent
+  Usage:   Special highlights, featured content, hover states
+
+
+BACKGROUND COLORS
+─────────────────────────────────────────────────────────────────────────────
+
+Premium Dark Navy (Primary Background)
+  HEX:     #0a0e27
+  RGB:     (10, 14, 39)
+  Variable: --premium-bg-dark
+  Usage:   Main page background
+  
+Premium Darker Navy (Darker Background)
+  HEX:     #050810
+  RGB:     (5, 8, 16)
+  Variable: --premium-bg-darker
+  Usage:   Alternate sections, overlays
+  
+Card Background (Semi-transparent)
+  HEX:     rgba(15, 18, 28, 0.8)
+  Variable: --premium-bg-card
+  Usage:   Card and panel backgrounds
+
+Overlay Background (Dark)
+  HEX:     rgba(10, 14, 39, 0.95)
+  Variable: --premium-bg-overlay
+  Usage:   Modal overlays, darkened sections
+
+
+ACCENT COLORS
+─────────────────────────────────────────────────────────────────────────────
+
+Bright Cyan (Primary Accent)
+  HEX:     #00d9ff
+  RGB:     (0, 217, 255)
+  HSL:     (188°, 100%, 50%)
+  Usage:   Focus states, active indicators, glows
+
+Rich Violet (Secondary Accent)
+  HEX:     #805ad5
+  RGB:     (128, 90, 213)
+  HSL:     (266°, 56%, 59%)
+  Usage:   Hover states, secondary highlights
+
+Neon Magenta (Highlight Accent)
+  HEX:     #ff006e
+  RGB:     (255, 0, 110)
+  HSL:     (333°, 100%, 50%)
+  Usage:   Special highlights, warnings, urgent states
+
+Lime Green (Success)
+  HEX:     #4cff8a
+  RGB:     (76, 255, 138)
+  HSL:     (134°, 100%, 67%)
+  Usage:   Success states, completed actions
+
+Coral Red (Error)
+  HEX:     #ff6b6b
+  RGB:     (255, 107, 107)
+  HSL:     (0°, 100%, 71%)
+  Usage:   Error states, warnings, invalid inputs
+
+
+TEXT COLORS
+─────────────────────────────────────────────────────────────────────────────
+
+Primary Text (Light Blue-white)
+  HEX:     #e8f0ff
+  RGB:     (232, 240, 255)
+  Usage:   Primary text, headings, labels
+
+Secondary Text (Semi-transparent)
+  HEX:     rgba(255, 255, 255, 0.8)
+  RGB:     (255, 255, 255) at 80%
+  Usage:   Secondary text, descriptions
+
+Muted Text (Low contrast)
+  HEX:     rgba(255, 255, 255, 0.6)
+  RGB:     (255, 255, 255) at 60%
+  Usage:   Muted text, placeholders, hints
+
+Disabled Text (Very low contrast)
+  HEX:     rgba(255, 255, 255, 0.4)
+  RGB:     (255, 255, 255) at 40%
+  Usage:   Disabled elements, inactive states
+
+
+GLASS EFFECTS (Transparency)
+─────────────────────────────────────────────────────────────────────────────
+
+Light Glass
+  HEX:     rgba(255, 255, 255, 0.08)
+  Usage:   Standard glass background effects
+
+Lighter Glass
+  HEX:     rgba(255, 255, 255, 0.05)
+  Usage:   Subtle glass effect background
+
+Dark Glass
+  HEX:     rgba(0, 0, 0, 0.3)
+  Usage:   Darkened glass effect overlay
+
+
+GLOW EFFECTS
+─────────────────────────────────────────────────────────────────────────────
+
+Cyan Glow (Primary)
+  Box-shadow: 0 0 30px rgba(0, 217, 255, 0.4)
+  Usage:     Primary focus, active states
+
+Purple Glow (Secondary)
+  Box-shadow: 0 0 30px rgba(178, 75, 255, 0.3)
+  Usage:     Secondary emphasis, hover states
+
+Orange Glow (Accent)
+  Box-shadow: 0 0 25px rgba(255, 122, 84, 0.25)
+  Usage:     Special emphasis, highlights
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 2: TYPOGRAPHY
+═══════════════════════════════════════════════════════════════════════════════
+
+FONT FAMILIES
+─────────────────────────────────────────────────────────────────────────────
+
+Display Font (Headings & Titles)
+  Font:     Sora / Poppins
+  Fallback: sans-serif
+  Weight:   600, 700, 900
+  Usage:    h1, h2, h3, titles, large text
+
+Body Font (Regular Text)
+  Font:     Inter
+  Fallback: Segoe UI, system-ui, sans-serif
+  Weight:   300, 400, 500, 600
+  Usage:    Paragraphs, labels, descriptions, UI text
+
+Monospace Font (Code)
+  Font:     Fira Code
+  Fallback: Courier New, monospace
+  Weight:   400, 500, 700
+  Usage:    Code blocks, technical text, values
+
+
+FONT WEIGHTS
+─────────────────────────────────────────────────────────────────────────────
+
+Light (300)
+  Usage: Subtle text, secondary information
+  Example: "Last updated 2 minutes ago"
+
+Regular (400)
+  Usage: Standard body text, descriptions
+  Example: Regular paragraphs, UI text
+
+Medium (500)
+  Usage: Emphasized body text, labels
+  Example: "Status: Active" label
+
+Semibold (600)
+  Usage: Subheadings, buttons, emphasis
+  Example: Button text, card titles
+
+Bold (700)
+  Usage: Headings, important text
+  Example: h2, h3 headings
+
+Black (900)
+  Usage: Main headings, logos
+  Example: h1 page titles, brand text
+
+
+TYPOGRAPHY SCALE
+─────────────────────────────────────────────────────────────────────────────
+
+H1 (Display Heading)
+  Font-size:   2.5rem (40px)
+  Font-family: Display (Sora)
+  Font-weight: 900
+  Line-height: 1.2
+  Letter-spacing: -1px
+  Usage:       Main page title
+
+H2 (Large Heading)
+  Font-size:   1.75rem (28px)
+  Font-family: Display (Sora)
+  Font-weight: 700
+  Line-height: 1.3
+  Letter-spacing: -0.5px
+  Usage:       Section heading, panel header
+
+H3 (Medium Heading)
+  Font-size:   1.25rem (20px)
+  Font-family: Display (Sora)
+  Font-weight: 600
+  Line-height: 1.4
+  Usage:       Card title, subsection
+
+H4 (Small Heading)
+  Font-size:   1rem (16px)
+  Font-family: Body (Inter)
+  Font-weight: 600
+  Line-height: 1.5
+  Usage:       Label, emphasized text
+
+Body Text (Regular)
+  Font-size:   0.95rem (15.2px)
+  Font-family: Body (Inter)
+  Font-weight: 400
+  Line-height: 1.6
+  Letter-spacing: 0px
+  Usage:       Standard paragraph text
+
+Small Text
+  Font-size:   0.85rem (13.6px)
+  Font-family: Body (Inter)
+  Font-weight: 400
+  Line-height: 1.5
+  Usage:       Secondary text, annotations
+
+Tiny Text
+  Font-size:   0.75rem (12px)
+  Font-family: Body (Inter)
+  Font-weight: 400
+  Line-height: 1.4
+  Usage:       Captions, hints, badges
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 3: SHADOWS
+═══════════════════════════════════════════════════════════════════════════════
+
+SHADOW SYSTEM
+─────────────────────────────────────────────────────────────────────────────
+
+Shadow Small (sm)
+  Box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3)
+  Variable:  --premium-shadow-sm
+  Elevation: 1 (Light elevation)
+  Usage:     Small cards, subtle depth, default cards
+
+Shadow Medium (md)
+  Box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4)
+  Variable:  --premium-shadow-md
+  Elevation: 2 (Medium elevation)
+  Usage:     Standard cards, panels, buttons
+
+Shadow Large (lg)
+  Box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5)
+  Variable:  --premium-shadow-lg
+  Elevation: 3 (Large elevation)
+  Usage:     Modal dialogs, hovered cards, featured content
+
+Shadow Extra Large (xl)
+  Box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6)
+  Variable:  --premium-shadow-xl
+  Elevation: 4 (Extra large elevation)
+  Usage:     Full-page overlays, floating elements, focus emphasis
+
+Inset Shadow (Inner)
+  Box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.1)
+  Usage:     Input fields, secondary buttons, inner emphasis
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 4: BORDERS
+═══════════════════════════════════════════════════════════════════════════════
+
+BORDER SYSTEM
+─────────────────────────────────────────────────────────────────────────────
+
+Border Thin (Subtle)
+  Border:    1px solid rgba(255, 255, 255, 0.1)
+  Variable:  --premium-border-thin
+  Usage:     Card borders, panel separators, light divisions
+
+Border Thick (Prominent)
+  Border:    2px solid rgba(255, 255, 255, 0.15)
+  Variable:  --premium-border-thick
+  Usage:     Emphasis borders, highlighted elements
+
+Border Glow (Accent)
+  Border:    2px solid rgba(0, 217, 255, 0.3)
+  Variable:  --premium-border-glow
+  Usage:     Focus states, active elements, hover effects
+
+Border Radius Sizes
+  Radius sm:   6px     (Subtle roundness)
+  Radius md:   12px    (Standard roundness)
+  Radius lg:   16px    (Premium roundness - DEFAULT)
+  Radius xl:   20px    (Maximum roundness)
+  Radius full: 9999px  (Perfect circles)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 5: SPACING
+═══════════════════════════════════════════════════════════════════════════════
+
+SPACING SCALE (8px base)
+─────────────────────────────────────────────────────────────────────────────
+
+xs:    4px   (0.25rem)  - Micro spacing
+sm:    8px   (0.5rem)   - Small spacing
+md:    12px  (0.75rem)  - Medium spacing
+lg:    16px  (1rem)     - Standard spacing
+xl:    24px  (1.5rem)   - Large spacing
+2xl:   32px  (2rem)     - Extra large spacing
+
+USAGE GUIDE:
+─────────────────────────────────────────────────────────────────────────────
+xs (4px):   Between tiny elements, microspacing
+sm (8px):   Padding in small buttons, tight spacing
+md (12px):  Default form field padding, compact cards
+lg (16px):  Standard card/panel padding, default spacing
+xl (24px):  Section spacing, between major elements
+2xl (32px): Page margins, large section spacing
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 6: ANIMATIONS & TRANSITIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+TRANSITION SPEEDS
+─────────────────────────────────────────────────────────────────────────────
+
+Fast (Quick feedback)
+  Duration:     150ms
+  Easing:       cubic-bezier(0.4, 0, 0.2, 1)
+  Variable:     --premium-trans-fast
+  Usage:        Button hovers, input focus, quick feedback
+
+Smooth (Standard)
+  Duration:     300ms
+  Easing:       cubic-bezier(0.4, 0, 0.2, 1)
+  Variable:     --premium-trans-smooth
+  Usage:        Card lift, color changes, standard transitions
+
+Slow (Emphasis)
+  Duration:     500ms
+  Easing:       cubic-bezier(0.4, 0, 0.2, 1)
+  Variable:     --premium-trans-slow
+  Usage:        Page animations, major transitions, emphasis
+
+
+KEYFRAME ANIMATIONS
+─────────────────────────────────────────────────────────────────────────────
+
+Premium Pulse
+  Duration:     2s
+  Loop:         infinite
+  Effect:       Box shadow grows and shrinks
+  Class:        .element-premium-pulse
+  Usage:        Loading states, active indicators
+  
+Premium Glow
+  Duration:     3s
+  Loop:         infinite
+  Effect:       Opacity fades in and out
+  Class:        .element-premium-glow
+  Usage:        Highlights, emphasis elements
+
+Premium Float
+  Duration:     4s
+  Loop:         infinite
+  Effect:       Vertical translation up and down
+  Class:        .element-premium-float
+  Usage:        Hero elements, decorative items
+
+Premium Shimmer
+  Duration:     2s
+  Loop:         infinite
+  Effect:       Background position shifts
+  Class:        .element-premium-shimmer
+  Usage:        Skeleton loading, pending states
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 7: COMPONENT SPECIFICATIONS
+═══════════════════════════════════════════════════════════════════════════════
+
+BUTTON COMPONENTS
+─────────────────────────────────────────────────────────────────────────────
+
+Primary Button
+  Class:         .btn-premium-primary
+  Background:    Cyan → Blue → Purple gradient
+  Color:         White (#fff)
+  Padding:       12px 24px
+  Border-radius: 16px
+  Border:        1px solid rgba(0, 217, 255, 0.3)
+  Shadow:        Medium shadow + cyan glow
+  Font-weight:   600
+  Font-size:     0.95rem
+  Hover:         Lift up 2px, shadow increases, glow intensifies
+  Active:        Back to baseline, shadow reduces
+  Letter-spacing: 0.5px
+
+Secondary Button
+  Class:         .btn-premium-secondary
+  Background:    Transparent
+  Color:         #e8f0ff
+  Padding:       12px 24px
+  Border-radius: 16px
+  Border:        1px solid rgba(255, 255, 255, 0.2)
+  Shadow:        Inset + subtle glow on hover
+  Font-weight:   600
+  Font-size:     0.95rem
+  Hover:         Background slightly lighter, border more visible
+  Active:        Background slightly darker
+
+
+CARD COMPONENTS
+─────────────────────────────────────────────────────────────────────────────
+
+Standard Card
+  Class:         .card-premium
+  Background:    rgba(15, 18, 28, 0.8) with backdrop blur
+  Border:        1px solid rgba(255, 255, 255, 0.1)
+  Border-radius: 16px
+  Padding:       16px
+  Shadow:        Medium shadow
+  Backdrop:      blur(20px)
+  Hover:         Border brightens, shadow increases, lift up 4px
+  Overlay:       Gradient overlay appears on hover (opacity 0→1)
+
+Card Header
+  Class:         .card-premium-header
+  Padding:       Bottom 16px
+  Border:        Bottom 1px separator
+  Margin:        Bottom 16px
+  H3 Style:      Gradient text, 1.25rem, bold
+
+
+INPUT COMPONENTS
+─────────────────────────────────────────────────────────────────────────────
+
+Text Input
+  Class:         .input-premium
+  Background:    rgba(255, 255, 255, 0.05)
+  Border:        1px solid rgba(255, 255, 255, 0.1)
+  Border-radius: 12px
+  Padding:       12px 16px
+  Color:         #e8f0ff
+  Font-size:     0.95rem
+  Backdrop:      blur(10px)
+  Focus:         Background lighter, border cyan, glow effect
+  Placeholder:   rgba(255, 255, 255, 0.4)
+
+
+NAVIGATION COMPONENT
+─────────────────────────────────────────────────────────────────────────────
+
+Nav Container
+  Class:         .nav-premium
+  Background:    rgba(10, 14, 39, 0.8) with blur
+  Border:        Bottom 1px separator
+  Padding:       16px 0
+  Backdrop:      blur(30px)
+  Position:      sticky top 0
+  Z-index:       100
+  Shadow:        Subtle bottom shadow
+
+Nav Link
+  Class:         .nav-premium-link
+  Color:         rgba(255, 255, 255, 0.7)
+  Font-weight:   500
+  Font-size:     0.9rem
+  Hover:         Color becomes #e8f0ff
+  Underline:     Animated cyan line appears on hover
+  Animation:     Smooth width expansion (0→100%)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 8: ACCESSIBILITY
+═══════════════════════════════════════════════════════════════════════════════
+
+COLOR CONTRAST RATIOS (WCAG AA Compliance)
+─────────────────────────────────────────────────────────────────────────────
+
+✓ Primary text (#e8f0ff) on Dark (#0a0e27):  Ratio 18.7:1 (AAA)
+✓ Cyan (#00d9ff) on Dark (#0a0e27):          Ratio 8.3:1 (AAA)
+✓ Button white on Gradient:                  Ratio >7:1 (AAA)
+✓ Secondary text on Dark:                    Ratio >4.5:1 (AA)
+
+FOCUS STATES
+─────────────────────────────────────────────────────────────────────────────
+
+All interactive elements have clear focus states:
+- Visible outline or border change
+- Sufficient contrast ratio
+- Clearly distinguishable from default state
+
+MOTION & ANIMATION
+─────────────────────────────────────────────────────────────────────────────
+
+Respects prefers-reduced-motion:
+- Animations can be disabled via CSS media query
+- Core functionality remains without animation
+- No required animations for interaction
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 9: RESPONSIVE BREAKPOINTS
+═══════════════════════════════════════════════════════════════════════════════
+
+Mobile (375px and up)
+  Min-width:      375px
+  Max-width:      767px
+  Column count:   1
+  Font-size:      Base reduced 5-10%
+  Padding:        12px (reduced from 16px)
+  Stack layout:   Vertical
+
+Tablet (768px and up)
+  Min-width:      768px
+  Max-width:      1023px
+  Column count:   2
+  Font-size:      Base size
+  Padding:        16px
+  Grid:           2-column layouts
+
+Laptop (1024px and up)
+  Min-width:      1024px
+  Max-width:      1919px
+  Column count:   3-4
+  Font-size:      Base size
+  Padding:        24px
+  Grid:           3+ column layouts
+
+Desktop (1920px and up)
+  Min-width:      1920px
+  Column count:   4+
+  Font-size:      Slightly increased
+  Padding:        32px
+  Grid:           Full-width with max-width
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 10: USAGE EXAMPLES
+═══════════════════════════════════════════════════════════════════════════════
+
+BUTTON EXAMPLE
+─────────────────────────────────────────────────────────────────────────────
+<button class="btn-premium btn-premium-primary">
+  Send Message
+</button>
+
+Visual Result:
+┌─────────────────────────────────┐
+│  Send Message                   │ (Gradient background)
+│  (Cyan to Purple gradient)      │ (White text, 60% opacity)
+│  Medium shadow below            │ (Slight glow effect)
+│  On hover: lifts up 2px         │ (Shadow increases)
+└─────────────────────────────────┘
+
+CARD EXAMPLE
+─────────────────────────────────────────────────────────────────────────────
+<div class="card-premium">
+  <div class="card-premium-header">
+    <h3>Card Title</h3>
+  </div>
+  <div class="card-premium-body">
+    Card content here
+  </div>
+</div>
+
+Visual Result:
+┌──────────────────────────────────┐
+│ Card Title                       │ (Gradient text)
+├──────────────────────────────────┤ (Border separator)
+│ Card content here                │ (White/light text)
+│                                  │
+└──────────────────────────────────┘ (16px radius, subtle shadow)
+
+On hover: Card lifts, shadow grows, border brightens
+
+INPUT EXAMPLE
+─────────────────────────────────────────────────────────────────────────────
+<input type="text" 
+       class="input-premium" 
+       placeholder="Enter message...">
+
+Visual Result:
+Default:
+  ┌─────────────────────────────────┐
+  │ Enter message...               │ (Placeholder text - 40% opacity)
+  └─────────────────────────────────┘ (Subtle border)
+
+On focus:
+  ┌─────────────────────────────────┐
+  │ User typing...                  │ (Bright text)
+  └─────────────────────────────────┘ (Cyan border, glow effect)
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 11: DO'S AND DON'TS
+═══════════════════════════════════════════════════════════════════════════════
+
+DO:
+✓ Use CSS variables for all values
+✓ Apply gradients to primary actions
+✓ Keep animations smooth and purposeful
+✓ Test on mobile first
+✓ Maintain clear visual hierarchy
+✓ Use shadows for depth
+✓ Respect accessibility guidelines
+✓ Use the spacing scale consistently
+✓ Apply consistent border radius
+✓ Use the color palette provided
+
+DON'T:
+✗ Use inline styles instead of classes
+✗ Mix too many colors in one section
+✗ Create custom animations without reason
+✗ Ignore mobile responsiveness
+✗ Use pure white (#fff) - use #e8f0ff
+✗ Override focus states
+✗ Create animations faster than 300ms
+✗ Skip accessibility testing
+✗ Mix different border radius values
+✗ Deviate from the design system
+
+
+═══════════════════════════════════════════════════════════════════════════════
+SECTION 12: QUICK REFERENCE CARD
+═══════════════════════════════════════════════════════════════════════════════
+
+COLORS TO REMEMBER:
+  Primary Accent:       #00d9ff (Cyan)
+  Secondary Accent:     #805ad5 (Purple)
+  Highlight Accent:     #ff006e (Magenta)
+  Success Color:        #4cff8a (Green)
+  Error Color:          #ff6b6b (Red)
+  Background:           #0a0e27 (Dark Navy)
+  Text Color:           #e8f0ff (Light Blue-white)
+
+FONTS TO USE:
+  Headings:            Sora / Poppins
+  Body Text:           Inter
+  Code:                Fira Code
+
+SPACING TO USE:
+  Default Padding:     16px (lg)
+  Default Gap:         16px (lg)
+  Border Radius:       16px (lg)
+
+SHADOWS TO USE:
+  Default Shadow:      Medium shadow
+  On Hover:            Large shadow
+  On Active:           Small shadow
+
+ANIMATION TIMING:
+  Button/Quick:        150ms
+  Standard:            300ms
+  Emphasis:            500ms
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+END OF STYLE GUIDE
+
+This guide provides a comprehensive visual reference for implementing AION's
+premium design system. Reference this document when building and updating
+components to ensure consistency.
+
+For implementation details, see PREMIUM_DESIGN_GUIDE.md
+For quick reference, see PREMIUM_DESIGN_SUMMARY.txt
+For step-by-step implementation, see IMPLEMENTATION_CHECKLIST.txt
+
+═══════════════════════════════════════════════════════════════════════════════

@@ -97,7 +97,10 @@
 .export-controls button { padding:8px 12px; border-radius:10px; }
 
 @media (max-width:900px) { .memory-hero { flex-direction:row; gap:10px; } }
-@media (max-width:700px) { .memory-stats { flex-direction:column; } .memory-hero { align-items:flex-start; gap:8px; } .hero-actions { margin-left:0; }
+@media (max-width:700px) { 
+	.memory-stats { flex-direction:column; } 
+	.memory-hero { align-items:flex-start; gap:8px; } 
+	.hero-actions { margin-left:0; }
 	.results-list { grid-template-columns: 1fr; }
 }
 

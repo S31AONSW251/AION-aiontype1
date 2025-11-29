@@ -1,15 +1,15 @@
 // setupProxy.js - Configure API proxy with error handling
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
+// setupProxy.js - Configure API proxy with error handling
+const { createProxyMiddleware } = require('http-proxy-middleware');
+
 module.exports = function(app) {
   app.use(
-    '/api',
-    createProxyMiddleware({
+    createProxyMiddleware('/api', {
       target: 'http://127.0.0.1:5000',
       changeOrigin: true,
-      pathRewrite: {
-        '^/api': '/api',
-      },
+      // Keep the full path including /api since backend expects /api routes
       onError: (err, req, res) => {
         // Gracefully handle proxy errors
         res.status(503).json({
