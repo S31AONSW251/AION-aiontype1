@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import syncService from '../services/syncService';
 import { pendingCount } from '../lib/offlineQueue';
+import { apiFetch, safeJson } from '../lib/fetchHelper';
 
 const Header = ({
   soulState = {},
@@ -30,9 +31,10 @@ const Header = ({
     let stopped = false;
     const fetchStatus = async () => {
       try {
-        const res = await fetch('/api/status/providers');
-        if (!res.ok) return;
-        const j = await res.json();
+        const res = await apiFetch('/status/providers');
+        if (!res || !res.ok) return;
+        const wrap = await safeJson(res).catch(() => null);
+        const j = wrap ? (wrap.json || null) : null;
         if (j && j.providers) setProviderStatus(j.providers);
       } catch (e) {
         // ignore network errors

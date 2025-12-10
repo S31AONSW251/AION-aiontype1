@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>AION Admin Debug</title>
+    <style>
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; padding: 24px; }
+      pre { background: #f7f7f7; padding: 12px; border-radius: 6px; }
+      label{display:block;margin-top:12px}
+    </style>
+  </head>
+  <body>
+    <h1>AION Admin Debug</h1>
+    <button id="healthBtn">Check /api/health</button>
+    <pre id="healthOut">(health output)</pre>
+
+    <h2>Vector Query (admin)</h2>
+    <label>Query: <input id="q" value="AION" /></label>
+    <label>Admin key: <input id="k" value="changeme" /></label>
+    <button id="qBtn">Query Vector DB</button>
+    <pre id="qOut">(results)</pre>
+
+    <h2>Client error demo</h2>
+    <p>Click to throw a test error (this will be reported to the backend via /api/log-client-error).</p>
+    <button id="errBtn">Throw test error</button>
+
+    <script>
+      async function showHealth(){
+        try{
+          const r = await fetch('/api/health');
+          const j = await r.json();
+          document.getElementById('healthOut').innerText = JSON.stringify(j, null, 2);
+        }catch(e){ document.getElementById('healthOut').innerText = 'Error: '+e }
+      }
+      document.getElementById('healthBtn').addEventListener('click', showHealth);
+
+      document.getElementById('qBtn').addEventListener('click', async ()=>{
+        const q = document.getElementById('q').value;
+        const k = document.getElementById('k').value;
+        try{
+          const r = await fetch(`/admin/vector/query?q=${encodeURIComponent(q)}&admin_key=${encodeURIComponent(k)}`);
+          const j = await r.json();
+          document.getElementById('qOut').innerText = JSON.stringify(j, null, 2);
+        }catch(e){ document.getElementById('qOut').innerText = 'Error: '+e }
+      });
+
+      // Install global error handler to report client errors to server
+      window.addEventListener('error', function(ev){
+        try{
+          fetch('/api/log-client-error', {
+            method:'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({error: ev.message, stack: ev.error && ev.error.stack ? ev.error.stack : null, when: 'window.onerror'})
+          }).catch(()=>{});
+        }catch(e){}
+      });
+
+      document.getElementById('errBtn').addEventListener('click', ()=>{ throw new Error('Admin-debug test error at '+new Date().toISOString()) });
+    </script>
+  </body>
+</html>

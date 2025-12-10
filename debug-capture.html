@@ -1,0 +1,43 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>AION debug-capture (local)</title>
+<link href="/static/css/main.36566b5a.css" rel="stylesheet">
+<script defer src="/static/js/main.344a2cb3.js"></script>
+</head>
+<body>
+<!-- Injected debug-capture script -->
+<script>
+(function(){
+  function send(obj){
+    try{
+      var payload=JSON.stringify(obj);
+      if(navigator.sendBeacon){ navigator.sendBeacon('/api/log-client-error', payload); return; }
+      fetch('/api/log-client-error',{method:'POST',headers:{'Content-Type':'application/json'},body:payload}).catch(()=>{});
+    }catch(e){}
+  }
+  window.addEventListener('error', function(e){
+    send({error:e.message,filename:e.filename,lineno:e.lineno,colno:e.colno,stack:e.error&&e.error.stack,when:'window-error'});
+  });
+  window.addEventListener('unhandledrejection', function(e){
+    var r = e.reason;
+    send({error:r&&r.message? r.message: String(r),stack:r&&r.stack,when:'unhandled-rejection'});
+  });
+  ['error','warn'].forEach(function(level){
+    var orig = console[level];
+    console[level] = function(){
+      try{ send({error: Array.prototype.slice.call(arguments).join(' '),when:'console-'+level}); }catch(e){}
+      if(orig && orig.apply) orig.apply(console, arguments);
+    };
+  });
+  var ov = document.createElement('div'); ov.id='__aion_debug_overlay'; ov.style.position='fixed'; ov.style.right='12px'; ov.style.bottom='12px'; ov.style.padding='8px 10px'; ov.style.background='rgba(255,20,20,0.85)'; ov.style.color='#fff'; ov.style.fontFamily='sans-serif'; ov.style.zIndex='999999'; ov.style.borderRadius='6px'; ov.style.fontSize='13px'; ov.innerText='AION debug-capture active';
+  document.addEventListener('DOMContentLoaded', function(){ try{ document.body.appendChild(ov);}catch(e){} });
+})();
+</script>
+
+<!-- App root will mount here -->
+<div id="root"></div>
+</body>
+</html>

@@ -1,11 +1,39 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App";
 import ErrorBoundary from './ErrorBoundary';
 import "./App.css";
 import "./theme-compat.css";
 import syncService from './services/syncService';
 import { enqueue } from './lib/offlineQueue';
+import { apiFetch, safeJson } from './lib/fetchHelper';
+
+// Safely require App to catch module-evaluation/runtime errors during import.
+let AppComponent = null;
+try {
+  // Use require to allow catching exceptions thrown during module evaluation
+  // (e.g., syntax/runtime errors inside `App.js` that happen before React render)
+  // eslint-disable-next-line global-require
+  // Use a safe loader during debugging to avoid import-time crashes.
+  AppComponent = require('./App.loader').default;
+} catch (err) {
+  // Report the client-side boot error to backend for diagnostics
+  try {
+    apiFetch('/log-client-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ error: String(err), stack: err.stack || null, when: 'import-App' })
+    }).catch(() => {});
+  } catch (e) {
+    // ignore
+  }
+  // Create a minimal fallback component that displays the error
+  AppComponent = function ImportErrorFallback() {
+    return React.createElement('div', { style: { padding: 24, color: '#900', background: '#fff' } }, [
+      React.createElement('h2', { key: 'h' }, 'Application failed to load'),
+      React.createElement('pre', { key: 'p', style: { whiteSpace: 'pre-wrap' } }, String(err))
+    ]);
+  };
+}
 
 // Apply persisted premium theme before React mounts to avoid FOUC
 try {
@@ -21,7 +49,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
     <ErrorBoundary>
-      <App />
+      <AppComponent />
     </ErrorBoundary>
   </React.StrictMode>
 );
@@ -41,9 +69,10 @@ const apiSend = async (type, payload) => {
     return enqueue(type, payload);
   }
   try {
-    const res = await fetch(`/api/${type}`, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return res.json();
+    const res = await apiFetch(`${type}`, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'application/json' } });
+    if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'ERR'}`);
+    const wrap = await safeJson(res).catch(() => null);
+    return wrap ? (wrap.json || wrap.text) : null;
   } catch (err) {
     // enqueue and rethrow so syncService can backoff
     await enqueue(type, payload);
