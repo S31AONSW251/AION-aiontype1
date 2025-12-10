@@ -58,6 +58,8 @@ import './styles/aion-ultra-theme.css';
 import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
+import memoryService from './services/memoryService';
+import modelService from './services/modelService';
 
 // --- DEFAULT SETTINGS moved to module scope so effects can reuse them safely ---
 export const DEFAULT_SETTINGS = {
@@ -384,56 +386,17 @@ function App() {
 
   // Centralized helper to call backend Ollama proxy and normalize response
   const callOllamaGenerate = useCallback(async (promptPayload, onPiece = null) => {
-    // Try the new streaming NDJSON endpoint first. If it fails, fall back to
-    // existing behavior (localModel -> offlineReply).
     try {
-      const controller = new AbortController();
-      const res = await fetch('/api/generate/stream', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(promptPayload),
-        signal: controller.signal,
-      });
-      if (!res.ok) {
-        const err = await res.text().catch(() => `${res.status} ${res.statusText}`);
-        throw new Error(err || `HTTP ${res.status}`);
-      }
-
-      // Use the shared streaming parser to process NDJSON / JSON-lines
-      await processStreamedResponse(res, async (piece) => {
-        // If parser yields JSON objects from NDJSON, forward them as-is
-        if (piece && piece.type && typeof onPiece === 'function') {
-          await onPiece(piece);
-          return;
-        }
-        // Otherwise, forward raw text pieces
-        if (typeof onPiece === 'function') await onPiece({ type: 'text', data: piece.data || '' });
-      });
-
-      // No single final return value for streaming mode; caller should rely on onPiece
-      return null;
+      return await modelService.generateStreaming(promptPayload, onPiece);
     } catch (e) {
-      console.warn('streaming generate failed, falling back:', e);
-      // Try local WASM model if available
-      try {
-        if (!localModel.available) await localModel.init();
-        if (localModel.available) {
-          const localOut = await localModel.generate(promptPayload.prompt || JSON.stringify(promptPayload));
-          if (typeof onPiece === 'function') await onPiece({ type: 'text', data: localOut });
-          return localOut;
-        }
-      } catch (lmErr) {
-        console.warn('localModel fallback failed', lmErr);
-      }
-
-      // Fallback to offline responder (cached knowledge / template)
+      console.warn('modelService.generateStreaming failed, falling back to offline reply', e);
       try {
         const q = (promptPayload && promptPayload.prompt) ? String(promptPayload.prompt) : '';
         const offline = await offlineReply(q || '');
         if (typeof onPiece === 'function') await onPiece({ type: 'text', data: offline.text });
         return offline.text;
-      } catch (offErr) {
-        console.error('offlineReply failed', offErr);
+      } catch (err) {
+        console.error('callOllamaGenerate fallback to offlineReply failed', err);
         throw e;
       }
     }
@@ -730,6 +693,8 @@ function App() {
         ...event
     };
     setEpisodicMemory(prev => [...prev, newEpisode].slice(-100));
+    // also store in local IndexedDB for persistence and retrieval
+    try { memoryService.storeEpisode(newEpisode).catch(() => {}); } catch(e){ /* ignore */ }
     try {
         await fetch("http://127.0.0.1:5000/api/consciousness/process-interaction", {
             method: 'POST',
