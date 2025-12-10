@@ -386,8 +386,21 @@ function App() {
 
   // Centralized helper to call backend Ollama proxy and normalize response
   const callOllamaGenerate = useCallback(async (promptPayload, onPiece = null) => {
+    // Build a prompt enriched with relevant local episodic memory (RAG)
+    async function buildPromptWithMemory(payload) {
+      try {
+        const basePrompt = (payload && payload.prompt) ? String(payload.prompt) : '';
+        if (!basePrompt) return payload;
+        const mems = await memoryService.queryEpisodes(basePrompt, 5);
+        if (!mems || mems.length === 0) return payload;
+        const header = mems.map(m => `- [${m.timestamp}] ${m.excerpt || (m.content||'').slice(0,200)}`).join('\n');
+        const enriched = `Relevant memories:\n${header}\n\nUser Prompt:\n${basePrompt}`;
+        return { ...payload, prompt: enriched };
+      } catch (err) { return payload; }
+    }
     try {
-      return await modelService.generateStreaming(promptPayload, onPiece);
+      const withMem = await buildPromptWithMemory(promptPayload);
+      return await modelService.generateStreaming(withMem, onPiece);
     } catch (e) {
       console.warn('modelService.generateStreaming failed, falling back to offline reply', e);
       try {
