@@ -14,6 +14,7 @@ const MemoryManager = ({
   const [memoryQuery, setMemoryQuery] = useState('');
   const [retrievalResults, setRetrievalResults] = useState([]);
   const [consolidationStatus, setConsolidationStatus] = useState('idle');
+  const [indexing, setIndexing] = useState(false);
   const [memoryStats, setMemoryStats] = useState({
     total: 0,
     shortTerm: 0,
@@ -309,7 +310,11 @@ const MemoryManager = ({
             <button className="action-btn ghost" onClick={() => setPinnedDrawerOpen(s => !s)}>{pinnedDrawerOpen ? 'Close Pins' : 'Pins'}</button>
           </Tooltip>
           <Tooltip text="Index all memories for semantic search">
-            <button className="action-btn" onClick={() => { if (typeof onIndexAllMemories === 'function') { onIndexAllMemories(); } else if (typeof onMemoryRetrieval === 'function') { /* fallback: call retrieve for now */ } }}>Index</button>
+            <button className="action-btn" disabled={indexing} onClick={async () => { 
+                if (typeof onIndexAllMemories === 'function') {
+                  try { setIndexing(true); await onIndexAllMemories(); } catch(e){ console.error(e);} finally { setIndexing(false); }
+                } 
+            }}>{indexing ? 'Indexing...' : 'Index'}</button>
           </Tooltip>
           <Tooltip text="Export currently visible results">
             <button className="action-btn" onClick={() => exportMemories()}>Export</button>
