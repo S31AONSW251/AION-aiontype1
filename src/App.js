@@ -730,6 +730,14 @@ function App() {
     } catch (e) {
         console.error("Failed to log episodic event to backend:", e);
     }
+    // Try to index into server-side vector store for RAG
+    try {
+      const doc = { documents: [{ id: newEpisode.id, text: newEpisode.content || newEpisode.text || newEpisode.title || '', metadata: { source: 'ep', ts: newEpisode.timestamp } }] };
+      await fetch('/api/rag/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(doc) });
+    } catch (e) {
+      // non-fatal
+      console.debug('RAG ingest failed (non-fatal)', e);
+    }
   }, []);
 
   // NEW: Memory panel helpers (used by MemoriesPanel)
@@ -2756,6 +2764,26 @@ function App() {
             onMemoryRetrieval={handleMemoryRetrieval}
             onMemoryUpdate={handleMemoryUpdate}
             onMemoryConsolidation={handleMemoryConsolidation}
+            onIndexAllMemories={async () => {
+              try {
+                const docs = [];
+                const all = [ ...(soulState.memories || []), ...(soulState.episodicMemory || []), ...(longTermMemory || [] ) ];
+                for (let m of all) {
+                  if (!m || !m.text) continue;
+                  docs.push({ id: `mem-${m.id || Math.random().toString(36).slice(2)}`, text: m.text, metadata: { source: m.source || 'memory', ts: m.ts || (m.timestamp || new Date().toISOString()) } });
+                }
+                // Batch ingest
+                const batchSize = 40;
+                for (let i = 0; i < docs.length; i += batchSize) {
+                  const batch = docs.slice(i, i + batchSize);
+                  await fetch('/api/rag/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documents: batch }) });
+                }
+                showNotification(`Indexed ${docs.length} memories for RAG`);
+              } catch (err) {
+                console.error('Failed to index memories', err);
+                showNotification('Failed to index memories', 'error');
+              }
+            }}
           />
         );
 

@@ -8,7 +8,8 @@ const MemoryManager = ({
   soulState, 
   onMemoryUpdate,
   onMemoryRetrieval,
-  onMemoryConsolidation
+  onMemoryConsolidation,
+  onIndexAllMemories
 }) => {
   const [memoryQuery, setMemoryQuery] = useState('');
   const [retrievalResults, setRetrievalResults] = useState([]);
@@ -53,8 +54,8 @@ const MemoryManager = ({
       longTerm: soulState.longTermMemory?.length || 0,
       episodic: soulState.episodicMemory?.length || 0,
       procedural: soulState.proceduralMemory?.length || 0
-    };
-    
+    },
+    onMemoryUpdate,
     setMemoryStats(stats);
   }, [soulState]);
 
@@ -306,6 +307,9 @@ const MemoryManager = ({
         <div className="hero-actions">
           <Tooltip text={pinnedDrawerOpen ? 'Close pin manager' : 'Open pin manager'}>
             <button className="action-btn ghost" onClick={() => setPinnedDrawerOpen(s => !s)}>{pinnedDrawerOpen ? 'Close Pins' : 'Pins'}</button>
+          </Tooltip>
+          <Tooltip text="Index all memories for semantic search">
+            <button className="action-btn" onClick={() => { if (typeof onIndexAllMemories === 'function') { onIndexAllMemories(); } else if (typeof onMemoryRetrieval === 'function') { /* fallback: call retrieve for now */ } }}>Index</button>
           </Tooltip>
           <Tooltip text="Export currently visible results">
             <button className="action-btn" onClick={() => exportMemories()}>Export</button>
