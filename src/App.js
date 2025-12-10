@@ -670,6 +670,19 @@ function App() {
 
   // Register service worker and wire online/offline events
   useEffect(() => {
+    // Initialize memory DB and load recent episodes into state
+    (async () => {
+      try {
+        await memoryService.initMemoryDB();
+        const recent = await memoryService.getRecentEpisodes(200);
+        if (recent && recent.length > 0) {
+          setEpisodicMemory(prev => [...recent, ...prev].slice(-200));
+        }
+      } catch (err) {
+        console.warn('Failed to initialize memory DB', err);
+      }
+    })();
+
     if (typeof navigator !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.register('/service-worker.js').catch(err => console.warn('SW reg failed', err));
     }
@@ -704,6 +717,76 @@ function App() {
     } catch (e) {
         console.error("Failed to log episodic event to backend:", e);
     }
+  }, []);
+
+  // NEW: Memory panel helpers (used by MemoriesPanel)
+  const handleMemoryRetrieval = useCallback(async (query) => {
+    if (!query || query.trim() === '') return [];
+    try {
+      // Prefer local IndexedDB query
+      const results = await memoryService.queryEpisodes(query, 100);
+      // Map to expected UI format: id, metadata, score, title, snippet
+      return (results || []).map(r => ({
+        id: (r.id || '').toString(),
+        title: r.title || (r.excerpt && r.excerpt.slice(0, 80)) || 'Memory',
+        snippet: r.excerpt || (r.content || '').slice(0, 160),
+        metadata: { timestamp: r.timestamp, type: r.type },
+        score: 1.0
+      }));
+    } catch (err) {
+      if (navigator.onLine) {
+        try {
+          const q = encodeURIComponent(query);
+          const res = await fetch(`/api/consciousness/memory/local?q=${q}`);
+          if (res.ok) {
+            const json = await res.json();
+            return (json.memories || []).map(m => ({ id: String(m.id), title: m.text.slice(0,80), snippet: m.text.slice(0,160), metadata: { timestamp: m.ts }, score: 1.0 }));
+          }
+        } catch(e) { /* fallback */ }
+      }
+      return [];
+    }
+  }, []);
+
+  const handleMemoryUpdate = useCallback(async (updated) => {
+    try {
+      // Update local store (best-effort)
+      if (updated && updated.id) {
+        // Replace by removing and writing new item (very simple)
+        await memoryService.initMemoryDB();
+        // find by id and update
+        const items = await memoryService.getRecentEpisodes(500);
+        const existing = items.find(i => String(i.id) === String(updated.id));
+        if (existing) {
+          await memoryService.db.episodes.update(existing.id, { title: updated.title, content: updated.content || existing.content, excerpt: (updated.snippet||existing.excerpt) });
+        }
+      }
+      // Also attempt to sync to backend
+      if (navigator.onLine) {
+        try { await fetch('/api/consciousness/add-memory', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: updated.content || updated.snippet || updated.title }) }); } catch(e){}
+      }
+    } catch (err) { console.warn('memory update failed', err); }
+  }, []);
+
+  const handleMemoryConsolidation = useCallback(async () => {
+    try {
+      if (navigator.onLine) {
+        const res = await fetch('/api/consciousness/evolve', { method: 'POST' });
+        if (!res.ok) throw new Error('Server consolidation failed');
+        const json = await res.json();
+        setInternalReflections(prev => [json.evolution || 'Consolidated', ...prev].slice(0, 100));
+        return json;
+      } else {
+        // local consolidation (summarization) -- create a simple summary from recent episodes
+        const items = await memoryService.getRecentEpisodes(10);
+        const joined = items.map(i => (i.title || '') + '\n' + (i.excerpt || '')).join('\n\n');
+        return { ok: true, summary: joined.slice(0, 2048) };
+      }
+    } catch (err) {
+      console.warn('Consolidation error', err);
+      return { ok: false, error: err.message };
+    }
+  }, []);
   }, []);
 
   // NEW: Simple keyword-based similarity search for episodic memory
@@ -2657,6 +2740,9 @@ function App() {
             internalReflections={internalReflections}
             exportConversation={handleRegenerate}
             clearConversation={clearConversation}
+            onMemoryRetrieval={handleMemoryRetrieval}
+            onMemoryUpdate={handleMemoryUpdate}
+            onMemoryConsolidation={handleMemoryConsolidation}
           />
         );
 
