@@ -22,6 +22,7 @@ const MemoryManager = ({
     episodic: 0,
     procedural: 0
   });
+  const [vectorCount, setVectorCount] = useState(null);
   const [pinnedIds, setPinnedIds] = useState(() => {
     try { return JSON.parse(localStorage.getItem('aion_pinned_memories') || '[]'); } catch(e){ return []; }
   });
@@ -63,6 +64,20 @@ const MemoryManager = ({
   // Keep stats in sync when soulState changes
   // include updateMemoryStats in deps to satisfy exhaustive-deps lint rule
   useEffect(() => { updateMemoryStats(); }, [soulState, updateMemoryStats]);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch('/api/rag/status');
+        if (res.ok) {
+          const j = await res.json();
+          if (j.ok && j.status) {
+            setVectorCount(j.status.count);
+          }
+        }
+      } catch(e) { /* ignore */ }
+    })();
+  }, []);
 
   // persist pinned ids
   useEffect(() => {
@@ -350,6 +365,10 @@ const MemoryManager = ({
         <div className="stat">
           <span className="stat-label">Procedural:</span>
           <span className="stat-value">{memoryStats.procedural}</span>
+        </div>
+        <div className="stat">
+          <span className="stat-label">Indexed:</span>
+          <span className="stat-value">{vectorCount === null ? '—' : vectorCount}</span>
         </div>
       </div>
       
