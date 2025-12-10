@@ -391,7 +391,21 @@ function App() {
       try {
         const basePrompt = (payload && payload.prompt) ? String(payload.prompt) : '';
         if (!basePrompt) return payload;
-        const mems = await memoryService.queryEpisodes(basePrompt, 5);
+        // Try server-side RAG query first
+        let mems = [];
+        try {
+          const res = await fetch('/api/rag/query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: basePrompt, top_k: 5 }) });
+          if (res.ok) {
+            const j = await res.json();
+            if (j.ok && Array.isArray(j.results)) {
+              mems = j.results.map(r => ({ timestamp: r.metadata?.ts || '', excerpt: r.text, content: r.text }));
+            }
+          }
+        } catch (e) {
+          // ignore and fallback
+        }
+        // fallback to local IndexedDB if server-side RAG returned nothing
+        if (!mems || mems.length === 0) mems = await memoryService.queryEpisodes(basePrompt, 5);
         if (!mems || mems.length === 0) return payload;
         const header = mems.map(m => `- [${m.timestamp}] ${m.excerpt || (m.content||'').slice(0,200)}`).join('\n');
         const enriched = `Relevant memories:\n${header}\n\nUser Prompt:\n${basePrompt}`;
