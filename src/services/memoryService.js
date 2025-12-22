@@ -66,6 +66,16 @@ export async function getRecentEpisodes(limit = 10) {
   }
 }
 
+export async function getAllEpisodes() {
+  try {
+    await initMemoryDB();
+    return await db.episodes.toArray();
+  } catch (err) {
+    console.error('getAllEpisodes error', err);
+    return [];
+  }
+}
+
 export async function clearMemory() {
   try {
     await initMemoryDB();
@@ -83,5 +93,6 @@ export default {
   storeEpisode,
   queryEpisodes,
   getRecentEpisodes,
+  getAllEpisodes,
   clearMemory,
 };

@@ -11,10 +11,10 @@
 }
 .splash-inner { display:flex; gap:28px; align-items:center; max-width:1100px; width:100%; padding:40px; }
 .splash-left { flex:1; color: white; }
-.splash-title { font-size:64px; font-weight:900; letter-spacing:2px; color: #00f6ff; text-shadow: 0 10px 40px rgba(0,246,255,0.06); }
+.splash-title { font-size:64px; font-weight:900; letter-spacing:2px; color: var(--accent-3); text-shadow: 0 10px 40px rgba(0,246,255,0.06); }
 .splash-sub { margin-top:8px; color: rgba(255,255,255,0.82); font-size:18px; }
 .splash-cta-row { margin-top:18px; display:flex; gap:12px; }
-.splash-enter { background: linear-gradient(90deg,#00e5ff,#6c63ff); color: #041223; padding:12px 20px; border-radius:12px; font-weight:800; border: none; cursor:pointer; box-shadow: 0 12px 40px rgba(6,12,32,0.6); }
+.splash-enter { background: linear-gradient(90deg,var(--accent-3),var(--accent-2)); color: #041223; padding:12px 20px; border-radius:12px; font-weight:800; border: none; cursor:pointer; box-shadow: 0 12px 40px rgba(6,12,32,0.6); }
 .splash-about { background: transparent; color: rgba(255,255,255,0.9); padding:10px 14px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); cursor:pointer; }
 .splash-options { margin-top:12px; color: rgba(255,255,255,0.72); font-size:13px; }
 .splash-right { width:380px; display:flex; align-items:center; justify-content:center; }
@@ -35,69 +35,9 @@
    Dark-first with light-mode overrides. No duplicated blocks.
 */
 
-:root{
-  /* New premium design tokens (canonical for ChatPanel and new UI)
-    Kept compact and tuned for a warmer, premium look. */
-  --cp-accent-1: #ffd166; /* warm gold */
-  --cp-accent-2: #805ad5; /* rich violet */
-  --cp-accent-3: #00c2ff; /* bright cyan micro-accent */
-  --cp-glass-bg: rgba(12,14,20,0.46);
-  --cp-glass-border: rgba(255,255,255,0.07);
-  --cp-elev: 0 18px 70px rgba(2,4,12,0.65);
-  --cp-radius: 16px;
-  --cp-ui-font: var(--font-sans);
-
-  /* ChatPanel theme tokens - dark mode defaults (ChatPanel.css will override as needed) */
-  --chat-text-primary: #e6f6ff;
-  --chat-text-secondary: rgba(230, 246, 255, 0.7);
-  --chat-bg-message: rgba(15, 18, 24, 0.85);
-  --chat-bg-aion: rgba(8, 12, 18, 0.9);
-  --chat-border-color: rgba(255, 255, 255, 0.08);
-  --chat-shadow-soft: 0 4px 16px rgba(0, 0, 0, 0.4);
-  --chat-shadow-medium: 0 12px 36px rgba(0, 0, 0, 0.5);
-  --chat-shadow-elevated: 0 24px 60px rgba(0, 0, 0, 0.6);
-
-  /* Core typography & layout tokens */
-  --font-sans: Inter, 'Segoe UI', system-ui, -apple-system, 'Helvetica Neue', Arial;
-  --font-display: 'Poppins', var(--font-sans);
-  --font-mono: 'Fira Code', ui-monospace, SFMono-Regular, 'Segoe UI Mono', Menlo, Monaco, monospace;
-  --max-width: 1240px;
-  --r-sm: 10px; --r-md: 14px;
-  --shadow-soft: 0 12px 48px rgba(4,8,20,0.6);
-  --trans-fast: 180ms cubic-bezier(.2,.9,.2,1);
-
-  /* Compatibility fallbacks used by various components */
-  --text-primary: var(--text);
-  --bg-elev: rgba(255,255,255,0.01);
-  --bg-muted: rgba(255,255,255,0.01);
-  --ease-in-out: cubic-bezier(.2,.9,.2,1);
-
-  /* Page / surface colors (dark-first) */
-  --bg-page: #060610;
-  --bg-gradient: radial-gradient(1200px 600px at 10% 10%, rgba(255,209,102,0.03), transparent 8%), radial-gradient(800px 400px at 90% 90%, rgba(128,90,213,0.02), transparent 6%), var(--bg-page);
-  --bg-surface: rgba(12,16,24,0.62);
-  --card-bg: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006));
-  --text: #eaf6ff;
-  --muted: #aab9c6;
-
-  /* Map legacy accent variables to the new cp tokens so older components
-    keep working but pick up the premium palette by default. */
-  --accent: var(--cp-accent-1);
-  --accent-2: var(--cp-accent-2);
-  --accent-3: var(--cp-accent-3);
-
-  --neon: rgba(255,209,102,0.12);
-  --neon-2: rgba(128,90,213,0.10);
-  --glass: rgba(255,255,255,0.03);
-  --glass-strong: rgba(255,255,255,0.07);
-  --border: rgba(255,255,255,0.045);
-  --border-strong: rgba(255,255,255,0.07);
-  --focus: rgba(255,209,102,0.12);
-  --glow: 0 18px 80px rgba(128,90,213,0.06);
-  --elev-1: 0 8px 30px rgba(2,6,23,0.56);
-  --elev-2: 0 20px 80px rgba(2,6,23,0.66);
-  --glass-border: rgba(255,255,255,0.045);
-}
+/* Theme variables were moved to `src/styles/theme-vars.css` so they are
+   shared across all panels and can be overridden by specialized themes
+   such as `aion-ultra-theme.css`. */
 
 /* Palette overrides applied on the app container */
 .app-container.palette-magenta {
@@ -272,7 +212,7 @@ body{margin:0;background:var(--bg-page);color:var(--text);font-family:var(--font
 .app-container{max-width:var(--max-width);margin:22px auto;padding:18px;display:flex;flex-direction:column;gap:16px;position:relative;z-index:10}
 
 /* Header */
-.app-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.006));border-radius:var(--cp-radius);border:1px solid var(--glass-border);box-shadow:var(--cp-elev);backdrop-filter: blur(10px) saturate(130%);-webkit-backdrop-filter: blur(10px) saturate(130%)}
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:var(--bg-gradient);border-radius:var(--cp-radius);border:1px solid var(--glass-border);box-shadow:var(--cp-elev);backdrop-filter: blur(10px) saturate(130%);-webkit-backdrop-filter: blur(10px) saturate(130%)}
 .brand{display:flex;align-items:center;gap:14px}
 .brand .logo{font-family:var(--font-display);font-weight:800;letter-spacing:1px;font-size:1.18rem;color:var(--text);position:relative;text-shadow:0 10px 40px rgba(2,6,23,0.6);background:linear-gradient(90deg,var(--accent),var(--accent-2));-webkit-background-clip:text;background-clip:text;color:transparent}
 .brand .logo::after{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;width:48%;height:8px;border-radius:8px;background:linear-gradient(90deg,var(--accent),var(--accent-2));filter:blur(10px);opacity:0.85}
@@ -1907,7 +1847,7 @@ body.light-theme .welcome-logo {
 
 /* Make tabs look more premium */
 .tab-button { padding:10px 18px; border-radius: 999px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border:1px solid rgba(255,255,255,0.04); box-shadow:none; }
-.tab-button.active { background: linear-gradient(90deg,#00d4ff,#0066ff); color:white; border-color: transparent; box-shadow: 0 10px 30px rgba(3,169,244,0.12); }
+.tab-button.active { background: linear-gradient(90deg,var(--accent-3),var(--accent)); color:white; border-color: transparent; box-shadow: 0 10px 30px rgba(3,169,244,0.12); }
 
 /* Make message bubbles crisper and premium */
 .message-content, .aion-message { border-radius: 16px; padding:14px 18px; box-shadow: 0 8px 24px rgba(0,0,0,0.45); border: 1px solid rgba(255,255,255,0.02); }

@@ -10,6 +10,7 @@ const MemoryManager = ({
   onMemoryRetrieval,
   onMemoryConsolidation,
   onIndexAllMemories
+  , indexProgress
 }) => {
   const [memoryQuery, setMemoryQuery] = useState('');
   const [retrievalResults, setRetrievalResults] = useState([]);
@@ -56,10 +57,10 @@ const MemoryManager = ({
       longTerm: soulState.longTermMemory?.length || 0,
       episodic: soulState.episodicMemory?.length || 0,
       procedural: soulState.proceduralMemory?.length || 0
-    },
-    onMemoryUpdate,
+    };
     setMemoryStats(stats);
-  }, [soulState]);
+    if (typeof onMemoryUpdate === 'function') onMemoryUpdate(stats);
+  }, [soulState, onMemoryUpdate]);
 
   // Keep stats in sync when soulState changes
   // include updateMemoryStats in deps to satisfy exhaustive-deps lint rule
@@ -327,7 +328,10 @@ const MemoryManager = ({
           <Tooltip text="Index all memories for semantic search">
             <button className="action-btn" disabled={indexing} onClick={async () => { 
                 if (typeof onIndexAllMemories === 'function') {
-                  try { setIndexing(true); await onIndexAllMemories(); } catch(e){ console.error(e);} finally { setIndexing(false); }
+                  try { setIndexing(true); await onIndexAllMemories((done, total) => {
+                    // Optionally update local progress for visual feedback
+                    setIndexing(true);
+                  }); } catch(e){ console.error(e);} finally { setIndexing(false); }
                 } 
             }}>{indexing ? 'Indexing...' : 'Index'}</button>
           </Tooltip>
@@ -368,7 +372,10 @@ const MemoryManager = ({
         </div>
         <div className="stat">
           <span className="stat-label">Indexed:</span>
-          <span className="stat-value">{vectorCount === null ? '—' : vectorCount}</span>
+          <span className="stat-value">
+            {vectorCount === null ? '—' : vectorCount}
+            {indexProgress && indexProgress.total > 0 ? ` (${indexProgress.done}/${indexProgress.total})` : ''}
+          </span>
         </div>
       </div>
       

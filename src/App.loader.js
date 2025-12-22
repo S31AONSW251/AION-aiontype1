@@ -1,7 +1,8 @@
 import React, { Suspense, useEffect, useState } from 'react';
 import { apiFetch } from './lib/fetchHelper';
 
-const LazyApp = React.lazy(() => import('./App.full'));
+// Load the full App (restores Chat and all panels) so we mount the complete UI during normal runs.
+const LazyApp = React.lazy(() => import('./App'));
 
 function ImportErrorReport(err, phase = 'dynamic-import') {
   try {

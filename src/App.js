@@ -59,7 +59,10 @@ import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResp
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
 import memoryService from './services/memoryService';
-import modelService from './services/modelService';
+import { apiFetch, safeJson } from './lib/fetchHelper';
+import { generateStreaming } from './services/modelService';
+import RagPanel from './components/RagPanel';
+
 
 // --- DEFAULT SETTINGS moved to module scope so effects can reuse them safely ---
 export const DEFAULT_SETTINGS = {
@@ -240,12 +243,14 @@ function App() {
   
   // New state for Autonomous Search Agent
   const [agentStatus, setAgentStatus] = useState("idle");
+  const [agentEvents, setAgentEvents] = useState([]);
   const [searchPlan, setSearchPlan] = useState([]);
   const [thoughtProcessLog, setThoughtProcessLog] = useState([]);
   const [suggestedQueries, setSuggestedQueries] = useState([]);
   const [searchSummary, setSearchSummary] = useState("");
   const [searchError, setSearchError] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
+
 
   // New state for enhanced answer generation
   const [streamingResponse, setStreamingResponse] = useState("");
@@ -261,10 +266,6 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showSoulPanel, setShowSoulPanel] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  // Show pre-app welcome splash unless user opted out
-  const [showSplash, setShowSplash] = useState(() => {
-    try { return localStorage.getItem('aion_skip_splash') !== '1'; } catch (e) { return true; }
-  });
   // Ultra Power Mode (quick frontend 'boost' toggle)
   // When enabled, temporarily applies aggressive settings to demonstrate an "advanced" mode.
   const [ultraPower, setUltraPower] = useState(() => {
@@ -333,198 +334,18 @@ function App() {
       console.error('❌ AION Initialization Error:', initError);
     }
   }, []); // Run once on mount
-
-  useEffect(() => {
-    // Monitor URL hash to support links like #/about from the splash or external links
-    const handleHash = () => {
-      try {
-        const h = (window.location.hash || '').replace(/^#/, '');
-        if (h === '/about' || h === 'about') {
-          setShowSplash(false);
-          setShowAbout(true);
-        } else {
-          setShowAbout(false);
-        }
-      } catch (e) {
-        setShowAbout(false);
-      }
-    };
-    handleHash();
-    window.addEventListener('hashchange', handleHash);
-    return () => window.removeEventListener('hashchange', handleHash);
-  }, []);
-
-  useEffect(() => {
-    // Apply or revert lightweight 'power' overrides
-    if (ultraPower) {
-      // Save a shallow snapshot so we can revert later
-      prevSettingsRef.current = { ...settings };
-      setSettings(prev => ({
-        ...prev,
-        // crank up model aggressiveness and multimodal abilities for demonstration
-        responseTemperature: Math.min(1.0, (prev.responseTemperature || 0.7) + 0.25),
-        maxResponseTokens: Math.max(4096, (prev.maxResponseTokens || 4096) * 2),
-        enableAdvancedReasoning: true,
-        enablePredictiveAnalysis: true,
-        enableMultiModalProcessing: true,
-        enableRealTimeStreaming: true,
-        enableSelfCorrection: true,
-      }));
-      try { localStorage.setItem('aion_ultra_power', '1'); } catch (e) {}
-      notify({ message: 'Ultra Power Mode enabled — boosted reasoning & multimodal features' });
-    } else {
-      // revert to previous settings snapshot if available
-      if (prevSettingsRef.current) {
-        setSettings(prevSettingsRef.current);
-        prevSettingsRef.current = null;
-      }
-      try { localStorage.removeItem('aion_ultra_power'); } catch (e) {}
-      notify({ message: 'Ultra Power Mode disabled' });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ultraPower]);
-
-  // Centralized helper to call backend Ollama proxy and normalize response
-  const callOllamaGenerate = useCallback(async (promptPayload, onPiece = null) => {
-    // Build a prompt enriched with relevant local episodic memory (RAG)
-    async function buildPromptWithMemory(payload) {
-      try {
-        const basePrompt = (payload && payload.prompt) ? String(payload.prompt) : '';
-        if (!basePrompt) return payload;
-        // Try server-side RAG query first
-        let mems = [];
-        try {
-          const res = await fetch('/api/rag/query', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: basePrompt, top_k: 5 }) });
-          if (res.ok) {
-            const j = await res.json();
-            if (j.ok && Array.isArray(j.results)) {
-              mems = j.results.map(r => ({ timestamp: r.metadata?.ts || '', excerpt: r.text, content: r.text }));
-            }
-          }
-        } catch (e) {
-          // ignore and fallback
-        }
-        // fallback to local IndexedDB if server-side RAG returned nothing
-        if (!mems || mems.length === 0) mems = await memoryService.queryEpisodes(basePrompt, 5);
-        if (!mems || mems.length === 0) return payload;
-        const header = mems.map(m => `- [${m.timestamp}] ${m.excerpt || (m.content||'').slice(0,200)}`).join('\n');
-        const enriched = `Relevant memories:\n${header}\n\nUser Prompt:\n${basePrompt}`;
-        return { ...payload, prompt: enriched };
-      } catch (err) { return payload; }
-    }
-    try {
-      const withMem = await buildPromptWithMemory(promptPayload);
-      return await modelService.generateStreaming(withMem, onPiece);
-    } catch (e) {
-      console.warn('modelService.generateStreaming failed, falling back to offline reply', e);
-      try {
-        const q = (promptPayload && promptPayload.prompt) ? String(promptPayload.prompt) : '';
-        const offline = await offlineReply(q || '');
-        if (typeof onPiece === 'function') await onPiece({ type: 'text', data: offline.text });
-        return offline.text;
-      } catch (err) {
-        console.error('callOllamaGenerate fallback to offlineReply failed', err);
-        throw e;
-      }
-    }
-  }, []);
-
-  // Add to state
-  const [systemStatus, setSystemStatus] = useState(() => {
-    try {
-      return systemIntegration ? systemIntegration.getStatus() : { accessLevel: 'minimal', permissions: {}, resources: {}, stats: {} };
-    } catch (err) {
-      return { accessLevel: 'minimal', permissions: {}, resources: {}, stats: {} };
-    }
-  });
-  // systemActions state removed because it was not used; re-add if needed in future
-
-  // Live Agent state
-  const [agentEvents, setAgentEvents] = useState([]);
-  const agentSourceRef = useRef(null);
-
-  // Subscribe to backend agent SSE stream
-  useEffect(() => {
-  // In test environment skip mounting real SSE connections to avoid
-  // network/streaming side-effects. Use typeof guard so browsers (which
-  // don't define `process`) won't throw a ReferenceError.
-  if (typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test') return;
-    if (typeof window === 'undefined') return;
-    if (agentSourceRef.current) return; // already connected
-    try {
-      const es = new EventSource('/api/agent/stream');
-      agentSourceRef.current = es;
-      es.onmessage = (ev) => {
-        try {
-          const data = JSON.parse(ev.data);
-          if (data.type === 'status') {
-            setAgentStatus(data.status || 'unknown');
-          } else if (data.type) {
-            setAgentEvents(prev => [...prev, data]);
-          }
-        } catch (err) {
-          console.warn('Invalid SSE data', err, ev.data);
-        }
-      };
-      es.onerror = (e) => {
-        console.warn('Agent SSE error', e);
-        setAgentStatus('disconnected');
-        try { es.close(); } catch(_){}
-        agentSourceRef.current = null;
-      };
-    } catch (err) {
-      console.warn('Failed to connect to agent stream', err);
-      setAgentStatus('error');
-    }
-
-    return () => {
-      if (agentSourceRef.current) {
-        try { agentSourceRef.current.close(); } catch (e) {}
-        agentSourceRef.current = null;
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // API base for internal calls (empty string uses same origin)
-  // API base for internal calls. In development, prefer the local backend at 127.0.0.1:5000
-  // Use REACT_APP_API_BASE to override in environments (e.g., cloud or containers).
-  const apiBase = (() => {
-    try {
-      if (process && process.env && process.env.REACT_APP_API_BASE) return process.env.REACT_APP_API_BASE;
-    } catch (e) { /* ignore */ }
-    // When running the CRA dev server (port 3000), forward to local backend
-    try {
-      if (typeof window !== 'undefined' && window.location && (window.location.port === '3000' || window.location.hostname === 'localhost')) {
-        return 'http://127.0.0.1:5000';
-      }
-    } catch (e) { /* ignore */ }
-    return '';
-  })();
-
-  // convenience for WebCachePanel
-  const apiFetchWrapper = async (path, opts) => apiFetch(path, opts);
-
-  // Helper that adds Authorization header if admin key present in settings
-  const apiFetch = useCallback(async (path, opts = {}) => {
-    const headers = opts.headers ? { ...opts.headers } : {};
-    if (settings && settings.adminKey) {
-      headers['Authorization'] = `Bearer ${settings.adminKey}`;
-    }
-    const merged = { ...opts, headers };
-    return fetch(apiBase + path, merged);
-  }, [settings, apiBase]);
-
-  const notify = useCallback((note) => {
-    setNotification(note);
-    setTimeout(() => setNotification(null), 4000);
-  }, []);
-
+  const fileInputRef = useRef(null);
   const audioRef = useRef(null);
   const recognitionRef = useRef(null);
   const idleTimerRef = useRef(null);
   const moodIntervalRef = useRef(null);
-  const fileInputRef = useRef(null);
+
+  const [systemStatus, setSystemStatus] = useState({});
+  const [indexingProgress, setIndexingProgress] = useState(0);
+  const notify = showNotification; // backward-compatible alias
+
+  const DEFAULT_MODEL = process.env.REACT_APP_DEFAULT_MODEL || 'claude-haiku-4-5';
+  const apiBase = process.env.REACT_APP_API_BASE || '';
 
   // Basic client-side analysis for uploaded files
   const analyzeFile = useCallback(async (item) => {
@@ -582,9 +403,44 @@ function App() {
     }
   }, []);
   
+  // Centralized model call wrapper used throughout the app. Uses streaming when available and falls back to a non-streaming endpoint.
+  const callOllamaGenerate = useCallback(async (promptPayload, onPiece = null) => {
+    try {
+      if (!promptPayload) promptPayload = {};
+      if (!promptPayload.model) promptPayload.model = DEFAULT_MODEL;
+      // prefer streaming generator
+      const resp = await generateStreaming(promptPayload, onPiece, {});
+      return resp;
+    } catch (err) {
+      console.warn('generateStreaming failed, falling back to /api/generate', err);
+      try {
+        const res = await apiFetch('/api/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(promptPayload) });
+        if (!res || !res.ok) throw new Error(`HTTP ${res ? res.status : 'ERR'}`);
+        const wrap = await safeJson(res).catch(() => null);
+        return wrap ? (wrap.json || wrap.text) : null;
+      } catch (err2) {
+        console.error('Fallback generate also failed', err2);
+        throw err2;
+      }
+    }
+  }, [generateStreaming]);
+
+  // lightweight API wrapper used in a few legacy spots
+  const apiFetchWrapper = async (path, opts = {}) => {
+    try {
+      return await apiFetch(path, opts);
+    } catch (err) {
+      console.error('apiFetchWrapper error', err);
+      throw err;
+    }
+  };
+
+
   // Reusable handler for files selected (from footer input or ChatPanel)
   const handleFilesSelected = useCallback(async (files, inputElem = null) => {
     try {
+
+
       if (!files || files.length === 0) return;
       setIsUploading(true);
       const newItems = [];
@@ -694,6 +550,21 @@ function App() {
     setNotification({ message, type });
     setTimeout(() => setNotification(null), 3000);
   }, []);
+
+  // Show pre-app welcome splash unless user opts out or URL param bypasses it
+  const [showSplash, setShowSplash] = useState(() => {
+    try {
+      if (typeof window !== 'undefined') {
+        try {
+          const u = new URL(window.location.href);
+          if (u.searchParams.get('skip_splash') === '1') return false;
+        } catch (e) { /* ignore invalid URL */ }
+      }
+      return localStorage.getItem('aion_skip_splash') !== '1';
+    } catch (e) {
+      return true;
+    }
+  });
 
   // Register service worker and wire online/offline events
   useEffect(() => {
@@ -821,7 +692,6 @@ function App() {
       console.warn('Consolidation error', err);
       return { ok: false, error: err.message };
     }
-  }, []);
   }, []);
 
   // NEW: Simple keyword-based similarity search for episodic memory
@@ -1106,7 +976,7 @@ function App() {
   const generateAffirmation = useCallback(async (response) => {
     try {
       const promptPayload = { 
-        model: "llama3", 
+        model: DEFAULT_MODEL, 
         prompt: `You are AION, a soulful AI. Your current mood is ${soulState.currentMood}. Based on the following statement, create a short, inspiring, and soulful affirmation.\n\n[Statement to Base Affirmation On]\n"${response}"\n\n[Your Affirmation]\n`,
         options: { temperature: 0.8, num_predict: 100 }
       };
@@ -1360,7 +1230,7 @@ function App() {
       // NEW: Trigger autonomous sub-goal planning
       try {
         const promptPayload = {
-          model: "llama3",
+          model: DEFAULT_MODEL,
           prompt: `An AI has the primary goal: "${goalDescription}". Break this down into 3-5 smaller, actionable sub-goals. Respond ONLY with a JSON array of strings. For example: ["Sub-goal 1", "Sub-goal 2", "Sub-goal 3"]`,
           options: { temperature: 0.5 }
         };
@@ -1895,7 +1765,7 @@ function App() {
         }
 
         const promptPayload = { 
-          model: "llama3", 
+          model: DEFAULT_MODEL, 
           prompt: promptText, 
           options: { 
             temperature: Math.min(settings.responseTemperature + (settings.personalityIntensity / 133), 1.2), 
@@ -2271,7 +2141,7 @@ function App() {
     showNotification("Creating a story...");
     try {
       const promptPayload = { 
-        model: "llama3", 
+        model: DEFAULT_MODEL, 
         prompt: `You are AION, a wise storyteller. Your current mood is ${soulState.currentMood}. Tell a short, meaningful story that reflects this mood. The story should have a spiritual theme, incorporating wisdom and compassion, integrity, and adaptability.\n\n[Your Story]\n` 
       };
       // Use centralized proxy for story generation
@@ -2760,6 +2630,48 @@ function App() {
     if (activeTab === "math" && mathSolution) { renderGeometryDiagram(); }
   }, [activeTab, mathSolution, renderGeometryDiagram]);
 
+  // Shared helper to index all memories (used by MemoriesPanel and sidebar quick action)
+  const indexAllMemories = useCallback(async (onProgress = null) => {
+    try {
+      const docs = [];
+      // Collect memories from the local state and from Dexie memory service
+      let all = [ ...(soulState.memories || []), ...(soulState.episodicMemory || []), ...(longTermMemory || [] ) ];
+      try {
+        const episodes = await memoryService.getAllEpisodes();
+        if (Array.isArray(episodes) && episodes.length) {
+          const normalized = episodes.map(ep => ({ id: ep.id, text: ep.content || ep.excerpt || ep.title || '', source: 'episode', ts: ep.timestamp }));
+          all = [ ...all, ...normalized ];
+        }
+      } catch(e) { console.warn('Failed to load episodes for indexing', e); }
+
+      for (let m of all) {
+        if (!m || !m.text) continue;
+        docs.push({ id: `mem-${m.id || Math.random().toString(36).slice(2)}`, text: m.text || (m.content || ''), metadata: { source: m.source || 'memory', ts: m.ts || (m.timestamp || new Date().toISOString()) } });
+      }
+      // Batch ingest
+      const batchSize = 40;
+      setIndexingProgress({ done: 0, total: docs.length });
+      for (let i = 0; i < docs.length; i += batchSize) {
+        const batch = docs.slice(i, i + batchSize);
+        try {
+          await fetch('/api/rag/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documents: batch }) });
+        } catch (err) {
+          console.error('Batch ingest failed', err);
+        }
+        const done = Math.min(docs.length, i + batchSize);
+        setIndexingProgress(prev => ({ ...prev, done }));
+        if (typeof onProgress === 'function') {
+          try { onProgress(done, docs.length); } catch(e){}
+        }
+      }
+      showNotification(`Indexed ${docs.length} memories for RAG`);
+      setIndexingProgress({ done: docs.length, total: docs.length });
+    } catch (err) {
+      console.error('Failed to index memories', err);
+      showNotification('Failed to index memories', 'error');
+    }
+  }, [soulState, longTermMemory, showNotification]);
+
   // 2. UPDATE THE renderActivePanel FUNCTION
   // MODIFIED: Enhanced panel rendering to include Procedures
   const renderActivePanel = () => {
@@ -2778,26 +2690,8 @@ function App() {
             onMemoryRetrieval={handleMemoryRetrieval}
             onMemoryUpdate={handleMemoryUpdate}
             onMemoryConsolidation={handleMemoryConsolidation}
-            onIndexAllMemories={async () => {
-              try {
-                const docs = [];
-                const all = [ ...(soulState.memories || []), ...(soulState.episodicMemory || []), ...(longTermMemory || [] ) ];
-                for (let m of all) {
-                  if (!m || !m.text) continue;
-                  docs.push({ id: `mem-${m.id || Math.random().toString(36).slice(2)}`, text: m.text, metadata: { source: m.source || 'memory', ts: m.ts || (m.timestamp || new Date().toISOString()) } });
-                }
-                // Batch ingest
-                const batchSize = 40;
-                for (let i = 0; i < docs.length; i += batchSize) {
-                  const batch = docs.slice(i, i + batchSize);
-                  await fetch('/api/rag/ingest', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ documents: batch }) });
-                }
-                showNotification(`Indexed ${docs.length} memories for RAG`);
-              } catch (err) {
-                console.error('Failed to index memories', err);
-                showNotification('Failed to index memories', 'error');
-              }
-            }}
+            onIndexAllMemories={indexAllMemories}
+            indexProgress={indexingProgress}
           />
         );
 
@@ -2883,13 +2777,32 @@ function App() {
         />;
       // NEW: Case for procedures panel
       case 'procedures':
-        return <ProceduresPanel 
+        return (
+          <ProceduresPanel 
             setActiveTab={setActiveTab}
             notify={notify}
             apiFetch={apiFetch}
-        />;
+          />
+        );
+      case 'rag':
+        return <RagPanel apiFetch={apiFetch} indexProgress={indexingProgress} onIndexAll={indexAllMemories} />;
+      case 'admin':
+        return (
+          <div className="panel">
+            <h3>Admin Console</h3>
+            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+              <button className="btn" onClick={async () => { try { const res = await apiFetch('/admin/vector/sync-memory', { method: 'POST' }); if (res.ok) showNotification('Memory sync started', 'success'); else showNotification('Memory sync failed', 'error'); } catch(e){ console.error(e); showNotification('Memory sync error', 'error'); } }}>Sync Memories to Vector Store</button>
+              <button className="btn" onClick={async () => { try { const r = await apiFetch('/api/models'); const j = await r.json(); showNotification(`Models: ${Object.keys(j || {}).join(', ')}`, 'info'); } catch(e){ console.error(e); showNotification('Failed to fetch models', 'error'); } }}>List Models</button>
+            </div>
+            <div style={{marginTop:12}}>
+              <p>Admin key is set: {settings.adminKey ? '✅' : 'Not set'}</p>
+            </div>
+          </div>
+        );
       case 'status':
         return <StatusPanel apiBase={apiBase} adminKey={settings.adminKey || ''} />;
+      case 'webcache':
+        return <WebCachePanel apiFetch={apiFetch} />;
       case 'fileUpload':
         return <FileUploadPanel />;
       case 'chat':
@@ -2947,6 +2860,11 @@ function App() {
       {showSplash && (
         <WelcomeSplash onEnter={() => setShowSplash(false)} />
       )}
+      {process.env.NODE_ENV === 'development' && showSplash && (
+        <div style={{ position: 'fixed', left: 12, top: 12, zIndex: 9999 }}>
+          <button className="btn small" onClick={() => setShowSplash(false)}>Skip Splash</button>
+        </div>
+      )}
 
       <div className="main-content">
         <Header 
@@ -2982,6 +2900,14 @@ function App() {
           isMathQuery={isMathQuery}
           userInput={userInput}
         />
+
+        {/* Quick actions: Index All Memories */}
+        <div style={{display:'flex',alignItems:'center',gap:12,margin:'10px 0'}}>
+          <button className="btn" onClick={() => { indexAllMemories({ onProgress: (done, total) => setIndexingProgress({ done, total }) }).then(() => showNotification('Indexing finished', 'success')).catch(() => showNotification('Indexing failed', 'error')); }}>
+            Index All Memories
+          </button>
+          <div className="muted small">Indexed: {indexingProgress.done}/{indexingProgress.total}</div>
+        </div>
 
         {/* Live Agent panel: simple status and recent events */}
         <div className="panel" style={{marginTop:8}}>

@@ -31,6 +31,59 @@
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>
+      // Boot watchdog: if the app hasn't signalled successful boot within
+      // 4s, show a friendly overlay instructing the user to open DevTools.
+      (function(){
+        try {
+          console.info('AION boot watchdog started');
+          var timer = setTimeout(async function(){
+            if (!window.__AION_BOOTED__) {
+              var el = document.createElement('div');
+              el.style.position = 'fixed'; el.style.left = '12px'; el.style.right = '12px'; el.style.top = '12px'; el.style.zIndex = 999999;
+              el.style.padding = '12px 16px'; el.style.borderRadius = '8px'; el.style.background = 'rgba(255,90,193,0.95)'; el.style.color = '#fff';
+              el.style.fontFamily = 'sans-serif'; el.style.fontSize = '13px'; el.style.boxShadow = '0 12px 40px rgba(0,0,0,0.6)';
+              el.id = 'aion-boot-failed';
+              el.innerHTML = 'AION failed to initialize. Please open DevTools (F12) and check the console for errors.<br/><small id="boot-inspect"></small>';
+              document.body.appendChild(el);
+
+              try {
+                // Try to find the main bundle script tag
+                var scripts = document.querySelectorAll('script[src]');
+                var main = null;
+                for (var i = 0; i < scripts.length; i++) {
+                  var s = scripts[i].src;
+                  if (/\/static\/js\/main\.[^\/]+\.js$/.test(s)) { main = s; break; }
+                }
+                var infoEl = document.getElementById('boot-inspect');
+                if (!main) {
+                  if (infoEl) infoEl.textContent = '(main bundle not found on the page)';
+                } else {
+                  try {
+                    var r = await fetch(main);
+                    if (!r.ok) {
+                      var txt = await r.text().catch(()=>r.statusText);
+                      if (infoEl) infoEl.textContent = `(main bundle fetch failed: ${r.status} ${r.statusText} — first 200 chars: ${String(txt).slice(0,200)})`;
+                    } else {
+                      if (infoEl) infoEl.textContent = '(main bundle fetched OK but app failed to set boot flag)';
+                    }
+                  } catch (err) {
+                    if (infoEl) infoEl.textContent = '(failed to fetch main bundle: ' + String(err) + ')';
+                  }
+                }
+              } catch (e) {
+                // ignore errors while trying to inspect bundle
+              }
+            }
+          }, 4000);
+          // If app sets __AION_BOOTED__ we'll clear the timer early
+          Object.defineProperty(window, '__AION_BOOTED__', {
+            configurable: true,
+            set: function(v){ try{ clearTimeout(timer); if (v) { var el=document.getElementById('aion-boot-failed'); if (el) el.remove(); } }catch(e){} }
+          });
+        } catch (e) { /* ignore */ }
+      })();
+    </script>
     <!--
       This HTML file is a template.
       If you open it directly in the browser, you will see an empty page.

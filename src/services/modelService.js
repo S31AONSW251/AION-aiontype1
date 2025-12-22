@@ -2,6 +2,8 @@
 import { localModel } from '../lib/localModel';
 import { offlineReply } from '../lib/offlineResponder';
 
+const DEFAULT_CLIENT_MODEL = (typeof process !== 'undefined' && process.env && process.env.REACT_APP_DEFAULT_MODEL) ? process.env.REACT_APP_DEFAULT_MODEL : 'claude-haiku-4-5';
+
 const defaultApiBase = (() => {
   try {
     if (process && process.env && process.env.REACT_APP_API_BASE) return process.env.REACT_APP_API_BASE;
@@ -17,6 +19,8 @@ const defaultApiBase = (() => {
 export async function generateStreaming(promptPayload, onPiece = null, opts = {}) {
   try {
     const controller = new AbortController();
+    // Ensure model is set to default if not provided
+    if (!promptPayload.model) promptPayload.model = DEFAULT_CLIENT_MODEL;
     const res = await fetch('/api/generate/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

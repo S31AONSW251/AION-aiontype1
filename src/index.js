@@ -1,6 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import ErrorBoundary from './ErrorBoundary';
+// Load shared theme tokens first so all components and App.css can use them
+import './styles/theme-vars.css';
 import "./App.css";
 import "./theme-compat.css";
 import syncService from './services/syncService';
@@ -45,6 +47,54 @@ try {
   // ignore
 }
 
+// Global error surface: capture unhandled errors and promise rejections and
+// report them to the backend endpoint. Also show a small visible overlay so
+// users encountering a blank page can copy the error text for debugging.
+function showClientErrorOverlay(text) {
+  try {
+    let el = document.getElementById('client-error-overlay');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'client-error-overlay';
+      el.style.position = 'fixed';
+      el.style.left = '12px';
+      el.style.right = '12px';
+      el.style.bottom = '12px';
+      el.style.zIndex = 99999;
+      el.style.padding = '12px 16px';
+      el.style.borderRadius = '8px';
+      el.style.background = 'linear-gradient(90deg, rgba(255,90,193,0.95), rgba(138,43,255,0.95))';
+      el.style.color = '#fff';
+      el.style.boxShadow = '0 8px 40px rgba(0,0,0,0.6)';
+      el.style.fontFamily = 'monospace';
+      el.style.fontSize = '12px';
+      el.style.maxHeight = '40vh';
+      el.style.overflow = 'auto';
+      el.style.whiteSpace = 'pre-wrap';
+      document.body.appendChild(el);
+    }
+    el.textContent = text;
+  } catch (e) {
+    // ignore overlay errors
+  }
+}
+
+window.addEventListener('error', function (ev) {
+  try {
+    const msg = `Error: ${ev.message} at ${ev.filename}:${ev.lineno}:${ev.colno}`;
+    showClientErrorOverlay(msg);
+    fetch('/log-client-error', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: msg, stack: ev.error ? (ev.error.stack || null) : null }) }).catch(() => {});
+  } catch (e) {}
+});
+
+window.addEventListener('unhandledrejection', function (ev) {
+  try {
+    const msg = `UnhandledRejection: ${String(ev.reason)}`;
+    showClientErrorOverlay(msg);
+    fetch('/log-client-error', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ error: msg, stack: ev.reason && ev.reason.stack ? ev.reason.stack : null }) }).catch(() => {});
+  } catch (e) {}
+});
+
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
@@ -53,6 +103,10 @@ root.render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+
+// Signal successful boot so the inline boot-watchdog in index.html can
+// clear its failure message if present.
+try { window.__AION_BOOTED__ = true; } catch (e) {}
 
 // Register service worker if available
 if ('serviceWorker' in navigator) {

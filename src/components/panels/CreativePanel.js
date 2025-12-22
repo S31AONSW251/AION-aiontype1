@@ -114,16 +114,17 @@ const CreativePanel = ({
   }, [customPrompt, selectedType, userInput]);
 
   useEffect(() => {
-    // Fetch available Ollama models to let user choose
+    // Fetch available models from backend (Ollama + Anthropic if configured)
     let mounted = true;
-    fetch('/ollama/models').then(r => r.json()).then(j => {
+    fetch('/api/models').then(r => r.json()).then(j => {
       if (!mounted) return;
       if (j && j.ok && Array.isArray(j.models)) {
-        const models = j.models.filter(Boolean);
+        // Normalize: support ['llama3', ...] or [{id:'llama3',name:'llama3'}]
+        const models = j.models.map(m => (typeof m === 'string' ? m : (m.id || m.name || JSON.stringify(m)))).filter(Boolean);
         setAvailableModels(models);
         if (models.length > 0 && !selectedModel) setSelectedModel(models[0]);
       }
-    }).catch((err) => { console.warn('Failed to fetch ollama models', err); });
+    }).catch((err) => { console.warn('Failed to fetch models', err); });
     return () => { mounted = false; };
   }, [selectedModel]);
 
