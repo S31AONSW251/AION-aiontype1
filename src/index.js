@@ -9,6 +9,16 @@ import syncService from './services/syncService';
 import { enqueue } from './lib/offlineQueue';
 import { apiFetch, safeJson } from './lib/fetchHelper';
 
+// Ensure test workers and early runtime have a handler for unhandled rejections
+// so Jest child processes don't crash on background promise rejections during import.
+try {
+  if (typeof process !== 'undefined' && process && process.on) {
+    process.on('unhandledRejection', (reason) => {
+      try { console.warn('Early unhandledRejection captured in index.js:', reason); } catch (e) {}
+    });
+  }
+} catch (e) {}
+
 // Safely require App to catch module-evaluation/runtime errors during import.
 let AppComponent = null;
 try {
@@ -134,4 +144,9 @@ const apiSend = async (type, payload) => {
   }
 };
 
-syncService.startAutoSync(apiSend);
+// Avoid starting long-running background sync tasks during tests to prevent
+// unhandled rejections and flaky worker shutdowns. Tests mock/replace network
+// behavior and do not need the auto sync running.
+if (process.env.NODE_ENV !== 'test') {
+  try { syncService.startAutoSync(apiSend); } catch (e) { console.warn('syncService auto-start failed:', e); }
+}

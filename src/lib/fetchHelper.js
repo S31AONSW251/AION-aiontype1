@@ -1,5 +1,18 @@
 // Lightweight fetch helper used across the frontend.
-export const API_BASE = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE) ? import.meta.env.VITE_API_BASE : '/api';
+// Resolve base URL in a way that's safe for Node/Jest (avoids top-level `import.meta` syntax)
+let API_BASE = '/api';
+try {
+  // Access import.meta.env dynamically so parsers that don't support import.meta don't error
+  // eslint-disable-next-line no-new-func
+  const _env = Function('return (typeof import !== "undefined" && import.meta && import.meta.env) ? import.meta.env : undefined')();
+  if (_env && _env.VITE_API_BASE) API_BASE = _env.VITE_API_BASE;
+} catch (e) {
+  // Fallback to process.env for Node/Jest environments
+  if (typeof process !== 'undefined' && process.env && process.env.REACT_APP_API_BASE) {
+    API_BASE = process.env.REACT_APP_API_BASE;
+  }
+}
+export { API_BASE };
 
 function joinBase(path) {
   const base = API_BASE.replace(/\/$/, '');

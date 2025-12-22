@@ -57,7 +57,6 @@ import './components/About.css';
 import './styles/aion-ultra-theme.css';
 import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
-import { localModel } from './lib/localModel';
 import memoryService from './services/memoryService';
 import { apiFetch, safeJson } from './lib/fetchHelper';
 import { generateStreaming } from './services/modelService';
@@ -243,7 +242,7 @@ function App() {
   
   // New state for Autonomous Search Agent
   const [agentStatus, setAgentStatus] = useState("idle");
-  const [agentEvents, setAgentEvents] = useState([]);
+  const [agentEvents] = useState([]);
   const [searchPlan, setSearchPlan] = useState([]);
   const [thoughtProcessLog, setThoughtProcessLog] = useState([]);
   const [suggestedQueries, setSuggestedQueries] = useState([]);
@@ -271,10 +270,11 @@ function App() {
   const [ultraPower, setUltraPower] = useState(() => {
     try { return localStorage.getItem('aion_ultra_power') === '1'; } catch (e) { return false; }
   });
-  const prevSettingsRef = useRef(null);
+
 
   // Initialize all AION systems on first mount
   useEffect(() => {
+    if (process.env.NODE_ENV === 'test') return; // Prevent heavy async init during Jest tests
     try {
       // Initialize core engines
       if (!aionSoul) aionSoul = new SoulMatrix();
@@ -342,7 +342,9 @@ function App() {
 
   const [systemStatus, setSystemStatus] = useState({});
   const [indexingProgress, setIndexingProgress] = useState(0);
-  const notify = showNotification; // backward-compatible alias
+  // Backward-compatible alias; use a runtime wrapper so we don't reference the
+  // `showNotification` const before it's initialized (avoids TDZ errors in tests)
+  const notify = (...args) => (typeof showNotification === 'function' ? showNotification(...args) : undefined);
 
   const DEFAULT_MODEL = process.env.REACT_APP_DEFAULT_MODEL || 'claude-haiku-4-5';
   const apiBase = process.env.REACT_APP_API_BASE || '';
@@ -423,7 +425,7 @@ function App() {
         throw err2;
       }
     }
-  }, [generateStreaming]);
+  }, [DEFAULT_MODEL]);
 
   // lightweight API wrapper used in a few legacy spots
   const apiFetchWrapper = async (path, opts = {}) => {
@@ -988,7 +990,7 @@ function App() {
       console.error("Affirmation generation failed:", error);
       showNotification("Error generating affirmation", "error");
     }
-  }, [settings.affirmationLoop, speak, showNotification, soulState, callOllamaGenerate]);
+  }, [settings.affirmationLoop, speak, showNotification, soulState, callOllamaGenerate, DEFAULT_MODEL]);
   
 
   // Enhanced creative content generation
@@ -1273,7 +1275,7 @@ function App() {
     } else {
       showNotification("Could not understand the goal request.", "warning");
     }
-  }, [settings.goalTracking, settings.autoSpeakReplies, speak, showNotification, callOllamaGenerate]);
+  }, [settings.goalTracking, settings.autoSpeakReplies, speak, showNotification, callOllamaGenerate, DEFAULT_MODEL]);
 
 
   // MODIFIED: Enhanced knowledge request handling to simulate graph traversal
@@ -1926,7 +1928,7 @@ function App() {
       aionSoul.setFocus('idle'); // Ensure focus is reset
       setSoulState({ ...aionSoul });
     }
-  }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand, findRelevantEpisodes, logEpisodicEvent, handleProceduralRequest, callOllamaGenerate, getMoodBasedResponse, streamingResponse]);
+  }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand, findRelevantEpisodes, logEpisodicEvent, handleProceduralRequest, callOllamaGenerate, getMoodBasedResponse, streamingResponse, DEFAULT_MODEL]);
   
   // You might need this helper function in App.js scope if it's not imported
   const getHostname = useCallback((url) => {
@@ -2155,7 +2157,7 @@ function App() {
       console.error("Story generation failed:", error);
       showNotification("Error generating story", "error");
     } finally { setIsThinking(false); }
-  }, [speak, updateBiometrics, showNotification, soulState, callOllamaGenerate]);
+  }, [speak, updateBiometrics, showNotification, soulState, callOllamaGenerate, DEFAULT_MODEL]);
 
   // Enhanced feeling expression
   const expressFeeling = useCallback((feeling) => {

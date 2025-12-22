@@ -88,7 +88,7 @@ export async function clearMemory() {
   }
 }
 
-export default {
+const memoryService = {
   initMemoryDB,
   storeEpisode,
   queryEpisodes,
@@ -96,3 +96,5 @@ export default {
   getAllEpisodes,
   clearMemory,
 };
+
+export default memoryService;

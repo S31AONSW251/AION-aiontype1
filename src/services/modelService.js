@@ -111,4 +111,5 @@ export async function generateStreaming(promptPayload, onPiece = null, opts = {}
   }
 }
 
-export default { generateStreaming, defaultApiBase };
+const modelService = { generateStreaming, defaultApiBase };
+export default modelService;

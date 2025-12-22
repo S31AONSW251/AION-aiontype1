@@ -142,8 +142,12 @@ try {
 	if (typeof process !== 'undefined' && process && process.on) {
 		process.on('unhandledRejection', (reason, promise) => {
 			try {
-				const repr = (reason && reason.message) ? reason.message : String(reason);
+				const util = require('util');
+				let repr;
+				try { repr = util.inspect(reason, { depth: null, getters: true }); } catch (e) { repr = String(reason); }
 				console.warn('Test environment caught unhandledRejection (type=' + typeof reason + '):', repr);
+				if (reason && reason.stack) console.warn('Reason stack:', reason.stack);
+				if (reason && reason.message) console.warn('Reason message:', reason.message);
 			} catch (e) {
 				console.warn('Test environment caught unhandledRejection (non-serializable reason)');
 			}
