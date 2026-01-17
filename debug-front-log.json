@@ -1,0 +1,10 @@
+{
+  "console": [
+    {
+      "type": "error",
+      "text": "Failed to load resource: the server responded with a status of 429 (Too Many Requests)"
+    }
+  ],
+  "errors": [],
+  "rootHtml": "<div class=\"aion-app\"><header class=\"app-header header-reordered\"><div class=\"header-left\"><button class=\"icon-button left-online online\" title=\"Online\" aria-pressed=\"true\" type=\"button\"><span class=\"sr-only\">Online</span>●</button></div><div class=\"header-center\"><div class=\"brand-center\"><span class=\"brand-logo\" aria-hidden=\"false\">AION</span><h1 class=\"sr-only\">AION</h1></div></div><div class=\"header-right\"><button class=\"icon-button \" title=\"Settings\" aria-pressed=\"false\" type=\"button\"><i class=\"icon-settings\" aria-hidden=\"true\"></i><span class=\"sr-only\">Settings</span></button></div></header><main style=\"padding: 20px;\"><div style=\"max-width: 960px; margin: 0px auto;\"><div style=\"background: linear-gradient(rgba(4, 6, 12, 0.5), rgba(6, 9, 18, 0.6)); padding: 16px; border-radius: 12px; box-shadow: rgba(2, 8, 20, 0.6) 0px 6px 18px;\"><section role=\"region\" aria-label=\"Retrieval Augmented Generation Panel\"><h2 style=\"margin-bottom: 8px;\">AION — RAG Panel</h2><div style=\"margin-bottom: 12px;\"><label for=\"rag-query\" style=\"display: block; margin-bottom: 6px; color: rgba(230, 238, 246, 0.85);\">Ask AION (Ctrl/Cmd+Enter to submit)</label><textarea id=\"rag-query\" rows=\"4\" placeholder=\"Enter your question or query here\" style=\"width: 100%; padding: 12px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.06); background: rgba(5, 8, 16, 0.5); color: rgb(230, 238, 246);\"></textarea><div style=\"margin-top: 10px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;\"><button disabled=\"\" class=\"submit-btn\">Query RAG</button><button class=\"btn-outline\">Ingest sample docs</button><button class=\"btn-outline\">Try demo query</button></div></div></section></div></div></main></div>"
+}

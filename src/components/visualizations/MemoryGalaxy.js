@@ -1,5 +1,4 @@
 import React, { useRef, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Points, PointMaterial } from '@react-three/drei';
 import * as THREE from 'three';
@@ -8,27 +7,20 @@ const GalaxyPoints = ({ memories }) => {
   const ref = useRef();
 
   const positions = useMemo(() => {
-    const safeMemories = Array.isArray(memories) ? memories : [];
-    const points = new Float32Array(safeMemories.length * 3);
-    
-    safeMemories.forEach((mem, i) => {
-      // Safely extract vector components with fallbacks
-      const vector = Array.isArray(mem?.vector) ? mem.vector : [];
-      const x = ((vector[0] || 0) * 10) - 5;
-      const y = ((vector[1] || 0) * 10) - 5;
-      const z = ((vector[2] || 0) * 10) - 5;
-      
+    const points = new Float32Array(memories.length * 3);
+    memories.forEach((mem, i) => {
+      // Use the first 3 dimensions of the vector for position
+      const x = (mem.vector[0] || 0) * 10 - 5;
+      const y = (mem.vector[1] || 0) * 10 - 5;
+      const z = (mem.vector[2] || 0) * 10 - 5;
       points.set([x, y, z], i * 3);
     });
-    
     return points;
   }, [memories]);
 
   useFrame((state, delta) => {
-    if (ref.current) {
-      ref.current.rotation.x -= delta / 15;
-      ref.current.rotation.y -= delta / 20;
-    }
+    ref.current.rotation.x -= delta / 15;
+    ref.current.rotation.y -= delta / 20;
   });
 
   return (
@@ -45,35 +37,18 @@ const GalaxyPoints = ({ memories }) => {
 };
 
 const MemoryGalaxy = ({ memories }) => {
-  const safeMemories = Array.isArray(memories) ? memories : [];
-  
   return (
     <div className="memory-galaxy-container">
       <Canvas camera={{ position: [0, 0, 5] }}>
         <ambientLight intensity={0.5} />
-        {safeMemories.length > 0 && <GalaxyPoints memories={safeMemories} />}
+        {memories.length > 0 && <GalaxyPoints memories={memories} />}
       </Canvas>
       <div className="galaxy-overlay">
         <h3>AION's Mind</h3>
-        <p>{safeMemories.length} memories visualized. Similar thoughts cluster together.</p>
-        {safeMemories.length === 0 && (
-          <p className="no-memories-message">No memories to display</p>
-        )}
+        <p>{memories.length} memories visualized. Similar thoughts cluster together.</p>
       </div>
     </div>
   );
-};
-
-MemoryGalaxy.propTypes = {
-  memories: PropTypes.arrayOf(
-    PropTypes.shape({
-      vector: PropTypes.arrayOf(PropTypes.number),
-    })
-  ),
-};
-
-MemoryGalaxy.defaultProps = {
-  memories: [],
 };
 
 export default MemoryGalaxy;

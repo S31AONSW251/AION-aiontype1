@@ -6,7 +6,7 @@
 import React, { useState, useEffect } from 'react';
 
 export default function AIONUltraDashboard() {
-  const [systemStatus, setSystemStatus] = useState(null);
+  const [, setSystemStatus] = useState(null);
   const [tabActive, setTabActive] = useState('quantum');
   const [glowEffect, setGlowEffect] = useState(true);
 
@@ -281,6 +281,7 @@ export default function AIONUltraDashboard() {
       {/* Tab Content with Glow Effect */}
       <div style={{ 
         fontSize: '0.95rem',
+        ...dashboardStyle,
         ...(glowEffect && {
           boxShadow: 'inset 0 0 20px rgba(0, 212, 255, 0.15)',
           borderRadius: '8px',

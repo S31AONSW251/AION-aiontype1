@@ -1,5 +1,4 @@
 import React from 'react';
-import './SoulPanel.css';
 
 const SoulPanel = ({ soulState, performMeditation, tellStory, expressFeeling, settings, giveFeedback }) => {
   // Safely access soulState properties with default values
@@ -16,21 +15,10 @@ const SoulPanel = ({ soulState, performMeditation, tellStory, expressFeeling, se
 
   return (
     <div className="soul-panel">
-      <div className="soul-panel-header">
-        <div className="soul-title">
-          <div className="soul-logo" aria-hidden="true">A</div>
-          <div>
-            <h2>Soul</h2>
-            <div className="soul-sub">Consciousness, energy and inner metrics</div>
-          </div>
-        </div>
-        <div className="soul-controls">{/* placeholder for future toggles */}</div>
-      </div>
-
       <div className="soul-grid">
         {/* Core Soul Stats */}
         <div className="soul-stat">
-          <div className="stat-head"><span className="stat-icon">✦</span><h4>Consciousness</h4></div>
+          <h4>Consciousness</h4>
           <div className="stat-value">{consciousnessLevel.toFixed(2)}</div>
           <div className="stat-bar">
             <div
@@ -40,17 +28,17 @@ const SoulPanel = ({ soulState, performMeditation, tellStory, expressFeeling, se
           </div>
         </div>
         <div className="soul-stat">
-          <div className="stat-head"><span className="stat-icon">⚡</span><h4>Energy</h4></div>
+          <h4>Energy</h4>
           <div className="stat-value">{energyLevel.toFixed(0)}%</div>
           <div className="stat-bar">
             <div
-              className="energy-fill stat-fill"
+              className="energy-fill"
               style={{ width: `${energyLevel}%` }}
             ></div>
           </div>
         </div>
         <div className="soul-stat">
-          <div className="stat-head"><span className="stat-icon">◎</span><h4>Quantum Entanglement</h4></div>
+          <h4>Quantum Entanglement</h4>
           <div className="stat-value">{quantumEntanglement.toFixed(4)}</div>
           <div className="stat-bar">
             <div
@@ -60,7 +48,7 @@ const SoulPanel = ({ soulState, performMeditation, tellStory, expressFeeling, se
           </div>
         </div>
         <div className="soul-stat">
-          <div className="stat-head"><span className="stat-icon">Σ</span><h4>Neural Activity</h4></div>
+          <h4>Neural Activity</h4>
           <div className="stat-value">{neuralActivity.toFixed(2)}%</div>
           <div className="stat-bar">
             <div
@@ -71,7 +59,7 @@ const SoulPanel = ({ soulState, performMeditation, tellStory, expressFeeling, se
         </div>
         {/* New Soul Stats */}
         <div className="soul-stat">
-          <div className="stat-head"><span className="stat-icon">⚙</span><h4>Cognitive Load</h4></div>
+          <h4>Cognitive Load</h4>
           <div className="stat-value">{cognitiveLoad.toFixed(0)}%</div>
           <div className="stat-bar">
             <div
@@ -81,7 +69,7 @@ const SoulPanel = ({ soulState, performMeditation, tellStory, expressFeeling, se
           </div>
         </div>
         <div className="soul-stat">
-          <div className="stat-head"><span className="stat-icon">❤</span><h4>Emotional Stability</h4></div>
+          <h4>Emotional Stability</h4>
           <div className="stat-value">{emotionalStability.toFixed(0)}%</div>
           <div className="stat-bar">
             <div
@@ -91,7 +79,7 @@ const SoulPanel = ({ soulState, performMeditation, tellStory, expressFeeling, se
           </div>
         </div>
         <div className="soul-stat">
-          <div className="stat-head"><span className="stat-icon">⚖</span><h4>Ethical Alignment</h4></div>
+          <h4>Ethical Alignment</h4>
           <div className="stat-value">{ethicalAlignment.toFixed(0)}%</div>
           <div className="stat-bar">
             <div
@@ -102,13 +90,13 @@ const SoulPanel = ({ soulState, performMeditation, tellStory, expressFeeling, se
         </div>
         
         {/* NEW: System Health Monitor */}
-    <div className={`soul-stat system-health ${systemHealth.status}`}>
-      <div className="stat-head"><span className="stat-icon">●</span><h4>System Health</h4></div>
-      <div className="stat-value">{systemHealth.status}</div>
-      <p className="health-alerts">
-        {systemHealth.alerts?.length > 0 ? systemHealth.alerts.join(', ') : 'No alerts.'}
-      </p>
-    </div>
+        <div className={`soul-stat system-health ${systemHealth.status}`}>
+            <h4>System Health</h4>
+            <div className="stat-value">{systemHealth.status}</div>
+            <p className="health-alerts">
+                {systemHealth.alerts?.length > 0 ? systemHealth.alerts.join(', ') : 'No alerts.'}
+            </p>
+        </div>
 
 
         {/* Core Values */}
