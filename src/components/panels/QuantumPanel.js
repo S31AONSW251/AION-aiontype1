@@ -1,5 +1,4 @@
 import React from 'react';
-import './QuantumPanel.css';
 
 const QuantumPanel = ({ 
     soulState, 

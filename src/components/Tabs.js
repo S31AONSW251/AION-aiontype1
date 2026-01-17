@@ -80,49 +80,6 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           Knowledge
         </button>
       )}
-      <button
-        className={`tab-button ${activeTab === "fileUpload" ? 'active' : ''}`}
-        onClick={() => setActiveTab("fileUpload")}
-      >
-        File Analysis
-      </button>
-      {/* Additional utility tabs */}
-      <button
-        className={`tab-button ${activeTab === "status" ? 'active' : ''}`}
-        onClick={() => setActiveTab("status")}
-      >
-        Status
-      </button>
-      <button
-        className={`tab-button ${activeTab === "webcache" ? 'active' : ''}`}
-        onClick={() => setActiveTab("webcache")}
-      >
-        Web Cache
-      </button>
-      <button
-        className={`tab-button ${activeTab === "rag" ? 'active' : ''}`}
-        onClick={() => setActiveTab("rag")}
-      >
-        RAG
-      </button>
-      {/* Admin tab appears only when an adminKey is present in settings */}
-      {settings && settings.adminKey ? (
-        <button
-          className={`tab-button ${activeTab === "admin" ? 'active' : ''}`}
-          onClick={() => setActiveTab("admin")}
-        >
-          Admin
-        </button>
-      ) : null}
-      {/* NEW: Add Procedures Tab */}
-      {settings.enableProceduralMemory && (
-        <button
-          className={`tab-button ${activeTab === 'procedures' ? 'active' : ''}`}
-          onClick={() => setActiveTab('procedures')}
-        >
-          Procedures
-        </button>
-      )}
     </div>
   );
 };

@@ -24,8 +24,47 @@ function joinBase(path) {
 
 export async function apiFetch(path, opts = {}) {
   const target = joinBase(path);
-  const res = await fetch(target, opts);
-  return res;
+  // Retry/backoff policy to handle transient network errors and 429 rate-limits
+  const maxRetries = (opts && typeof opts._retries === 'number') ? opts._retries : 4;
+  const baseDelay = (opts && typeof opts._retryDelay === 'number') ? opts._retryDelay : 500; // ms
+
+  // Avoid sending internal retry options to the server
+  const fetchOpts = { ...opts };
+  delete fetchOpts._retries;
+  delete fetchOpts._retryDelay;
+
+  let attempt = 0;
+  while (true) {
+    try {
+      const res = await fetch(target, fetchOpts);
+      // If not rate-limited, return response immediately
+      if (!res || res.status !== 429) return res;
+
+      // Handle 429 specially: check Retry-After header if present
+      if (res.status === 429 && attempt < maxRetries) {
+        const retryAfter = res.headers.get('Retry-After');
+        let waitMs = baseDelay * Math.pow(2, attempt);
+        if (retryAfter) {
+          const parsed = parseInt(retryAfter, 10);
+          if (!isNaN(parsed)) waitMs = parsed * 1000;
+        }
+        await new Promise(r => setTimeout(r, waitMs));
+        attempt++;
+        continue;
+      }
+
+      return res;
+    } catch (err) {
+      // Network or other error — retry with exponential backoff
+      if (attempt < maxRetries) {
+        const waitMs = baseDelay * Math.pow(2, attempt);
+        await new Promise(r => setTimeout(r, waitMs));
+        attempt++;
+        continue;
+      }
+      throw err;
+    }
+  }
 }
 
 export async function safeJson(response) {

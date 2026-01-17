@@ -1,85 +1,36 @@
-import React, { useEffect, useState } from 'react';
-import syncService from '../services/syncService';
-import { pendingCount } from '../lib/offlineQueue';
-import { apiFetch, safeJson } from '../lib/fetchHelper';
+import React from 'react';
 
-const Header = ({
-  soulState = {},
-  setShowSettings = () => {},
-  showSettings = false,
-  showSoulPanel = false,
-  setShowSoulPanel = () => {},
-  isOnline = true,
-  onSync = () => {},
-  offlineEnabled = false,
-  onToggleOffline = () => {}
-}) => {
-  // mood and energy values are available on soulState if needed for UI enhancements
-
-  const [online, setOnline] = useState(navigator.onLine);
-  const [queueCount, setQueueCount] = useState(0);
-  const [providerStatus, setProviderStatus] = useState({});
-
-  useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    window.addEventListener('online', update);
-    window.addEventListener('offline', update);
-    const refreshCount = async () => setQueueCount(await pendingCount());
-    refreshCount();
-    syncService.onQueueChange(refreshCount);
-
-    let stopped = false;
-    const fetchStatus = async () => {
-      try {
-        const res = await apiFetch('/status/providers');
-        if (!res || !res.ok) return;
-        const wrap = await safeJson(res).catch(() => null);
-        const j = wrap ? (wrap.json || null) : null;
-        if (j && j.providers) setProviderStatus(j.providers);
-      } catch (e) {
-        // ignore network errors
-      }
-    };
-    fetchStatus();
-    const pid = setInterval(() => { if (!stopped) fetchStatus(); }, 10000);
-
-    return () => {
-      stopped = true;
-      clearInterval(pid);
-      window.removeEventListener('online', update);
-      window.removeEventListener('offline', update);
-      syncService.offQueueChange(refreshCount);
-    };
-  }, []);
+const Header = ({ soulState = {}, setShowSettings = () => {}, showSettings = false, showSoulPanel = false, setShowSoulPanel = () => {} }) => {
+  const mood = soulState?.currentMood ?? 'calm';
+  const energyRaw = Number(soulState?.energyLevel ?? 0);
+  const energy = Number.isFinite(energyRaw) ? energyRaw : 0;
+  const energyTitle = typeof energy === 'number' ? `${energy.toFixed(0)}%` : `${energy}%`;
 
   return (
-    <header className="app-header header-reordered">
+    <header className="app-header">
       <div className="header-left">
-        {/* Online/offline icon moved to left per user request */}
-        <button
-          className={`icon-button left-online ${online ? 'online' : 'offline'}`}
-          title={online ? 'Online' : 'Offline'}
-          aria-pressed={online}
-          type="button"
-          onClick={() => onToggleOffline(!offlineEnabled)}
-        >
-          <span className="sr-only">{online ? 'Online' : 'Offline'}</span>
-          {online ? '●' : '○'}
-        </button>
-        {queueCount > 0 && (
-          <div className="queue-pill left-pill" title={`${queueCount} queued`} aria-hidden="true">{queueCount}</div>
-        )}
-      </div>
-
-      <div className="header-center">
-        {/* Centered AION wordmark */}
-        <div className="brand-center">
-          <span className="brand-logo" aria-hidden="false">AION</span>
-          <h1 className="sr-only">AION</h1>
+        <h1>AION</h1>
+        <div className="soul-status" aria-label="Soul status">
+          <span className={`mood ${mood}`}>{mood}</span>
+          <div className="energy-bar" title={`Energy: ${energyTitle}`}>
+            <div
+              className="energy-fill"
+              style={{ width: `${Math.max(0, Math.min(100, energy))}%` }}
+            ></div>
+          </div>
         </div>
       </div>
 
       <div className="header-right">
+        <button
+          className={`icon-button ${showSoulPanel ? 'active' : ''}`}
+          onClick={() => setShowSoulPanel(!showSoulPanel)}
+          title="Soul Panel"
+          aria-pressed={showSoulPanel}
+          type="button"
+        >
+          <i className="icon-soul" aria-hidden="true"></i>
+        </button>
         <button
           className={`icon-button ${showSettings ? 'active' : ''}`}
           onClick={() => setShowSettings(!showSettings)}
@@ -88,16 +39,8 @@ const Header = ({
           type="button"
         >
           <i className="icon-settings" aria-hidden="true"></i>
-          <span className="sr-only">Settings</span>
         </button>
       </div>
-      {providerStatus && Object.keys(providerStatus).length > 0 && (
-        Object.values(providerStatus).some(s => !s.online) ? (
-          <div className="provider-banner" role="status" aria-live="polite">
-            <strong>Warning:</strong> One or more model providers are offline. Check the status page for details.
-          </div>
-        ) : null
-      )}
     </header>
   );
 };

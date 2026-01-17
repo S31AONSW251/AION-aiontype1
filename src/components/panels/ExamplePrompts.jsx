@@ -1,95 +1,28 @@
 // src/components/ExamplePrompts.jsx
-import React, { useState } from 'react';
-import './ExamplePrompts.css';
+import React from 'react';
 
 const SAMPLE_PROMPTS = [
-  {
-    text: "Research web3 governance models",
-    category: "research",
-    icon: "🔍"
-  },
-  {
-    text: "Explain RLHF in simple terms",
-    category: "explain",
-    icon: "📚"
-  },
-  {
-    text: "Write a short poem about curiosity",
-    category: "creative",
-    icon: "✍️"
-  },
-  {
-    text: "Solve: integral of x^2 dx",
-    category: "math",
-    icon: "∫"
-  },
-  {
-    text: "Generate a starter Next.js app structure",
-    category: "code",
-    icon: "💻"
-  },
-  {
-    text: "What's the latest in AI safety research?",
-    category: "research",
-    icon: "🤖"
-  },
-  {
-    text: "How does quantum computing work?",
-    category: "explain",
-    icon: "⚛️"
-  },
-  {
-    text: "Create a short story about space exploration",
-    category: "creative",
-    icon: "🚀"
-  }
+  "research web3 governance",
+  "Explain RLHF in simple terms",
+  "Write a short poem about curiosity",
+  "Solve: integral of x^2 dx",
+  "Generate a starter Next.js app structure"
 ];
 
 const ExamplePrompts = ({ onExampleClick }) => {
-  const [activeCategory, setActiveCategory] = useState("all");
-  
-  const categories = [
-    { id: "all", name: "All Prompts", icon: "⭐" },
-    { id: "research", name: "Research", icon: "🔍" },
-    { id: "explain", name: "Explain", icon: "📚" },
-    { id: "creative", name: "Creative", icon: "✍️" },
-    { id: "math", name: "Math", icon: "∫" },
-    { id: "code", name: "Code", icon: "💻" }
-  ];
-
-  const filteredPrompts = activeCategory === "all" 
-    ? SAMPLE_PROMPTS 
-    : SAMPLE_PROMPTS.filter(prompt => prompt.category === activeCategory);
-
   return (
-    <div className="example-prompts-container">
-      <h3>Try asking me something</h3>
-      <p>Select a category or try one of these example prompts:</p>
-      
-      <div className="prompt-categories">
-        {categories.map(category => (
+    <div className="example-prompts" role="list">
+      <p>Try one of these:</p>
+      <div style={{display:'flex',flexDirection:'column',gap:8}}>
+        {SAMPLE_PROMPTS.map((p, i) => (
           <button
-            key={category.id}
-            className={`category-btn ${activeCategory === category.id ? 'active' : ''}`}
-            onClick={() => setActiveCategory(category.id)}
+            key={i}
+            className="example-prompt-btn"
+            onClick={() => onExampleClick ? onExampleClick(p) : null}
+            style={{padding:'8px 12px', borderRadius:8, border:'none', background:'rgba(255,255,255,0.04)', color:'inherit', textAlign:'left'}}
           >
-            <span className="category-icon">{category.icon}</span>
-            {category.name}
+            {p}
           </button>
-        ))}
-      </div>
-      
-      <div className="example-prompts-grid">
-        {filteredPrompts.map((prompt, index) => (
-          <div
-            key={index}
-            className="example-prompt-card"
-            onClick={() => onExampleClick ? onExampleClick(prompt.text) : null}
-          >
-            <div className="prompt-icon">{prompt.icon}</div>
-            <div className="prompt-text">{prompt.text}</div>
-            <div className="prompt-category">{prompt.category}</div>
-          </div>
         ))}
       </div>
     </div>
