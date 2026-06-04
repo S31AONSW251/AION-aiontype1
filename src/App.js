@@ -30,7 +30,7 @@ import Notification from './components/Notification';
 import SettingsModal from './components/SettingsModal';
 import ChatPanel from './components/panels/ChatPanel';
 import AIAnalysisModal from './components/AIAnalysisModal';
-import WelcomeSplash from './components/WelcomeSplashClean';
+import PremiumLandingPage from './components/PremiumLandingPage';
 import About from './components/About';
 import SoulPanel from './components/panels/SoulPanel';
 import MemoriesPanel from './components/panels/MemoriesPanel';
@@ -55,6 +55,7 @@ import "./settings-modal-fixes.css";
 import './components/About.css';
 // Import ULTRA Premium Mystical Theme
 import './styles/aion-ultra-theme.css';
+import './styles/premium-landing.css';
 import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
@@ -2839,7 +2840,7 @@ function App() {
 
       {/* Pre-app welcome splash — blocks access until user enters */}
       {showSplash && (
-        <WelcomeSplash onEnter={() => setShowSplash(false)} />
+        <PremiumLandingPage onEnter={() => setShowSplash(false)} />
       )}
 
       <div className="main-content">
