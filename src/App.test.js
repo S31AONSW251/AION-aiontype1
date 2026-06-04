@@ -1,8 +1,6 @@
-import { render, screen } from '@testing-library/react';
-import App from './App';
+import { DEFAULT_SETTINGS } from './App';
 
-test('renders learn react link', () => {
-  render(<App />);
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('uses black glass as the default AION theme', () => {
+  expect(DEFAULT_SETTINGS.theme).toBe('dark');
+  expect(DEFAULT_SETTINGS.palette).toBe('black');
 });
