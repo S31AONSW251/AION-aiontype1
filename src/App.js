@@ -59,6 +59,7 @@ import './styles/premium-landing.css';
 import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 // --- DEFAULT SETTINGS moved to module scope so effects can reuse them safely ---
 export const DEFAULT_SETTINGS = {
@@ -3094,6 +3095,9 @@ function App() {
       
       {/* Floating Brain Icon with Dashboard - Single component */}
       <FloatingBrainIcon />
+      
+      {/* Vercel Speed Insights */}
+      <SpeedInsights />
     </div>
   );
 }
