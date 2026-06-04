@@ -1,5 +1,3 @@
-import yaml from 'js-yaml';
-
 export function saveToMemory(message, reply) {
   const memory = {
     timestamp: new Date().toISOString(),
@@ -7,8 +5,7 @@ export function saveToMemory(message, reply) {
     response: reply
   };
 
-  const yamlText = yaml.dump(memory);
-  console.log('🧠 Saving to memory:', yamlText);
+  console.log('Saving to AION memory:', JSON.stringify(memory, null, 2));
 
   // Placeholder: In real setup, you'd write to file using backend or API.
 }

@@ -25,3 +25,18 @@ function categorizeResult(result) {
 
   return "Other";
 }
+
+async function fetchResultsFromAPI(query) {
+  const response = await fetch('/api/advanced-search', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query })
+  });
+
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(data.error || data.message || `Search failed: ${response.status}`);
+  }
+
+  return Array.isArray(data.results) ? data.results : [];
+}

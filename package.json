@@ -11,6 +11,7 @@
     "chart.js": "^4.5.0",
     "d3": "^7.9.0",
     "dexie": "^3.2.2",
+    "express": "^5.2.1",
     "file-saver": "^2.0.5",
     "http-proxy-middleware": "^3.0.5",
     "idb-keyval": "^6.2.2",

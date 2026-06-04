@@ -209,7 +209,8 @@ const SettingsModal = ({
                 value={settings.palette ?? 'cyan'}
                 onChange={(e) => setSettings({ ...settings, palette: e.target.value })}
               >
-                <option value="cyan">Cyan (default)</option>
+                <option value="black">Black Glass (default)</option>
+                <option value="cyan">Cyan</option>
                 <option value="magenta">Magenta</option>
                 <option value="lime">Lime</option>
               </select>

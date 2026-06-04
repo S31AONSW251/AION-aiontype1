@@ -1,6 +1,7 @@
 const express = require('express');
 // use built-in express body parsing
 const brainRoutes = require('./src/routes/brainRoutes');
+const compatRoutes = require('./src/routes/compatRoutes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -10,6 +11,10 @@ app.use(express.urlencoded({ extended: true }));
 
 // Mount brain routes under /api/brain
 app.use('/api/brain', brainRoutes);
+
+// Compatibility routes for the current React frontend. These extend the
+// existing brain backend without replacing the original /api/brain contract.
+app.use(compatRoutes);
 
 // Lightweight placeholder for existing /api/messages so the frontend won't break
 app.post('/api/messages', (req, res) => {

@@ -1,5 +1,14 @@
-// src/lib/api.js (or wherever you call fetch/axios)
-export const API_BASE = import.meta.env.VITE_API_BASE;
+// Shared API helpers for the CRA app. Use REACT_APP_API_BASE when provided;
+// otherwise same-origin calls are proxied in development by setupProxy.js.
+export const API_BASE = process.env.REACT_APP_API_BASE || '';
+
+async function readJsonResponse(res) {
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(json.error || json.message || `Request failed: ${res.status}`);
+  }
+  return json;
+}
 
 export async function generateImage(prompt) {
   const res = await fetch(`${API_BASE}/generate-image`, {
@@ -7,7 +16,7 @@ export async function generateImage(prompt) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt }),
   });
-  return res.json();
+  return readJsonResponse(res);
 }
 
 export async function generateCode(prompt, model = "llama3") {
@@ -16,10 +25,10 @@ export async function generateCode(prompt, model = "llama3") {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ prompt, model }),
   });
-  return res.json();
+  return readJsonResponse(res);
 }
 
 export async function webSearch(query) {
   const res = await fetch(`${API_BASE}/api/search?query=${encodeURIComponent(query)}`);
-  return res.json();
+  return readJsonResponse(res);
 }

@@ -1,9 +1,6 @@
 import React, { createContext, useState, useEffect, useRef, useCallback } from 'react';
 import { SoulMatrix } from '../core/soul';
 
-// --- New Imports for Semantic Memory ---
-import { pipeline, cos_sim } from '@xenova/transformers';
-
 // Create the context
 export const AionContext = createContext();
 
@@ -21,45 +18,25 @@ export const AionProvider = ({ children }) => {
   const [soulState, setSoulState] = useState({ ...aionSoul });
   const [activeTab, setActiveTab] = useState("chat");
   const [notification, setNotification] = useState(null);
-  const [settings, setSettings] = useState(() => { /* ... existing settings ... */ });
+  const [settings] = useState(() => ({
+    theme: 'dark',
+    enableMemoryIntegration: true,
+    autoSpeakReplies: false,
+  }));
   const [showSettings, setShowSettings] = useState(false);
   const [showSoulPanel, setShowSoulPanel] = useState(false);
+  const chatContainerRef = useRef(null);
 
-  // --- New State for Semantic Memory ---
-  const [isModelLoading, setIsModelLoading] = useState(true);
+  // Lightweight semantic memory fallback. This file is not part of the main
+  // runtime, so avoid optional model dependencies here.
+  const [isModelLoading] = useState(false);
   const [vectorStore, setVectorStore] = useState([]);
-  const modelPipeline = useRef(null); // Use a ref to hold the pipeline instance
-
-  // --- Effect to Load the AI Model on Startup ---
-  useEffect(() => {
-    const loadModel = async () => {
-      try {
-        setNotification({ message: 'Loading cognitive model...', type: 'info' });
-        // Load the feature-extraction pipeline with a lightweight sentence-transformer model
-        modelPipeline.current = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2');
-        setNotification({ message: 'AION is ready.', type: 'success' });
-      } catch (error) {
-        console.error("Model loading failed:", error);
-        setNotification({ message: 'Cognitive model failed to load.', type: 'error' });
-      } finally {
-        setIsModelLoading(false);
-      }
-    };
-    loadModel();
-  }, []); // The empty array ensures this runs only once on startup
 
 
   // --- New Core Memory Functions ---
 
-  /**
-   * Generates a vector embedding for a given text.
-   * @param {string} text - The text to embed.
-   * @returns {Promise<number[]>} - The vector embedding.
-   */
-  const generateEmbedding = useCallback(async (text) => {
-    if (!modelPipeline.current || !text) return null;
-    const result = await modelPipeline.current(text, { pooling: 'mean', normalize: true });
-    return result.data;
+  const tokenize = useCallback((text) => {
+    return String(text || '').toLowerCase().split(/[^a-z0-9]+/).filter(Boolean);
   }, []);
 
   /**
@@ -67,19 +44,13 @@ export const AionProvider = ({ children }) => {
    * @param {string} text - The text to remember.
    */
   const addMemory = useCallback(async (text) => {
-    if (isModelLoading) {
-        console.warn("Model not ready, memory not added.");
-        return;
-    }
-    const embedding = await generateEmbedding(text);
-    if (embedding) {
-      setVectorStore(prevStore => [
-        ...prevStore,
-        { text, embedding, timestamp: new Date() }
-      ]);
-      showNotification("New memory stored.", "info");
-    }
-  }, [isModelLoading, generateEmbedding]);
+    if (!text) return;
+    setVectorStore(prevStore => [
+      ...prevStore,
+      { text, tokens: tokenize(text), timestamp: new Date() }
+    ]);
+    showNotification("New memory stored.", "info");
+  }, [showNotification, tokenize]);
 
   /**
    * Searches the memory for the most relevant entries to a query.
@@ -89,18 +60,19 @@ export const AionProvider = ({ children }) => {
    */
   const searchMemories = useCallback(async (query, topK = 3) => {
     if (isModelLoading || vectorStore.length === 0) return [];
-    
-    const queryEmbedding = await generateEmbedding(query);
-    if (!queryEmbedding) return [];
+    const queryTokens = tokenize(query);
+    if (!queryTokens.length) return [];
 
     const scoredMemories = vectorStore.map(memory => {
-      const similarity = cos_sim(queryEmbedding, memory.embedding);
+      const memoryTokens = new Set(memory.tokens || tokenize(memory.text));
+      const hits = queryTokens.filter(token => memoryTokens.has(token)).length;
+      const similarity = hits / Math.max(queryTokens.length, 1);
       return { ...memory, similarity };
-    });
+    }).filter(memory => memory.similarity > 0);
 
     scoredMemories.sort((a, b) => b.similarity - a.similarity);
     return scoredMemories.slice(0, topK);
-  }, [isModelLoading, vectorStore, generateEmbedding]);
+  }, [isModelLoading, vectorStore, tokenize]);
 
 
   // --- Existing Functions ---

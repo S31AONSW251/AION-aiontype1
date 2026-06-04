@@ -56,6 +56,7 @@ import './components/About.css';
 // Import ULTRA Premium Mystical Theme
 import './styles/aion-ultra-theme.css';
 import './styles/premium-landing.css';
+import './styles/aion-black-glass-theme.css';
 import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
@@ -102,8 +103,8 @@ export const DEFAULT_SETTINGS = {
   adminKey: '',
   // Ambient background control (separate from global animations)
   ambientBackgroundEnabled: true,
-  // Color palette: 'cyan' (default), 'magenta', 'lime'
-  palette: 'cyan',
+  // Color palette: black glass is the default AION skin.
+  palette: 'black',
   // Particle layer control (only particles)
   particlesEnabled: true,
 };
@@ -298,25 +299,28 @@ function App() {
       // Update soul state
       setSoulState({ ...aionSoul });
 
-      // Initialize consciousness async
-      console.log('🌟 AION ULTRA: Awakening consciousness...');
-      try {
-        consciousnessSystem.awakenConsciousness().then(result => {
-          console.log('✨ Consciousness Status:', result.final_state);
-          window.AION_CONSCIOUSNESS = result.final_state;
-        }).catch(err => console.error('Consciousness error:', err));
-      } catch (err) {
-        console.error('Failed to awaken consciousness:', err);
-      }
+      const isTestEnv = typeof process !== 'undefined' && process.env && process.env.NODE_ENV === 'test';
+      if (!isTestEnv) {
+        // Initialize consciousness async
+        console.log('AION ULTRA: Awakening consciousness...');
+        try {
+          consciousnessSystem.awakenConsciousness().then(result => {
+            console.log('Consciousness Status:', result.final_state);
+            window.AION_CONSCIOUSNESS = result.final_state;
+          }).catch(err => console.error('Consciousness error:', err));
+        } catch (err) {
+          console.error('Failed to awaken consciousness:', err);
+        }
 
-      // Initialize offline systems async
-      console.log('📚 AION ULTRA: Initializing offline capabilities...');
-      try {
-        offlineResponseManager.initialize(offlineMetadata).then(init_result => {
-          console.log('✅ Offline Response Manager Status:', init_result);
-        }).catch(err => console.error('Offline manager error:', err));
-      } catch (err) {
-        console.error('Failed to initialize offline manager:', err);
+        // Initialize offline systems async
+        console.log('AION ULTRA: Initializing offline capabilities...');
+        try {
+          offlineResponseManager.initialize(offlineMetadata).then(init_result => {
+            console.log('Offline Response Manager Status:', init_result);
+          }).catch(err => console.error('Offline manager error:', err));
+        } catch (err) {
+          console.error('Failed to initialize offline manager:', err);
+        }
       }
 
       // Expose to window
@@ -327,7 +331,9 @@ function App() {
       window.OFFLINE_RESPONSE_MANAGER = offlineResponseManager;
       window.OFFLINE_LEARNING_COLLECTOR = offlineLearner;
 
-      console.log('🚀 AION ULTRA STATUS:', aionQuantumCore.getUltraStatus());
+      if (!isTestEnv) {
+        console.log('AION ULTRA STATUS:', aionQuantumCore.getUltraStatus());
+      }
     } catch (initError) {
       console.error('❌ AION Initialization Error:', initError);
     }

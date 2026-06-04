@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useCallback, useRef } from 'react';
-import { SoulMatrix } from '../core/soul';
+import { SoulMatrix } from './core/soul';
 import FileSaver from "file-saver";
 
 // Create the context
