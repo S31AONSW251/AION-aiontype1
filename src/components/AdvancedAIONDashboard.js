@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { status as fetchBrainStatus } from '../services/aionBrainClient';
 import './AdvancedAIONDashboard.css';
 
 /**
@@ -13,6 +14,8 @@ const AdvancedAIONDashboard = ({ onClose }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [brainInfo, setBrainInfo] = useState(null);
+  const [brainLoading, setBrainLoading] = useState(false);
   const modalRef = useRef(null);
 
   const languages = {
@@ -143,6 +146,25 @@ const AdvancedAIONDashboard = ({ onClose }) => {
     return () => window.removeEventListener('keydown', handleEscape);
   }, [onClose]);
 
+  // Fetch brain status when the Brain tab becomes active
+  useEffect(() => {
+    let mounted = true;
+    const load = async () => {
+      if (activeTab !== 'brain') return;
+      setBrainLoading(true);
+      try {
+        const info = await fetchBrainStatus();
+        if (mounted) setBrainInfo(info);
+      } catch (e) {
+        if (mounted) setBrainInfo({ error: e.message });
+      } finally {
+        if (mounted) setBrainLoading(false);
+      }
+    };
+    load();
+    return () => { mounted = false; };
+  }, [activeTab]);
+
   // Handle outside click
   const handleBackdropClick = (e) => {
     if (e.target === e.currentTarget) {
@@ -206,6 +228,15 @@ const AdvancedAIONDashboard = ({ onClose }) => {
             </svg>
             System Status
           </button>
+            <button
+              className={`tab-button ${activeTab === 'brain' ? 'active' : ''}`}
+              onClick={() => setActiveTab('brain')}
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 2v6M12 16v6M4 12h6M14 12h6M6.5 6.5l4 4M13.5 13.5l4 4M6.5 17.5l4-4" />
+              </svg>
+              Brain
+            </button>
         </div>
 
         {/* Tab Content */}
@@ -403,6 +434,29 @@ const AdvancedAIONDashboard = ({ onClose }) => {
                   </div>
                   <p className="status-text">Interactive Learning • Data Collection</p>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Brain Tab */}
+          {activeTab === 'brain' && (
+            <div className="tab-pane active">
+              <div className="brain-container">
+                {brainLoading ? (
+                  <div style={{ padding: '1rem' }}>Loading AION brain status...</div>
+                ) : brainInfo && brainInfo.status ? (
+                  <div style={{ padding: '1rem' }}>
+                    <h4>Brain Status</h4>
+                    <pre style={{ whiteSpace: 'pre-wrap', fontSize: '0.85rem' }}>{JSON.stringify(brainInfo.status, null, 2)}</pre>
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <button onClick={async () => { setBrainLoading(true); try { const r = await fetchBrainStatus(); setBrainInfo(r); } catch (err) { setBrainInfo({ error: err.message }); } finally { setBrainLoading(false); } }}>
+                        Refresh
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ padding: '1rem' }}>AION brain not available.</div>
+                )}
               </div>
             </div>
           )}

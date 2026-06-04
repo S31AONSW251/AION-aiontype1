@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import ChatPanel from './ChatPanel';
 import { storeConversation, queueOutgoing, offlineReply, indexKnowledge } from '../../lib/offlineResponder';
 import { localModel } from '../../lib/localModel';
+import { think as brainThink } from '../../services/aionBrainClient';
 
 // Simple container that demonstrates wiring ChatPanel.onSend to a backend endpoint
 export default function ChatPanelContainer() {
@@ -32,7 +33,41 @@ export default function ChatPanelContainer() {
     setIsThinking(true);
 
     try {
-  const data = await postMessageToServer({ text, attachments, feeling });
+      // Try local AION brain first (graceful if not available)
+      try {
+        const brainResp = await brainThink(text, { conversation: conversation.slice(-10), feeling });
+        if (brainResp && brainResp.response) {
+          const aionMsg = {
+            id: brainResp.id || `a-${Date.now()}`,
+            response: brainResp.response || '',
+            time: new Date().toLocaleTimeString(),
+            source: 'brain'
+          };
+          setConversation((prev) => [...prev, aionMsg]);
+          try { await storeConversation({ role: 'assistant', text: aionMsg.response, ts: Date.now() }); } catch (e) { console.warn('store conversation failed', e); }
+          // auto-index if enabled
+          try {
+            const raw = localStorage.getItem('aion_settings');
+            const appSettings = raw ? JSON.parse(raw) : {};
+            if (appSettings.autoIndexResponses) {
+              const entry = {
+                title: (aionMsg.response || '').slice(0, 80) || `AION ${aionMsg.id}`,
+                text: aionMsg.response || '',
+                snippet: (aionMsg.response || '').slice(0, 256),
+                ts: Date.now(),
+              };
+              await indexKnowledge([entry]);
+            }
+          } catch (ie) { console.warn('auto index in ChatPanelContainer failed', ie); }
+          setIsThinking(false);
+          return;
+        }
+      } catch (brainErr) {
+        // brain not available — continue to server/local fallback
+        console.debug('AION brain think failed or not available', brainErr);
+      }
+
+      const data = await postMessageToServer({ text, attachments, feeling });
       // expect server to return an object { response: string, id?: string }
       const aionMsg = {
         id: data.id || `a-${Date.now()}`,
@@ -40,7 +75,7 @@ export default function ChatPanelContainer() {
         time: new Date().toLocaleTimeString(),
       };
       setConversation((prev) => [...prev, aionMsg]);
-  try { await storeConversation({ role: 'assistant', text: aionMsg.response, ts: Date.now() }); } catch (e) { console.warn('store conversation failed', e); }
+      try { await storeConversation({ role: 'assistant', text: aionMsg.response, ts: Date.now() }); } catch (e) { console.warn('store conversation failed', e); }
       // Auto-index assistant replies if the user has enabled that setting in the app
       try {
         const raw = localStorage.getItem('aion_settings');
