@@ -1,0 +1,470 @@
+/* AION Chat Premium Clean Overrides
+   Paste this file at the VERY BOTTOM of:
+   src/components/panels/ChatPanel.css
+   Purpose: remove childish/crowded chat styling and make the chat compact, premium, readable.
+*/
+
+/* ---------- Main shell ---------- */
+.chat-container {
+  background: #050608 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  border-radius: 18px !important;
+  overflow: hidden !important;
+  box-shadow: 0 22px 80px rgba(0,0,0,0.38) !important;
+  color: rgba(245,248,255,0.92) !important;
+}
+
+.chat-container:hover {
+  transform: none !important;
+  box-shadow: 0 22px 80px rgba(0,0,0,0.38) !important;
+}
+
+.chat-header,
+.brand-premium.chat-header {
+  min-height: 54px !important;
+  padding: 12px 16px !important;
+  background: rgba(8,10,14,0.92) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.07) !important;
+  box-shadow: none !important;
+}
+
+.chat-title,
+.brand-logo,
+.brand-logo-large {
+  color: rgba(245,248,255,0.96) !important;
+  font-size: 15px !important;
+  letter-spacing: 0.02em !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+  text-shadow: none !important;
+}
+
+/* ---------- Live/status panel compact ---------- */
+.agent-stream,
+.live-operations,
+.status-panel,
+.stream-panel {
+  background: rgba(255,255,255,0.025) !important;
+  border: 1px solid rgba(255,255,255,0.07) !important;
+  border-radius: 14px !important;
+  box-shadow: none !important;
+}
+
+.agent-stream button,
+.live-operations button,
+.status-panel button,
+.stream-panel button {
+  border-radius: 10px !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  background: rgba(255,255,255,0.06) !important;
+  color: rgba(245,248,255,0.88) !important;
+  font-weight: 700 !important;
+  padding: 7px 12px !important;
+}
+
+/* ---------- Conversation column ---------- */
+.conversation-history {
+  width: 100% !important;
+  max-width: 860px !important;
+  margin: 0 auto !important;
+  padding: 18px 14px 120px !important;
+  gap: 14px !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* ---------- Message layout ---------- */
+.message-wrapper,
+.message.user,
+.message.aion {
+  width: 100% !important;
+  max-width: 100% !important;
+  display: flex !important;
+  gap: 10px !important;
+  align-items: flex-start !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.message-wrapper.user {
+  flex-direction: row-reverse !important;
+  justify-content: flex-start !important;
+}
+
+.message-wrapper:hover,
+.message-wrapper:hover .message-content,
+.message-wrapper:hover .message-body,
+.message-wrapper.user:hover .message-body {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* ---------- Avatars ---------- */
+.user-avatar,
+.aion-avatar {
+  width: 30px !important;
+  height: 30px !important;
+  min-width: 30px !important;
+  min-height: 30px !important;
+  margin-top: 20px !important;
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  font-weight: 800 !important;
+  background: rgba(255,255,255,0.07) !important;
+  color: rgba(245,248,255,0.86) !important;
+  border: 1px solid rgba(255,255,255,0.10) !important;
+  box-shadow: none !important;
+}
+
+.aion-avatar {
+  background: linear-gradient(135deg, rgba(0,234,255,0.20), rgba(124,58,237,0.18)) !important;
+  border-color: rgba(0,234,255,0.20) !important;
+}
+
+.user-avatar:hover,
+.aion-avatar:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.avatar-pulse,
+.aion-avatar::before,
+.aion-avatar::after {
+  display: none !important;
+}
+
+/* ---------- Bubble containers ---------- */
+.message-content,
+.aion-message,
+.message.user .message-content,
+.message.aion .message-content {
+  flex: 0 1 auto !important;
+  width: auto !important;
+  max-width: min(760px, calc(100% - 48px)) !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.message-wrapper.user .message-content {
+  margin-left: auto !important;
+}
+
+/* ---------- Header text ---------- */
+.message-header,
+.user-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  margin: 0 0 5px !important;
+  padding: 0 2px !important;
+  min-height: 16px !important;
+  border: 0 !important;
+}
+
+.user-header {
+  justify-content: flex-end !important;
+}
+
+.username,
+.message-wrapper .aion-message .message-header .username,
+.message-wrapper .aion-message .message-header .mood-indicator,
+.mood-indicator {
+  background: transparent !important;
+  color: rgba(245,248,255,0.68) !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  font-size: 11px !important;
+  line-height: 1.2 !important;
+  font-weight: 750 !important;
+  text-transform: none !important;
+  letter-spacing: 0.02em !important;
+}
+
+.message-wrapper.user .username {
+  color: rgba(245,248,255,0.72) !important;
+}
+
+.time,
+.message-id {
+  color: rgba(245,248,255,0.42) !important;
+  font-size: 11px !important;
+  opacity: 1 !important;
+}
+
+/* ---------- Message body ---------- */
+.message-body,
+.message.user .message-body,
+.message.aion .message-body {
+  display: block !important;
+  width: fit-content !important;
+  max-width: 100% !important;
+  padding: 12px 14px !important;
+  border-radius: 16px !important;
+  background: rgba(255,255,255,0.035) !important;
+  border: 1px solid rgba(255,255,255,0.075) !important;
+  color: rgba(245,248,255,0.92) !important;
+  font-size: 14px !important;
+  line-height: 1.55 !important;
+  word-break: normal !important;
+  overflow-wrap: anywhere !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.message-wrapper.user .message-body {
+  margin-left: auto !important;
+  background: rgba(255,255,255,0.075) !important;
+  border-color: rgba(255,255,255,0.11) !important;
+  color: rgba(255,255,255,0.96) !important;
+  border-bottom-right-radius: 6px !important;
+}
+
+.message-wrapper:not(.user) .message-body,
+.aion-message .message-body {
+  background: rgba(6,10,14,0.72) !important;
+  border-color: rgba(0,234,255,0.12) !important;
+  border-bottom-left-radius: 6px !important;
+}
+
+.message-body p {
+  margin: 0 0 0.7em !important;
+}
+.message-body p:last-child {
+  margin-bottom: 0 !important;
+}
+
+.user-question {
+  margin: 0 !important;
+}
+
+/* ---------- Hide crowded action toolbar until hover ---------- */
+.message-actions {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  margin: 5px 0 0 !important;
+  padding: 0 !important;
+  border-top: 0 !important;
+  opacity: 0 !important;
+  max-height: 0 !important;
+  overflow: hidden !important;
+  pointer-events: none !important;
+  transition: opacity .16s ease, max-height .16s ease !important;
+}
+
+.message-wrapper:hover .message-actions,
+.message-wrapper:focus-within .message-actions {
+  opacity: 0.86 !important;
+  max-height: 34px !important;
+  pointer-events: auto !important;
+}
+
+.action-btn,
+.reaction-btn,
+.message-wrapper.user .action-btn,
+.message-wrapper.user .reaction-btn {
+  min-width: auto !important;
+  height: 24px !important;
+  padding: 0 7px !important;
+  border-radius: 7px !important;
+  border: 1px solid rgba(255,255,255,0.075) !important;
+  background: rgba(255,255,255,0.035) !important;
+  color: rgba(245,248,255,0.58) !important;
+  font-size: 10.5px !important;
+  line-height: 1 !important;
+  font-weight: 650 !important;
+  box-shadow: none !important;
+  text-transform: none !important;
+}
+
+.action-btn:hover,
+.reaction-btn:hover {
+  transform: none !important;
+  background: rgba(0,234,255,0.10) !important;
+  border-color: rgba(0,234,255,0.22) !important;
+  color: rgba(245,248,255,0.92) !important;
+  box-shadow: none !important;
+}
+
+/* ---------- Offline/fallback message should be compact ---------- */
+.message-body:has-text,
+.offline-message,
+.fallback-message {
+  max-width: 100% !important;
+}
+
+/* ---------- Composer/input ---------- */
+.chat-composer-area,
+.chat-footer {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
+
+.chat-composer,
+.composer-input-wrapper {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 50 !important;
+  width: calc(100% - 20px) !important;
+  max-width: 860px !important;
+  margin: 0 auto 10px !important;
+  padding: 10px !important;
+  border-radius: 16px !important;
+  background: rgba(8,10,14,0.94) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  box-shadow: 0 -16px 50px rgba(0,0,0,0.40) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+}
+
+.composer-middle .composer-input,
+.composer-middle textarea,
+.composer-middle input,
+.composer-input {
+  min-height: 44px !important;
+  max-height: 150px !important;
+  padding: 12px 14px !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,0.035) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  color: rgba(245,248,255,0.94) !important;
+  font-size: 14px !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.composer-middle .composer-input:focus,
+.composer-middle textarea:focus,
+.composer-middle input:focus,
+.composer-input:focus {
+  outline: none !important;
+  border-color: rgba(0,234,255,0.28) !important;
+  background: rgba(255,255,255,0.052) !important;
+  box-shadow: 0 0 0 3px rgba(0,234,255,0.07) !important;
+  transform: none !important;
+}
+
+.composer-middle .composer-input::placeholder,
+.composer-middle textarea::placeholder,
+.composer-input::placeholder {
+  color: rgba(245,248,255,0.42) !important;
+  opacity: 1 !important;
+}
+
+.chat-composer .action-btn,
+.chat-composer .icon-button,
+.chat-composer .icon-btn,
+.chat-composer .rich-text-button,
+.chat-composer .file-upload-button {
+  width: 34px !important;
+  height: 34px !important;
+  min-width: 34px !important;
+  border-radius: 11px !important;
+  padding: 0 !important;
+  background: rgba(255,255,255,0.045) !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+  color: rgba(245,248,255,0.72) !important;
+  box-shadow: none !important;
+}
+
+.chat-composer .primary-cta,
+.primary-cta {
+  min-width: 42px !important;
+  height: 38px !important;
+  border-radius: 12px !important;
+  padding: 0 13px !important;
+  background: rgba(245,248,255,0.92) !important;
+  border: 1px solid rgba(255,255,255,0.16) !important;
+  color: #050608 !important;
+  font-weight: 850 !important;
+  font-size: 12px !important;
+  letter-spacing: 0 !important;
+  text-transform: none !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.chat-composer .primary-cta:hover,
+.primary-cta:hover {
+  background: #ffffff !important;
+  color: #050608 !important;
+  transform: none !important;
+  box-shadow: 0 0 0 3px rgba(0,234,255,0.08) !important;
+}
+
+/* ---------- Remove decorative noise that makes it childish ---------- */
+.glint,
+.decorative-art,
+.chat-container::after,
+.chat-container.light-theme::before,
+.minimal-welcome::before,
+.minimal-welcome::after {
+  display: none !important;
+}
+
+/* ---------- Mobile/narrow layout ---------- */
+@media (max-width: 700px) {
+  .conversation-history {
+    padding: 14px 12px 112px !important;
+    gap: 12px !important;
+  }
+
+  .user-avatar,
+  .aion-avatar {
+    width: 28px !important;
+    height: 28px !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    font-size: 10px !important;
+  }
+
+  .message-content,
+  .aion-message,
+  .message.user .message-content,
+  .message.aion .message-content {
+    max-width: calc(100% - 40px) !important;
+  }
+
+  .message-body,
+  .message.user .message-body,
+  .message.aion .message-body {
+    padding: 10px 12px !important;
+    font-size: 13.5px !important;
+    line-height: 1.5 !important;
+  }
+
+  .message-actions {
+    display: none !important;
+  }
+
+  .chat-composer,
+  .composer-input-wrapper {
+    width: calc(100% - 16px) !important;
+    margin-bottom: 8px !important;
+    padding: 8px !important;
+  }
+
+  .chat-composer .action-btn,
+  .chat-composer .icon-button,
+  .chat-composer .icon-btn,
+  .chat-composer .rich-text-button,
+  .chat-composer .file-upload-button {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+}
