@@ -2,7 +2,7 @@ import React from 'react';
 
 const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, userInput }) => {
   return (
-    <div className="tab-container">
+    <nav className="tab-container" aria-label="AION workspace">
       <button
         className={`tab-button ${activeTab === "chat" ? 'active' : ''}`}
         onClick={() => setActiveTab("chat")}
@@ -95,7 +95,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           Procedures
         </button>
       )}
-    </div>
+    </nav>
   );
 };
 

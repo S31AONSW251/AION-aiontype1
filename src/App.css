@@ -10281,3 +10281,293 @@ input:checked + .slider:before {
   .result-item{flex-direction:row}
   .result-thumb{flex:0 0 84px;height:56px}
 }
+
+/* ------------------------------------------------------------------ */
+/* AION production final pass - kept at the end of App.css because this
+   file loads late in the current bundle. */
+/* ------------------------------------------------------------------ */
+body::before,
+.app-container button::before,
+.app-container button::after,
+.app-container .tab-button::before,
+.app-container .app-header::after,
+.app-container .panel::before,
+.app-container .chat-container::before,
+.app-container .chat-container::after,
+.app-container .empty-chat-container::before,
+.app-container .minimal-welcome::before,
+.app-container .minimal-welcome::after,
+.app-container .message-wrapper::after,
+.app-container .aion-avatar::before,
+.app-container .aion-avatar::after,
+.app-container .brain-pulse-ring,
+.app-container .brain-badge,
+.app-container .brain-tooltip {
+  display: none !important;
+  background: none !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.app-container,
+.app-container * {
+  text-shadow: none !important;
+}
+
+.app-container .tab-button,
+.app-container .icon-button,
+.app-container .btn,
+.app-container .primary-cta,
+.app-container .ghost-cta,
+.app-container .prompt-chip,
+.app-container .action-btn,
+.app-container .reaction-btn,
+.app-container .send-button,
+.app-container .floating-brain-button,
+.app-container .agent-presence-actions .btn,
+.app-container .input-actions .icon-button {
+  background: #151515 !important;
+  background-image: none !important;
+  border: 1px solid #2c2c2c !important;
+  color: #f7f7f7 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.app-container .tab-button:hover,
+.app-container .icon-button:hover,
+.app-container .btn:hover,
+.app-container .primary-cta:hover,
+.app-container .ghost-cta:hover,
+.app-container .prompt-chip:hover,
+.app-container .action-btn:hover,
+.app-container .reaction-btn:hover,
+.app-container .send-button:hover,
+.app-container .floating-brain-button:hover {
+  background: #232323 !important;
+  border-color: #454545 !important;
+  color: #ffffff !important;
+  transform: none !important;
+}
+
+.app-container .tab-button.active,
+.app-container .btn.primary,
+.app-container .send-button {
+  background: #ffffff !important;
+  background-image: none !important;
+  border-color: #ffffff !important;
+  color: #000000 !important;
+}
+
+.app-container .chat-container,
+.app-container .conversation-history,
+.app-container .panel,
+.app-container .agent-presence-panel,
+.app-container .input-container,
+.app-container .uploaded-files-panel,
+.app-container .modal-content,
+.app-container .ai-analysis-modal,
+.app-container .mem-edit-modal,
+.app-container .lightbox-content {
+  background: #0f0f0f !important;
+  background-image: none !important;
+  border-color: #2c2c2c !important;
+  color: #f7f7f7 !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+}
+
+.app-container .conversation-history,
+.app-container .welcome-hero,
+.app-container .message-body,
+.app-container .aion-message,
+.app-container .message-content {
+  background: transparent !important;
+  background-image: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.app-container .welcome-hero,
+.app-container .welcome-hero *,
+.app-container .empty-chat-container,
+.app-container .empty-chat-container * {
+  opacity: 1 !important;
+  filter: none !important;
+  mix-blend-mode: normal !important;
+}
+
+.app-container .brand-logo,
+.app-container .brand-logo-large,
+.app-container .agent-presence-panel h3,
+.app-container .panel h2,
+.app-container .panel h3,
+.app-container .username {
+  color: #ffffff !important;
+  background: none !important;
+  -webkit-text-fill-color: currentColor !important;
+}
+
+.app-container .welcome-hero .brand-logo-large {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+.app-container .welcome-hero .brand-tag,
+.app-container .welcome-hero .hero-subtitle {
+  color: #d4d4d4 !important;
+  -webkit-text-fill-color: #d4d4d4 !important;
+}
+
+.app-container .welcome-hero .prompt-chip {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #151515 !important;
+  background-image: none !important;
+}
+
+.app-container .brand-tag,
+.app-container .hero-subtitle,
+.app-container .muted,
+.app-container .time,
+.app-container .kv,
+.app-container .agent-event-meta {
+  color: #a3a3a3 !important;
+}
+
+.app-container .chat-input,
+.app-container input,
+.app-container textarea,
+.app-container select {
+  background: #101010 !important;
+  background-image: none !important;
+  border-color: #2c2c2c !important;
+  color: #f7f7f7 !important;
+  box-shadow: none !important;
+}
+
+.app-container .chat-input {
+  background: transparent !important;
+  border: 0 !important;
+}
+
+.app-container .notification {
+  position: fixed !important;
+  top: 18px !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  transform: translateX(-50%) !important;
+  z-index: 3000 !important;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 10px 14px !important;
+  border: 1px solid #3a3a3a !important;
+  border-radius: 8px !important;
+  background: #050505 !important;
+  background-image: none !important;
+  color: #ffffff !important;
+  box-shadow: 0 16px 48px rgba(0,0,0,0.45) !important;
+}
+
+.app-container .floating-brain-button::before {
+  content: "A" !important;
+  display: block !important;
+  color: #ffffff !important;
+  font-size: 15px !important;
+  font-weight: 760 !important;
+}
+
+.app-container .floating-brain-container {
+  right: 24px !important;
+  bottom: 108px !important;
+}
+
+.app-container .floating-brain-button {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 8px !important;
+}
+
+.app-container .brain-icon {
+  display: none !important;
+}
+
+.app-container ::-webkit-scrollbar-thumb {
+  background: #333333 !important;
+  border: 2px solid #000000 !important;
+  border-radius: 999px !important;
+}
+
+@media (max-width: 560px) {
+  html,
+  body,
+  #root,
+  .app-container,
+  .app-container .main-content {
+    width: 100% !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
+  }
+
+  .app-container,
+  .app-container * {
+    min-width: 0 !important;
+  }
+
+  .app-container .tab-container {
+    width: min(360px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 6px !important;
+    padding: 10px 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-container .tab-button {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-container .agent-presence-panel,
+  .app-container .chat-container,
+  .app-container .input-section {
+    width: min(360px, calc(100vw - 24px)) !important;
+    max-width: calc(100vw - 24px) !important;
+    margin-left: 12px !important;
+    margin-right: 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .app-container .floating-brain-container {
+    display: none !important;
+  }
+
+  .app-container .agent-presence-row .kv {
+    width: 100%;
+    align-items: flex-start;
+    flex-direction: column;
+    flex-wrap: wrap;
+  }
+
+  .app-container .agent-presence-row .kv span {
+    width: 100%;
+  }
+
+  .app-container .agent-presence-actions {
+    width: 100% !important;
+    margin-left: 0 !important;
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  .app-container .agent-presence-actions .btn {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+}

@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './ChatPanel.css';
+import '../../styles/aion-production-ui.css';
 // ExamplePrompts and AvatarBadge imports removed because they are not used in this file
 
 // Small utility: friendly timestamp formatter
@@ -38,7 +39,7 @@ const CustomCodeRenderer = ({ node, inline, className, children, ...props }) => 
           <div className="code-actions">
             <CopyToClipboard text={text} onCopy={handleCopy}>
               <button className={`action-btn ${isCopied ? 'copied' : ''}`} title="Copy Code">
-                {isCopied ? '✓ Copied' : '📋 Copy'}
+                {isCopied ? 'Copied' : 'Copy'}
               </button>
             </CopyToClipboard>
           </div>
@@ -83,70 +84,22 @@ const TypingIndicator = React.memo(() => (
   </div>
 ));
 
-// Futuristic welcome/hero message (sci-fi, professional)
 const WelcomeMessage = React.memo(({ onExampleClick }) => (
   <div className="empty-chat-container minimal-welcome welcome-hero" role="region" aria-label="Welcome to AION">
     <div className="welcome-hero-grid">
-      <div className="hero-left">
-        <div className="brand-compact">
-          <div className="brand-mark" aria-hidden>
-            {/* subtle mark left intentionally minimal */}
-          </div>
-          <div className="brand-line">
-            <h2 className="brand-logo-large">AION</h2>
-            <div className="brand-tag">Living AI — Expert workflows, reimagined</div>
-          </div>
-        </div>
-
-        <h3 className="hero-title">Your intelligent co‑pilot for code, research, and workflows</h3>
-        <p className="hero-subtitle">AION reasons over files, memories and context to give you confident answers. Fast. Secure. Human-centered.</p>
-
-        <div className="hero-ctas">
-          <button className="primary-cta" onClick={() => onExampleClick && onExampleClick('Summarize this page')}>Get started</button>
-          <button className="ghost-cta" onClick={() => onExampleClick && onExampleClick('Show docs')}>Explore templates</button>
-        </div>
-
-        <div className="quick-prompts" aria-label="Quick examples">
-          {['Summarize this repo', 'Find TODOs', 'Explain this file'].map((p) => (
-            <button key={p} className="prompt-chip" onClick={() => onExampleClick && onExampleClick(p)}>{p}</button>
-          ))}
-        </div>
-
-        <div className="welcome-stats hero-stats">
-          <div className="stat-item">
-            <span className="stat-value">24ms</span>
-            <span className="stat-label">Avg response</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">3.2k</span>
-            <span className="stat-label">Knowledge nodes</span>
-          </div>
-          <div className="stat-item">
-            <span className="stat-value">Live</span>
-            <span className="stat-label">Presence</span>
-          </div>
-        </div>
+      <div className="brand-line">
+        <h2 className="brand-logo-large">AION</h2>
+        <div className="brand-tag">Ask, analyze, build.</div>
       </div>
 
-      <div className="hero-right" aria-hidden>
-        <div className="orb-wrap">
-          <div className="orb-core">
-            <div className="orb-glow" />
-            <div className="orb-ring ring-1" />
-            <div className="orb-ring ring-2" />
-            <div className="orb-ring ring-3" />
-          </div>
-        </div>
-        <div className="hero-feature-cards">
-          <div className="feature-card">
-            <strong>Adaptive Reasoning</strong>
-            <div className="feature-desc">Context-aware suggestions that learn from your project.</div>
-          </div>
-          <div className="feature-card">
-            <strong>Secure Memory</strong>
-            <div className="feature-desc">Local-first storage and selective recall.</div>
-          </div>
-        </div>
+      <p className="hero-subtitle">
+        A focused workspace for chat, files, memory, research, and advanced AION tools.
+      </p>
+
+      <div className="quick-prompts" aria-label="Quick examples">
+        {['Summarize this project', 'Review my latest code', 'Plan the next build', 'Explain a file'].map((p) => (
+          <button key={p} className="prompt-chip" onClick={() => onExampleClick && onExampleClick(p)}>{p}</button>
+        ))}
       </div>
     </div>
   </div>
@@ -170,7 +123,7 @@ const UserMessage = React.memo(({ entry, onEdit, onSaveToIndex }) => {
   return (
     <div className="message-wrapper user">
       <div className={`user-avatar ${isEditing ? 'pulse' : ''}`}>
-        <span className="avatar-icon">👤</span>
+        <span className="avatar-icon">U</span>
       </div>
       <div className="message-content">
         <div className="message-header user-header">
@@ -288,7 +241,7 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
               className={`action-btn ${isCopied ? 'copied' : ''}`} 
               title="Copy to Clipboard"
             >
-              {isCopied ? '✓' : '📋'}
+              {isCopied ? 'Copied' : 'Copy'}
             </button>
           </CopyToClipboard>
           
@@ -297,7 +250,7 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
             title="Regenerate" 
             onClick={() => onRegenerate(entry.question)}
           >
-            🔄
+            Retry
           </button>
           
           <button 
@@ -305,7 +258,7 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
             title="Read Aloud" 
             onClick={() => onSpeak(entry.response)}
           >
-            {isSpeaking ? '⏹' : '🔊'}
+            {isSpeaking ? 'Stop' : 'Speak'}
           </button>
           
           <button 
@@ -316,12 +269,11 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
             {expanded ? '−' : '+'}
           </button>
           <button className="action-btn" title="Save message to local index" onClick={() => onSaveToIndex && onSaveToIndex(entry)}>
-            💾
+            Save
           </button>
-          {/* Simple reactions UI */}
-          <div className="reactions" role="group" aria-label="Reactions">
-            {['👍','🎯','❤️','🤔'].map((r) => (
-              <button key={r} className="reaction-btn" onClick={() => toggleReaction(r)} aria-label={`React ${r}`}>{r} {reactions[r] ? reactions[r] : ''}</button>
+          <div className="reactions" role="group" aria-label="Response feedback">
+            {['Useful','Accurate','Save','Review'].map((r) => (
+              <button key={r} className="reaction-btn" onClick={() => toggleReaction(r)} aria-label={`Mark ${r}`}>{r} {reactions[r] ? reactions[r] : ''}</button>
             ))}
           </div>
         </div>
@@ -373,7 +325,7 @@ const StreamingMessage = React.memo(({ content, soulState, onCancel, isStreaming
               <div className="wave-animation">
                 <div></div><div></div><div></div>
               </div>
-              <span>Generating response...</span>
+              <span>Generating response</span>
             </div>
             <button className="cancel-button" onClick={onCancel}>
               Stop Generation
@@ -737,7 +689,7 @@ const ChatPanel = React.memo(({
       {/* Jump to latest button appears when user scrolls up */}
       {!isAtBottom && (
         <div className="jump-to-bottom-wrap">
-          <button className="jump-to-bottom" onClick={scrollToBottom} aria-label="Jump to latest messages">⬇ New messages</button>
+          <button className="jump-to-bottom" onClick={scrollToBottom} aria-label="Jump to latest messages">New messages</button>
         </div>
       )}
 

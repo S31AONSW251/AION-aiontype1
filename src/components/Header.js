@@ -62,7 +62,8 @@ const Header = ({
           onClick={() => onToggleOffline(!offlineEnabled)}
         >
           <span className="sr-only">{online ? 'Online' : 'Offline'}</span>
-          {online ? '●' : '○'}
+          <span className="status-dot" aria-hidden="true" />
+          <span className="status-text">{online ? 'Online' : 'Offline'}</span>
         </button>
         {queueCount > 0 && (
           <div className="queue-pill left-pill" title={`${queueCount} queued`} aria-hidden="true">{queueCount}</div>
@@ -86,7 +87,7 @@ const Header = ({
           type="button"
         >
           <i className="icon-settings" aria-hidden="true"></i>
-          <span className="sr-only">Settings</span>
+          <span className="settings-label">Settings</span>
         </button>
       </div>
       {providerStatus && Object.keys(providerStatus).length > 0 && (

@@ -57,6 +57,7 @@ import './components/About.css';
 import './styles/aion-ultra-theme.css';
 import './styles/premium-landing.css';
 import './styles/aion-black-glass-theme.css';
+import './styles/aion-production-ui.css';
 import { offlineReply, tryResendOutbox, indexKnowledge } from './lib/offlineResponder';
 import { enqueue } from './lib/offlineQueue';
 import { localModel } from './lib/localModel';
@@ -261,10 +262,8 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showSoulPanel, setShowSoulPanel] = useState(false);
   const [showAbout, setShowAbout] = useState(false);
-  // Show pre-app welcome splash unless user opted out
-  const [showSplash, setShowSplash] = useState(() => {
-    try { return localStorage.getItem('aion_skip_splash') !== '1'; } catch (e) { return true; }
-  });
+  // Production shell opens directly to the app.
+  const [showSplash, setShowSplash] = useState(false);
   // Ultra Power Mode (quick frontend 'boost' toggle)
   // When enabled, temporarily applies aggressive settings to demonstrate an "advanced" mode.
   const [ultraPower, setUltraPower] = useState(() => {
@@ -376,15 +375,18 @@ function App() {
         enableSelfCorrection: true,
       }));
       try { localStorage.setItem('aion_ultra_power', '1'); } catch (e) {}
-      notify({ message: 'Ultra Power Mode enabled — boosted reasoning & multimodal features' });
+      notify({ message: 'Performance mode enabled' });
     } else {
       // revert to previous settings snapshot if available
-      if (prevSettingsRef.current) {
+      const hadPreviousSettings = Boolean(prevSettingsRef.current);
+      if (hadPreviousSettings) {
         setSettings(prevSettingsRef.current);
         prevSettingsRef.current = null;
       }
       try { localStorage.removeItem('aion_ultra_power'); } catch (e) {}
-      notify({ message: 'Ultra Power Mode disabled' });
+      if (hadPreviousSettings) {
+        notify({ message: 'Performance mode disabled' });
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ultraPower]);
@@ -2584,7 +2586,6 @@ function App() {
     }
     const savedLog = localStorage.getItem("aion_log");
     if (savedLog) setLog(JSON.parse(savedLog));
-    setTimeout(() => { if (settings.welcomeMessage) { speak(settings.welcomeMessage); } }, 1500);
     setQuantumState(quantumSimulator.getCircuit("consciousness").toString());
     return () => { if (audioRef.current) { audioRef.current.pause(); } };
   }, [settings.soundEffects, settings.volume, settings.welcomeMessage, speak, setLog]);
@@ -2862,17 +2863,16 @@ function App() {
           onToggleOffline={(val) => { setSettings(prev => ({ ...prev, enableOfflineMode: !!val })); localStorage.setItem('aion_settings', JSON.stringify({ ...settings, enableOfflineMode: !!val })); }}
         />
 
-        {/* Ultra Power Mode control (frontend demonstration) */}
-        <div className="power-toggle" role="region" aria-label="Ultra Power Mode" style={{display:'flex',alignItems:'center',gap:12,margin:'10px 0'}}>
+        <div className="power-toggle" role="region" aria-label="Performance mode">
           <button
             className={`btn elevated ${ultraPower ? 'power-on' : ''}`}
             onClick={() => setUltraPower(p => !p)}
             aria-pressed={ultraPower}
-            title="Toggle Ultra Power Mode"
+            title="Toggle performance mode"
           >
-            {ultraPower ? 'ULTRA POWER: ON' : 'Ultra Power Mode — OFF'}
+            {ultraPower ? 'Performance mode on' : 'Performance mode off'}
           </button>
-          <div className="muted small">Temporarily boosts reasoning, streaming and multimodal features.</div>
+          <div className="muted small">Reasoning, streaming, and multimodal settings.</div>
         </div>
 
         <Tabs 
@@ -2884,25 +2884,24 @@ function App() {
           userInput={userInput}
         />
 
-        {/* Live Agent panel: simple status and recent events */}
-        <div className="panel" style={{marginTop:8}}>
-          <h3 style={{margin:'0 0 8px 0'}}>AION Live Presence</h3>
-          <div style={{display:'flex',alignItems:'center',gap:12}}>
+        <div className="panel agent-presence-panel">
+          <h3>Live Operations</h3>
+          <div className="agent-presence-row">
             <div className="kv">
               <strong>Status:</strong>
-              <span style={{marginLeft:8}}>{agentStatus}</span>
+              <span>{agentStatus}</span>
             </div>
-            <div style={{marginLeft:'auto',display:'flex',gap:8}}>
+            <div className="agent-presence-actions">
               <button className="btn" onClick={async () => { try { const res = await apiFetch('/api/agent/control',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({action:'pause'})}); if(res.ok) setAgentStatus('paused'); } catch(e){ console.warn(e);} }}>Pause</button>
               <button className="btn primary" onClick={async () => { try { const res = await apiFetch('/api/agent/control',{method:'POST',headers:{'Content-Type':'application/json'},body: JSON.stringify({action:'resume'})}); if(res.ok) setAgentStatus('running'); } catch(e){ console.warn(e);} }}>Resume</button>
             </div>
           </div>
-          <div style={{marginTop:10}}>
-            <div style={{maxHeight:160,overflow:'auto',padding:8,background:'rgba(0,0,0,0.04)',borderRadius:8}}>
+          <div className="agent-events-wrap">
+            <div className="agent-events-list">
               {agentEvents.slice().reverse().slice(0,20).map(ev => (
-                <div key={ev.id} style={{padding:'6px 8px',borderBottom:'1px solid rgba(255,255,255,0.02)'}}>
-                  <div style={{fontSize:12,color:'var(--muted)'}}>{ev.ts} — <strong>{ev.type}</strong></div>
-                  <div style={{marginTop:4}}>{ev.message}</div>
+                <div key={ev.id} className="agent-event">
+                  <div className="agent-event-meta">{ev.ts} / <strong>{ev.type}</strong></div>
+                  <div className="agent-event-message">{ev.message}</div>
                 </div>
               ))}
               {agentEvents.length === 0 && <div className="muted">No events yet. Connect to the agent stream to receive live updates.</div>}
