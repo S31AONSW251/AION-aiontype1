@@ -224,7 +224,6 @@ function App() {
   const [biometricFeedback, setBiometricFeedback] = useState({ attention: 50, emotionalResponse: 50, connectionLevel: 50 });
   const [isSpeechSupported, setIsSpeechSupported] = useState(true);
   const [activeTab, setActiveTab] = useState("workspace");
-  const [isDockedOpen, setIsDockedOpen] = useState(true);
   const [notification, setNotification] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -2756,8 +2755,6 @@ function App() {
       case 'chat':
       default:
         return <ChatPanel 
-          isDockedOpen={isDockedOpen}
-          setIsDockedOpen={setIsDockedOpen}
           chatContainerRef={chatContainerRef}
           conversationHistory={conversationHistory}
           reply={reply}
@@ -2865,9 +2862,6 @@ function App() {
 
       <div className="main-content">
         <Header 
-          activeTab={activeTab}
-          isDockedOpen={isDockedOpen}
-          setIsDockedOpen={setIsDockedOpen}
           soulState={soulState} 
           setShowSettings={setShowSettings}
           showSettings={showSettings}

@@ -679,9 +679,16 @@ body {
   bottom: 0 !important;
   left: 0 !important;
   right: 0 !important;
-  background: linear-gradient(180deg, transparent 0%, #000000 70%) !important;
+  background: linear-gradient(180deg, transparent 0%, #000000 85%) !important;
   padding: 16px 24px 28px 24px !important;
   z-index: 40 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 8px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
 }
 
 .chat-composer-wrapper-card {
@@ -694,6 +701,8 @@ body {
   -webkit-backdrop-filter: blur(20px) !important;
   padding: 10px 12px 10px 12px !important;
   width: 100% !important;
+  max-width: 860px !important;
+  margin: 0 auto !important;
   display: flex !important;
   flex-direction: column !important;
   box-sizing: border-box !important;
@@ -842,6 +851,25 @@ body {
 .send-icon {
   display: inline-block !important;
   transform: rotate(0deg) !important;
+}
+
+/* Sleek footer style below composer card */
+.chat-container.enterprise-chat-override .chat-footer {
+  background: transparent !important;
+  border: none !important;
+  padding: 4px 0 0 0 !important;
+  width: 100% !important;
+  max-width: 860px !important;
+  margin: 0 auto !important;
+}
+
+.chat-container.enterprise-chat-override .conversation-stats {
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  width: 100% !important;
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.35) !important;
 }
 
 /* Message styling: Grok uses clean message styles with no bubble borders for AI */

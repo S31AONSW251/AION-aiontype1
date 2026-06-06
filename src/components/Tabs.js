@@ -195,26 +195,6 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
         </div>
       </div>
 
-      <div className="sidebar-system-footer">
-        <div className="system-footer-row">
-          <span className="system-footer-dot green"></span>
-          <span className="system-footer-text">AION Core Active</span>
-        </div>
-        <div className="system-metrics">
-          <div className="metric-item">
-            <span className="metric-label">CPU</span>
-            <span className="metric-val">12%</span>
-          </div>
-          <div className="metric-item">
-            <span className="metric-label">GPU</span>
-            <span className="metric-val">45%</span>
-          </div>
-          <div className="metric-item">
-            <span className="metric-label">RAM</span>
-            <span className="metric-val">3.4G</span>
-          </div>
-        </div>
-      </div>
     </nav>
   );
 };

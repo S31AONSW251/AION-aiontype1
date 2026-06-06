@@ -8,15 +8,6 @@ import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './ChatPanel.css';
 import '../../styles/aion-production-ui.css';
 
-// Import split-view panels
-import NeuralPanel from './NeuralPanel';
-import QuantumPanel from './QuantumPanel';
-import MathPanel from './MathPanel';
-import GoalsPanel from './GoalsPanel';
-import KnowledgePanel from './KnowledgePanel';
-import ProceduresPanel from './ProceduresPanel';
-import MemoriesPanel from './MemoriesPanel';
-import SearchPanel from './SearchPanel';
 
 // Small utility: friendly timestamp formatter
 const formatTime = (raw) => {
@@ -370,61 +361,6 @@ const ChatPanel = React.memo((props) => {
     onSend,
     onSaveToIndex,
     // offlineHelpers,
-
-    // Sub-panel props
-    // Neural
-    neuralOutput,
-    runNeuralSimulation,
-    neuralCanvasRef,
-    randomNeuralTest,
-    
-    // Quantum
-    quantumState,
-    runQuantumSimulation,
-    quantumCanvasRef,
-    applyQuantumGate,
-    QuantumGates,
-
-    // Math
-    isMathQuery,
-    mathSolution,
-    userInput,
-    onAsk,
-    settings,
-    mathCanvasRef,
-    onSolveCustomProblem,
-    setParentMathSolution,
-
-    // Goals
-    onAddGoal,
-    onUpdateGoal,
-    onDeleteGoal,
-
-    // Knowledge
-    onAddKnowledge,
-    onUpdateKnowledge,
-    onDeleteKnowledge,
-
-    // Procedures
-    notify,
-    apiFetch,
-
-    // Memories
-    longTermMemory,
-    internalReflections,
-    clearConversation,
-
-    // Search
-    agentStatus,
-    searchPlan,
-    thoughtProcessLog,
-    suggestedQueries,
-    searchSummary,
-    searchError,
-    isSearching,
-    searchResults,
-    onSearch,
-    setActiveTab,
   } = props;
 
   const enhancedHistory = useMemo(() => {
@@ -659,113 +595,14 @@ const ChatPanel = React.memo((props) => {
     };
   }, []);
 
-  const [isDockedOpen, setIsDockedOpen] = useState(true);
-  const [dockedTab, setDockedTab] = useState('neural');
-
-  const renderDockedPanel = () => {
-    switch (dockedTab) {
-      case 'neural':
-        return (
-          <NeuralPanel
-            soulState={soulState}
-            neuralOutput={neuralOutput}
-            runNeuralSimulation={runNeuralSimulation}
-            neuralCanvasRef={neuralCanvasRef}
-            setActiveTab={setActiveTab}
-            randomNeuralTest={randomNeuralTest}
-          />
-        );
-      case 'quantum':
-        return (
-          <QuantumPanel
-            soulState={soulState}
-            quantumState={quantumState}
-            runQuantumSimulation={runQuantumSimulation}
-            quantumCanvasRef={quantumCanvasRef}
-            setActiveTab={setActiveTab}
-            applyQuantumGate={applyQuantumGate}
-            QuantumGates={QuantumGates}
-          />
-        );
-      case 'math':
-        return (
-          <MathPanel
-            isMathQuery={isMathQuery}
-            mathSolution={mathSolution}
-            userInput={userInput}
-            onAsk={onAsk}
-            settings={settings}
-            mathCanvasRef={mathCanvasRef}
-            setActiveTab={setActiveTab}
-            onSolveCustomProblem={onSolveCustomProblem}
-            setParentMathSolution={setParentMathSolution}
-          />
-        );
-      case 'goals':
-        return (
-          <GoalsPanel
-            soulState={soulState}
-            setActiveTab={setActiveTab}
-            onAddGoal={onAddGoal}
-            onUpdateGoal={onUpdateGoal}
-            onDeleteGoal={onDeleteGoal}
-          />
-        );
-      case 'knowledge':
-        return (
-          <KnowledgePanel
-            soulState={soulState}
-            setActiveTab={setActiveTab}
-            onAdd={onAddKnowledge}
-            onUpdate={onUpdateKnowledge}
-            onDelete={onDeleteKnowledge}
-          />
-        );
-      case 'procedures':
-        return (
-          <ProceduresPanel
-            setActiveTab={setActiveTab}
-            notify={notify}
-            apiFetch={apiFetch}
-          />
-        );
-      case 'memories':
-        return (
-          <MemoriesPanel
-            soulState={soulState}
-            settings={settings}
-            longTermMemory={longTermMemory}
-            internalReflections={internalReflections}
-            exportConversation={onRegenerate}
-            clearConversation={clearConversation}
-          />
-        );
-      case 'search':
-        return (
-          <SearchPanel
-            agentStatus={agentStatus}
-            searchPlan={searchPlan}
-            thoughtProcessLog={thoughtProcessLog}
-            suggestedQueries={suggestedQueries}
-            searchSummary={searchSummary}
-            searchError={searchError}
-            isSearching={isSearching}
-            onSearch={onSearch}
-            searchResults={searchResults}
-          />
-        );
-      default:
-        return <div className="dock-empty">Select a panel from the tab dropdown.</div>;
-    }
-  };
-
   return (
     <div className={`chat-workstation-wrapper ${themeClass}`}>
       <div 
-        className={`chat-left-pane ${isDockedOpen ? 'dock-open' : ''}`}
+        className="chat-left-pane"
         style={{
           '--accent': 'var(--cp-accent-1)',
-          '--accent-2': 'var(--cp-accent-2)'
+          '--accent-2': 'var(--cp-accent-2)',
+          width: '100%'
         }}
       >
         <div
@@ -774,11 +611,6 @@ const ChatPanel = React.memo((props) => {
           style={{ width: '100%', height: '100%', border: 'none', margin: '0 auto', maxWidth: '100%' }}
         >
           <div className="decorative-art" aria-hidden="true" />
-          <div className="chat-header brand-premium">
-            <div className="chat-title-row">
-              <div className="title-left" />
-            </div>
-          </div>
 
           <div className="conversation-history">
             {enhancedHistory.length === 0 && !isThinking && (
@@ -864,50 +696,6 @@ const ChatPanel = React.memo((props) => {
           )}
         </div>
       </div>
-
-      {isDockedOpen && (
-        <div className="chat-right-pane-dock">
-          <div className="dock-header">
-            <div className="dock-title-select">
-              <span className="dock-icon">⚡</span>
-              <select 
-                value={dockedTab} 
-                onChange={(e) => setDockedTab(e.target.value)}
-                className="dock-selector"
-              >
-                <option value="neural">🧠 Neural Evolution</option>
-                <option value="quantum">✇ Quantum Circuit</option>
-                <option value="math">√ Math Solver</option>
-                <option value="goals">🎯 Goals & Objectives</option>
-                <option value="knowledge">▤ Knowledge Base</option>
-                <option value="procedures">⎔ Procedures Memory</option>
-                <option value="memories">▥ Memory Bank</option>
-                <option value="search">⌥ Web Search</option>
-              </select>
-            </div>
-            <button 
-              className="dock-close-btn" 
-              onClick={() => setIsDockedOpen(false)}
-              title="Close Panel"
-            >
-              ✕
-            </button>
-          </div>
-          <div className="dock-content-wrapper">
-            {renderDockedPanel()}
-          </div>
-        </div>
-      )}
-
-      {!isDockedOpen && (
-        <button 
-          className="dock-toggle-floating-btn"
-          onClick={() => setIsDockedOpen(true)}
-          title="Open Side Panel"
-        >
-          ⚡ Workspace Panel
-        </button>
-      )}
     </div>
   );
 });

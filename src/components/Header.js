@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import syncService from '../services/syncService';
-import { pendingCount } from '../lib/offlineQueue';
 
 const Header = ({
   soulState = {},
@@ -11,23 +9,11 @@ const Header = ({
   isOnline = true,
   onSync = () => {},
   offlineEnabled = false,
-  onToggleOffline = () => {},
-  activeTab = 'workspace',
-  isDockedOpen = true,
-  setIsDockedOpen = () => {}
+  onToggleOffline = () => {}
 }) => {
-  const [online, setOnline] = useState(navigator.onLine);
-  const [queueCount, setQueueCount] = useState(0);
   const [providerStatus, setProviderStatus] = useState({});
 
   useEffect(() => {
-    const update = () => setOnline(navigator.onLine);
-    window.addEventListener('online', update);
-    window.addEventListener('offline', update);
-    const refreshCount = async () => setQueueCount(await pendingCount());
-    refreshCount();
-    syncService.onQueueChange(refreshCount);
-
     let stopped = false;
     const fetchStatus = async () => {
       try {
@@ -45,9 +31,6 @@ const Header = ({
     return () => {
       stopped = true;
       clearInterval(pid);
-      window.removeEventListener('online', update);
-      window.removeEventListener('offline', update);
-      syncService.offQueueChange(refreshCount);
     };
   }, []);
 
@@ -59,20 +42,6 @@ const Header = ({
           <span className="hamburger-line"></span>
           <span className="hamburger-line"></span>
         </label>
-        <button
-          className={`icon-button left-online ${online ? 'online' : 'offline'}`}
-          title={online ? 'Online' : 'Offline'}
-          aria-pressed={online}
-          type="button"
-          onClick={() => onToggleOffline(!offlineEnabled)}
-        >
-          <span className="sr-only">{online ? 'Online' : 'Offline'}</span>
-          <span className="status-dot" aria-hidden="true" />
-          <span className="status-text">{online ? 'Online' : 'Offline'}</span>
-        </button>
-        {queueCount > 0 && (
-          <div className="queue-pill left-pill" title={`${queueCount} queued`} aria-hidden="true">{queueCount}</div>
-        )}
       </div>
 
       <div className="header-center">
@@ -83,19 +52,6 @@ const Header = ({
       </div>
 
       <div className="header-right">
-        {activeTab === 'chat' && (
-          <button
-            className={`icon-button workspace-toggle-btn ${isDockedOpen ? 'active' : ''}`}
-            onClick={() => setIsDockedOpen(!isDockedOpen)}
-            title={isDockedOpen ? 'Close Workspace Panel' : 'Open Workspace Panel'}
-            aria-pressed={isDockedOpen}
-            type="button"
-            style={{ marginRight: '8px' }}
-          >
-            <span style={{ marginRight: '6px' }}>⚡</span>
-            <span className="settings-label">Workspace</span>
-          </button>
-        )}
         <button
           className={`icon-button ${showSettings ? 'active' : ''}`}
           onClick={() => setShowSettings(!showSettings)}

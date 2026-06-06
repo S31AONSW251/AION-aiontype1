@@ -6,6 +6,47 @@
  */
 
 .settings-modal {
+  /* Premium Design Tokens for Settings Modal */
+  --z-modal: 99999;
+  --modal-backdrop-color: rgba(4, 5, 8, 0.7);
+  --backdrop-blur-md: blur(12px);
+  --duration-normal: 0.25s;
+  --easing-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 0.15s;
+  --bg-surface-elevated: #0d0f19;
+  --text-primary: #e6f6ff;
+  --text-secondary: rgba(230, 246, 255, 0.8);
+  --text-tertiary: rgba(230, 246, 255, 0.5);
+  --border-medium: rgba(255, 255, 255, 0.08);
+  --border-light: rgba(255, 255, 255, 0.04);
+  --bg-hover: rgba(255, 255, 255, 0.04);
+  --radius-2xl: 20px;
+  --radius-xl: 16px;
+  --radius-lg: 12px;
+  --radius-md: 8px;
+  --spacing-1: 4px;
+  --spacing-2: 8px;
+  --spacing-3: 12px;
+  --spacing-4: 16px;
+  --spacing-5: 20px;
+  --spacing-6: 24px;
+  --spacing-8: 32px;
+  --spacing-10: 40px;
+  --color-quantum-primary: #00e5ff;
+  --color-quantum-secondary: #0099ff;
+  --color-quantum-tertiary: #6c63ff;
+  --input-padding: 10px 14px;
+  --font-size-base: 14px;
+  --font-size-sm: 12px;
+  --font-size-lg: 16px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-weight-bold: 700;
+  --font-weight-semibold: 600;
+  --letter-spacing-wide: 0.5px;
+  --btn-padding-md: 10px 20px;
+  --color-danger: #ef4444;
+
   position: fixed;
   inset: 0;
   display: flex;
@@ -399,6 +440,86 @@
   flex: 0 1 auto;
 }
 
+/* Tabbed Layout Container */
+.settings-container {
+  display: flex;
+  min-height: 540px;
+  max-height: calc(90vh - 180px);
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border-light);
+  overflow: hidden;
+}
+
+.settings-sidebar {
+  width: 220px;
+  background: rgba(5, 8, 16, 0.45);
+  border-right: 1px solid var(--border-light);
+  display: flex;
+  flex-direction: column;
+  padding: var(--spacing-4) 0;
+  gap: var(--spacing-1);
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.settings-tab-button {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-3);
+  padding: var(--spacing-3) var(--spacing-4);
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  font-family: var(--premium-font-body), inherit;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-align: left;
+  cursor: pointer;
+  transition: all var(--duration-fast) var(--easing-out);
+  position: relative;
+  width: 100%;
+}
+
+.settings-tab-button:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.settings-tab-button.active {
+  color: var(--color-quantum-primary);
+  background: rgba(0, 229, 255, 0.05);
+}
+
+.settings-tab-button.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 15%;
+  height: 70%;
+  width: 3px;
+  background: linear-gradient(180deg, var(--color-quantum-primary), var(--color-quantum-secondary));
+  border-radius: 0 4px 4px 0;
+}
+
+.settings-tab-button i {
+  font-size: 1.1rem;
+  opacity: 0.8;
+}
+
+.settings-tab-button.active i {
+  opacity: 1;
+}
+
+.settings-pane {
+  flex: 1;
+  padding: var(--spacing-6) var(--spacing-8);
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-6);
+}
+
 /* ════════════════════════════════════════════════════════════════════════════════
    RESPONSIVE DESIGN
    ════════════════════════════════════════════════════════════════════════════════ */
@@ -418,6 +539,42 @@
     position: absolute;
     top: var(--spacing-4);
     right: var(--spacing-4);
+  }
+
+  .settings-container {
+    flex-direction: column;
+    min-height: auto;
+    max-height: calc(90vh - 220px);
+  }
+
+  .settings-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border-light);
+    padding: var(--spacing-2);
+    gap: var(--spacing-2);
+    white-space: nowrap;
+  }
+
+  .settings-tab-button {
+    width: auto;
+    display: inline-flex;
+    padding: var(--spacing-2) var(--spacing-4);
+  }
+
+  .settings-tab-button.active::before {
+    left: 15%;
+    bottom: 0;
+    top: auto;
+    width: 70%;
+    height: 3px;
+    border-radius: 4px 4px 0 0;
+  }
+
+  .settings-pane {
+    padding: var(--spacing-4) var(--spacing-5);
   }
   
   .settings-item {
