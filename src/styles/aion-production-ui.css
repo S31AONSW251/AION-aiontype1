@@ -194,7 +194,7 @@ select {
 
 .brand-center::after {
   content: "Production workspace";
-  display: block;
+  display: none !important;
   margin-top: 8px;
   color: var(--aion-muted);
   font-size: 12px;
@@ -486,11 +486,13 @@ button:disabled,
   overflow: hidden;
 }
 
+/*
 .chat-header,
 .chat-composer-area,
 .chat-footer {
   display: none !important;
 }
+*/
 
 .conversation-history {
   flex: 1;

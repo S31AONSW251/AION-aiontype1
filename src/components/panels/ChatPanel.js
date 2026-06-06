@@ -7,7 +7,16 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './ChatPanel.css';
 import '../../styles/aion-production-ui.css';
-// ExamplePrompts and AvatarBadge imports removed because they are not used in this file
+
+// Import split-view panels
+import NeuralPanel from './NeuralPanel';
+import QuantumPanel from './QuantumPanel';
+import MathPanel from './MathPanel';
+import GoalsPanel from './GoalsPanel';
+import KnowledgePanel from './KnowledgePanel';
+import ProceduresPanel from './ProceduresPanel';
+import MemoriesPanel from './MemoriesPanel';
+import SearchPanel from './SearchPanel';
 
 // Small utility: friendly timestamp formatter
 const formatTime = (raw) => {
@@ -23,7 +32,6 @@ const formatTime = (raw) => {
 const CustomCodeRenderer = ({ node, inline, className, children, ...props }) => {
   const [isCopied, setIsCopied] = useState(false);
   const match = /language-(\w+)/.exec(className || '');
-
   const text = String(children).replace(/\n$/, '');
 
   const handleCopy = useCallback(() => {
@@ -62,8 +70,6 @@ const CustomCodeRenderer = ({ node, inline, className, children, ...props }) => 
 
 const markdownComponents = { code: CustomCodeRenderer };
 
-// feeling emoji helper removed (unused)
-
 // Enhanced Typing indicator
 const TypingIndicator = React.memo(() => (
   <div className="message-wrapper">
@@ -85,21 +91,35 @@ const TypingIndicator = React.memo(() => (
 ));
 
 const WelcomeMessage = React.memo(({ onExampleClick }) => (
-  <div className="empty-chat-container minimal-welcome welcome-hero" role="region" aria-label="Welcome to AION">
-    <div className="welcome-hero-grid">
-      <div className="brand-line">
-        <h2 className="brand-logo-large">AION</h2>
-        <div className="brand-tag">Ask, analyze, build.</div>
-      </div>
-
-      <p className="hero-subtitle">
-        A focused workspace for chat, files, memory, research, and advanced AION tools.
+  <div className="welcome-hero-container" role="region" aria-label="Welcome to AION">
+    <div className="welcome-hero-inner">
+      <div className="welcome-badge">AION NEURAL CORE v2.5</div>
+      <h1 className="welcome-hero-title">How can we assist you today?</h1>
+      <p className="welcome-hero-subtitle">
+        Access real-time intelligence, local inference models, file analysis, and agent-driven workspace upgrades.
       </p>
 
-      <div className="quick-prompts" aria-label="Quick examples">
-        {['Summarize this project', 'Review my latest code', 'Plan the next build', 'Explain a file'].map((p) => (
-          <button key={p} className="prompt-chip" onClick={() => onExampleClick && onExampleClick(p)}>{p}</button>
-        ))}
+      <div className="welcome-actions-grid">
+        <div className="welcome-action-card" onClick={() => onExampleClick && onExampleClick('Summarize project context and file structure.')}>
+          <div className="action-card-icon">📁</div>
+          <div className="action-card-title">Project Summary</div>
+          <div className="action-card-desc">Scan codebase directory for insights & layout mapping</div>
+        </div>
+        <div className="welcome-action-card" onClick={() => onExampleClick && onExampleClick('Perform security audit on active modules.')}>
+          <div className="action-card-icon">🛡</div>
+          <div className="action-card-title">Security & Audit</div>
+          <div className="action-card-desc">Inspect code files for structural patterns or vulnerabilities</div>
+        </div>
+        <div className="welcome-action-card" onClick={() => onExampleClick && onExampleClick('Generate test suite for App controller.')}>
+          <div className="action-card-icon">⚛</div>
+          <div className="action-card-title">Test Suite Generation</div>
+          <div className="action-card-desc">Write robust Jest or React Testing Library suites</div>
+        </div>
+        <div className="welcome-action-card" onClick={() => onExampleClick && onExampleClick('Refactor App.css with clean variables.')}>
+          <div className="action-card-icon">⚡</div>
+          <div className="action-card-title">Refactoring</div>
+          <div className="action-card-desc">Clean up css rules and resolve unused component assets</div>
+        </div>
       </div>
     </div>
   </div>
@@ -169,7 +189,6 @@ const UserMessage = React.memo(({ entry, onEdit, onSaveToIndex }) => {
 const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFeedback, sentimentScore, onSaveToIndex }) => {
   const [isCopied, setIsCopied] = useState(false);
   const [expanded, setExpanded] = useState(false);
-  // lightweight local reactions state (emoji -> count)
   const [reactions, setReactions] = useState(() => (entry.reactions || {}));
 
   const toggleReaction = useCallback((emoji) => {
@@ -186,11 +205,8 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
     setTimeout(() => setIsCopied(false), 1600);
   }, []);
 
-  // feedback handler removed (no feedback controls in this component)
-
   const confidenceLevel = useMemo(() => {
-    // Calculate confidence based on various factors
-    const baseConfidence = 85; // Base confidence percentage
+    const baseConfidence = 85;
     const sentimentBonus = Math.abs(sentimentScore) * 0.5;
     return Math.min(95, baseConfidence + sentimentBonus);
   }, [sentimentScore]);
@@ -213,7 +229,6 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
             {entry.response || ''}
           </ReactMarkdown>
         </div>
-        {/* Provenance for non-streamed messages */}
         {entry.provenance && Array.isArray(entry.provenance) && (
           <div className="provenance-list static">
             {entry.provenance.slice(0,3).map((p, idx) => (
@@ -222,7 +237,6 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
           </div>
         )}
         
-        {/* Confidence meter */}
         <div className="confidence-meter">
           <span className="confidence-label">Confidence:</span>
           <div className="confidence-bar">
@@ -234,8 +248,7 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
           <span className="confidence-value">{confidenceLevel}%</span>
         </div>
 
-        {/* Message actions */}
-          <div className="message-actions">
+        <div className="message-actions">
           <CopyToClipboard text={entry.response || ''} onCopy={handleCopy}>
             <button 
               className={`action-btn ${isCopied ? 'copied' : ''}`} 
@@ -277,8 +290,6 @@ const AionMessage = React.memo(({ entry, onRegenerate, onSpeak, isSpeaking, onFe
             ))}
           </div>
         </div>
-        {/* Feedback section */}
-        {/* Header controls removed per user preference — only centered AION and header buttons remain. */}
       </div>
     </div>
   );
@@ -309,7 +320,6 @@ const StreamingMessage = React.memo(({ content, soulState, onCancel, isStreaming
               {content || ''}
             </ReactMarkdown>
           )}
-          {/* Provenance area: show small badges if provenance info attached to content */}
           {content && content.__provenance && Array.isArray(content.__provenance) && (
             <div className="provenance-list">
               {content.__provenance.slice(0,3).map((p, idx) => (
@@ -337,69 +347,117 @@ const StreamingMessage = React.memo(({ content, soulState, onCancel, isStreaming
   );
 });
 
-// Main ChatPanel Component
-const ChatPanel = React.memo(({
-  chatContainerRef,
-  conversationHistory,
-  reply,
-  soulState,
-  sentimentScore,
-  isThinking,
-  isStreaming,
-  streamingResponse,
-  onSaveToIndex,
-  onSpeak,
-  onRegenerate,
-  onCancel,
-  onExamplePrompt,
-  onEditMessage,
-  onFeedback,
-  // uploads
-  uploadedFiles = [],
-  onFilesSelected = () => {},
-  onInsertFile = () => {},
-  onOpenFile = () => {},
-  onSend = () => {},
-}) => {
-  // Generate unique IDs for messages if not present
+const ChatPanel = React.memo((props) => {
+  const {
+    chatContainerRef,
+    conversationHistory,
+    reply,
+    soulState,
+    // sentimentScore,
+    isThinking,
+    isStreaming,
+    streamingResponse,
+    onSpeak,
+    onRegenerate,
+    onCancel,
+    onExamplePrompt,
+    onEditMessage,
+    onFeedback,
+    uploadedFiles,
+    onInsertFile,
+    // onOpenFile,
+    onFilesSelected,
+    onSend,
+    onSaveToIndex,
+    // offlineHelpers,
+
+    // Sub-panel props
+    // Neural
+    neuralOutput,
+    runNeuralSimulation,
+    neuralCanvasRef,
+    randomNeuralTest,
+    
+    // Quantum
+    quantumState,
+    runQuantumSimulation,
+    quantumCanvasRef,
+    applyQuantumGate,
+    QuantumGates,
+
+    // Math
+    isMathQuery,
+    mathSolution,
+    userInput,
+    onAsk,
+    settings,
+    mathCanvasRef,
+    onSolveCustomProblem,
+    setParentMathSolution,
+
+    // Goals
+    onAddGoal,
+    onUpdateGoal,
+    onDeleteGoal,
+
+    // Knowledge
+    onAddKnowledge,
+    onUpdateKnowledge,
+    onDeleteKnowledge,
+
+    // Procedures
+    notify,
+    apiFetch,
+
+    // Memories
+    longTermMemory,
+    internalReflections,
+    clearConversation,
+
+    // Search
+    agentStatus,
+    searchPlan,
+    thoughtProcessLog,
+    suggestedQueries,
+    searchSummary,
+    searchError,
+    isSearching,
+    searchResults,
+    onSearch,
+    setActiveTab,
+  } = props;
+
   const enhancedHistory = useMemo(() => {
-    return conversationHistory.map((entry, index) => ({
-      ...entry,
-      id: entry.id || `msg-${Date.now()}-${index}`
+    return (conversationHistory || []).map((msg, idx) => ({
+      ...msg,
+      id: msg.id || `msg-${idx}-${msg.time || Date.now()}`,
     }));
   }, [conversationHistory]);
 
-  // Upload helpers (drag/drop + file input)
   const [, setDragOver] = useState(false);
   const [composerText, setComposerText] = useState('');
   const [selectedFeeling, setSelectedFeeling] = useState(null);
+
   // Helper to safely produce a preview URL or use existing URLs.
   const getPreview = (item) => {
     if (!item) return null;
     try {
-      // File/Blob (browser file input)
-      // If it's already a URL string or has preview/url, return those first
       if (typeof item === 'string') return item;
       if (item.url) return item.url;
       if (item.preview) return item.preview;
 
-      // Try to create an object URL for File/Blob-like objects. Prefer instanceof
-      // checks to avoid calling createObjectURL on non-Blob values which throws.
       try {
         if (typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function') {
-          // Some environments have cross-realm objects where instanceof may fail;
-          // perform a duck-typing check as a fallback: presence of `size` and `type`.
           if (item instanceof Blob) return URL.createObjectURL(item);
           if (item && typeof item === 'object' && typeof item.size === 'number' && typeof item.type === 'string' && typeof item.arrayBuffer === 'function') {
             return URL.createObjectURL(item);
           }
         }
       } catch (err) {
-        // Not a Blob/File or createObjectURL rejected it — fallthrough
         console.debug('getPreview: createObjectURL failed or item not a Blob', err);
       }
     } catch (e) {
-      // Some environments may throw for instanceof checks; ignore and continue
+      // ignore
     }
     return null;
   };
@@ -415,10 +473,7 @@ const ChatPanel = React.memo(({
     }));
   });
 
-  // Keep track of timers for simulated uploads so they can be cancelled
   const uploadTimers = useRef({});
-
-  // humanFileSize helper removed (unused)
 
   useEffect(() => {
     const el = chatContainerRef?.current;
@@ -437,7 +492,6 @@ const ChatPanel = React.memo(({
   }, [chatContainerRef, onFilesSelected]);
 
   const simulateUpload = useCallback((item) => {
-    // Simulate a progressive upload over 1.5-3 seconds
     const duration = 1500 + Math.floor(Math.random() * 1500);
     const start = Date.now();
     const tick = () => {
@@ -447,7 +501,6 @@ const ChatPanel = React.memo(({
       if (pct >= 100) {
         setAttachments((prev) => prev.map(a => a.id === item.id ? { ...a, status: 'done', progress: 100 } : a));
         delete uploadTimers.current[item.id];
-        // notify parent that a file has been inserted (server hook)
         try { onInsertFile && onInsertFile(item.file); } catch (e) {}
       } else {
         uploadTimers.current[item.id] = setTimeout(tick, 120);
@@ -459,12 +512,10 @@ const ChatPanel = React.memo(({
   const handleLocalFileInput = useCallback((e) => {
     const files = Array.from(e.target.files || []);
     if (files.length) {
-      // limit file size to 10MB per file to avoid huge previews
       const accepted = files.filter((f) => f.size == null || f.size <= 10 * 1024 * 1024);
       const newItems = accepted.map((f, i) => ({ id: `local-${Date.now()}-${i}`, file: f, preview: getPreview(f), progress: 0, status: 'uploading' }));
       setAttachments((prev) => {
         const next = [...prev, ...newItems];
-        // start simulated uploads for each new item
         newItems.forEach((item) => simulateUpload(item));
         try { onFilesSelected(next.map(a => a.file)); } catch (e) {}
         return next;
@@ -473,35 +524,24 @@ const ChatPanel = React.memo(({
     e.target.value = null;
   }, [onFilesSelected, simulateUpload]);
 
-
-
-  // cancelUpload removed (not used by UI)
-
-  // Keep attachments in sync if parent supplies uploadedFiles
   useEffect(() => {
-    // map uploadedFiles (from parent) into internal shape; create previews for images
     if (!Array.isArray(uploadedFiles)) return;
-  const items = uploadedFiles.map((f, i) => ({ id: `upd-${Date.now()}-${i}`, file: f, preview: getPreview(f) }));
-    // revoke previous previews
+    const items = uploadedFiles.map((f, i) => ({ id: `upd-${Date.now()}-${i}`, file: f, preview: getPreview(f) }));
     setAttachments((prev) => {
       prev.forEach(a => { try { if (a.preview) URL.revokeObjectURL(a.preview); } catch (e) {} });
       return items;
     });
   }, [uploadedFiles]);
 
-  // removeAttachment removed (not used by UI)
-
   const handleSend = useCallback(() => {
     const text = (composerText || '').trim();
     if (!text && (!attachments || attachments.length === 0)) return;
     const filesToSend = attachments.map(a => a.file);
-    // Call parent handler with message, attachments and optional feeling
     try {
       onSend({ text, attachments: filesToSend, feeling: selectedFeeling });
     } catch (e) {
       console.error('onSend handler error', e);
     }
-    // Clear composer and revoke previews
     setComposerText('');
     setSelectedFeeling(null);
     setAttachments((prev) => {
@@ -510,16 +550,14 @@ const ChatPanel = React.memo(({
     });
   }, [composerText, attachments, onSend, selectedFeeling]);
 
-  // Lightbox state for previewing images/videos
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [lightboxItem, setLightboxItem] = useState(null); // { src, type, name }
+  const [lightboxItem, setLightboxItem] = useState(null);
 
   const closeLightbox = useCallback(() => {
     setLightboxOpen(false);
     setLightboxItem(null);
   }, []);
 
-  // Auto-scroll and "jump to latest" UX
   const [isAtBottom, setIsAtBottom] = useState(true);
 
   const scrollToBottom = useCallback(() => {
@@ -533,31 +571,27 @@ const ChatPanel = React.memo(({
     const el = chatContainerRef?.current;
     if (!el) return;
     const onScroll = () => {
-      const buffer = 60; // px from bottom considered "at bottom"
+      const buffer = 60;
       const atBottom = (el.scrollHeight - el.scrollTop - el.clientHeight) <= buffer;
       setIsAtBottom(atBottom);
     };
     el.addEventListener('scroll', onScroll);
-    // run once to initialize
     onScroll();
     return () => el.removeEventListener('scroll', onScroll);
   }, [chatContainerRef]);
 
-  // Scroll to bottom when new messages arrive, only if the user was already at bottom
   useEffect(() => {
     if (isAtBottom) {
       scrollToBottom();
     }
   }, [enhancedHistory.length, isAtBottom, scrollToBottom]);
 
-  // Click-to-open-lightbox: global handler delegated from container so markdown images open in lightbox
   useEffect(() => {
     const el = chatContainerRef?.current;
     if (!el) return;
     const onClick = (e) => {
       const img = e.target.closest && e.target.closest('img');
       if (img && el.contains(img)) {
-        // Determine image src and open lightbox
         const src = img.src || img.getAttribute('src');
         if (src) {
           setLightboxItem({ src, type: 'image', name: img.alt || '' });
@@ -569,10 +603,6 @@ const ChatPanel = React.memo(({
     return () => el.removeEventListener('click', onClick);
   }, [chatContainerRef]);
 
-  // Determine theme class for this panel so CSS can adapt to light/dark appearances.
-  // This effect now watches for changes to the document's theme classes and
-  // system-level prefers-color-scheme so the panel updates if the app theme
-  // or OS theme changes after mount.
   const [themeClass, setThemeClass] = useState('');
   useEffect(() => {
     if (typeof document === 'undefined') {
@@ -598,7 +628,6 @@ const ChatPanel = React.memo(({
 
     determine();
 
-    // Listen for system theme changes
     const mql = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)');
     const onMqlChange = () => determine();
     if (mql) {
@@ -606,7 +635,6 @@ const ChatPanel = React.memo(({
       else if (typeof mql.addListener === 'function') mql.addListener(onMqlChange);
     }
 
-    // Observe class changes on <html> and <body> so JS-driven theme toggles update the panel
     const obs = new MutationObserver((mutations) => {
       for (const m of mutations) {
         if (m.attributeName === 'class') {
@@ -619,7 +647,7 @@ const ChatPanel = React.memo(({
       obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
       obs.observe(document.body, { attributes: true, attributeFilter: ['class'] });
     } catch (e) {
-      // ignore if observe is not permitted in some environments
+      // ignore
     }
 
     return () => {
@@ -631,115 +659,254 @@ const ChatPanel = React.memo(({
     };
   }, []);
 
+  const [isDockedOpen, setIsDockedOpen] = useState(true);
+  const [dockedTab, setDockedTab] = useState('neural');
+
+  const renderDockedPanel = () => {
+    switch (dockedTab) {
+      case 'neural':
+        return (
+          <NeuralPanel
+            soulState={soulState}
+            neuralOutput={neuralOutput}
+            runNeuralSimulation={runNeuralSimulation}
+            neuralCanvasRef={neuralCanvasRef}
+            setActiveTab={setActiveTab}
+            randomNeuralTest={randomNeuralTest}
+          />
+        );
+      case 'quantum':
+        return (
+          <QuantumPanel
+            soulState={soulState}
+            quantumState={quantumState}
+            runQuantumSimulation={runQuantumSimulation}
+            quantumCanvasRef={quantumCanvasRef}
+            setActiveTab={setActiveTab}
+            applyQuantumGate={applyQuantumGate}
+            QuantumGates={QuantumGates}
+          />
+        );
+      case 'math':
+        return (
+          <MathPanel
+            isMathQuery={isMathQuery}
+            mathSolution={mathSolution}
+            userInput={userInput}
+            onAsk={onAsk}
+            settings={settings}
+            mathCanvasRef={mathCanvasRef}
+            setActiveTab={setActiveTab}
+            onSolveCustomProblem={onSolveCustomProblem}
+            setParentMathSolution={setParentMathSolution}
+          />
+        );
+      case 'goals':
+        return (
+          <GoalsPanel
+            soulState={soulState}
+            setActiveTab={setActiveTab}
+            onAddGoal={onAddGoal}
+            onUpdateGoal={onUpdateGoal}
+            onDeleteGoal={onDeleteGoal}
+          />
+        );
+      case 'knowledge':
+        return (
+          <KnowledgePanel
+            soulState={soulState}
+            setActiveTab={setActiveTab}
+            onAdd={onAddKnowledge}
+            onUpdate={onUpdateKnowledge}
+            onDelete={onDeleteKnowledge}
+          />
+        );
+      case 'procedures':
+        return (
+          <ProceduresPanel
+            setActiveTab={setActiveTab}
+            notify={notify}
+            apiFetch={apiFetch}
+          />
+        );
+      case 'memories':
+        return (
+          <MemoriesPanel
+            soulState={soulState}
+            settings={settings}
+            longTermMemory={longTermMemory}
+            internalReflections={internalReflections}
+            exportConversation={onRegenerate}
+            clearConversation={clearConversation}
+          />
+        );
+      case 'search':
+        return (
+          <SearchPanel
+            agentStatus={agentStatus}
+            searchPlan={searchPlan}
+            thoughtProcessLog={thoughtProcessLog}
+            suggestedQueries={suggestedQueries}
+            searchSummary={searchSummary}
+            searchError={searchError}
+            isSearching={isSearching}
+            onSearch={onSearch}
+            searchResults={searchResults}
+          />
+        );
+      default:
+        return <div className="dock-empty">Select a panel from the tab dropdown.</div>;
+    }
+  };
+
   return (
-    <div
-      className={`chat-container ${themeClass}`}
-      ref={chatContainerRef}
-      style={{
-        // map legacy accent variables to the new cp variables so avatars and
-        // decorative elements pick up the updated palette without changing
-        // every place that references --accent / --accent-2 in CSS.
-        '--accent': 'var(--cp-accent-1)',
-        '--accent-2': 'var(--cp-accent-2)'
-      }}
-    >
-      {/* decorative art element (purely visual, aria-hidden) */}
-      <div className="decorative-art" aria-hidden="true" />
-      <div className="chat-header brand-premium">
+    <div className={`chat-workstation-wrapper ${themeClass}`}>
+      <div 
+        className={`chat-left-pane ${isDockedOpen ? 'dock-open' : ''}`}
+        style={{
+          '--accent': 'var(--cp-accent-1)',
+          '--accent-2': 'var(--cp-accent-2)'
+        }}
+      >
+        <div
+          className="chat-container enterprise-chat-override"
+          ref={chatContainerRef}
+          style={{ width: '100%', height: '100%', border: 'none', margin: '0 auto', maxWidth: '100%' }}
+        >
+          <div className="decorative-art" aria-hidden="true" />
+          <div className="chat-header brand-premium">
             <div className="chat-title-row">
-              <div className="title-left">
-                {/* Removed duplicate AION wordmark here; header now shows single centered wordmark in Header.js */}
+              <div className="title-left" />
+            </div>
+          </div>
+
+          <div className="conversation-history">
+            {enhancedHistory.length === 0 && !isThinking && (
+              <WelcomeMessage onExampleClick={onExamplePrompt} />
+            )}
+
+            {enhancedHistory.map((entry) => (
+              <React.Fragment key={entry.id}>
+                <UserMessage entry={entry} onEdit={onEditMessage} onSaveToIndex={onSaveToIndex} />
+                <AionMessage
+                  entry={entry}
+                  onRegenerate={onRegenerate}
+                  onSpeak={onSpeak}
+                  isSpeaking={false}
+                  onFeedback={onFeedback}
+                  sentimentScore={entry.sentiment || 0}
+                  onSaveToIndex={onSaveToIndex}
+                />
+              </React.Fragment>
+            ))}
+
+            {(isStreaming || (reply && enhancedHistory.length > 0)) && (
+              <StreamingMessage
+                content={streamingResponse || reply || ''}
+                soulState={soulState}
+                onCancel={onCancel}
+                isStreaming={isStreaming}
+              />
+            )}
+
+            {isThinking && !reply && !isStreaming && <TypingIndicator />}
+          </div>
+
+          {!isAtBottom && (
+            <div className="jump-to-bottom-wrap">
+              <button className="jump-to-bottom" onClick={scrollToBottom} aria-label="Jump to latest messages">New messages</button>
+            </div>
+          )}
+
+          <div className="chat-composer-area">
+            <div className="chat-composer-wrapper-card">
+              <ComposerInput
+                value={composerText}
+                onChange={setComposerText}
+                onSubmit={(val) => { setComposerText(''); onSend({ text: val, attachments: [], feeling: selectedFeeling }); setSelectedFeeling(null); }}
+                onFileUpload={(files) => { handleLocalFileInput({ target: { files } }); }}
+                onTypingStart={() => {}}
+                onTypingEnd={() => {}}
+                mentionables={[]}
+                placeholder="Ask AION..."
+                disabled={false}
+                isTyping={false}
+                onFeelingChange={(f) => setSelectedFeeling(f?.key || null)}
+              />
+              <button className="composer-send-btn" onClick={handleSend} title="Send message">
+                <span className="send-icon">▲</span>
+              </button>
+            </div>
+
+            <div className="chat-footer">
+              <div className="conversation-stats">
+                <span>{enhancedHistory.length} messages</span>
+                <span>Connection: {soulState?.connectionLevel || 0}%</span>
               </div>
             </div>
-        {/* Header subcontrols + composer removed per user request to keep header minimal */}
+          </div>
+          {lightboxOpen && lightboxItem && (
+            <div className="lightbox-overlay" role="dialog" aria-modal="true" onClick={closeLightbox}>
+              <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
+                <button className="lightbox-close" onClick={closeLightbox} aria-label="Close">✖</button>
+                <div className="lightbox-media">
+                  {lightboxItem.type === 'image' ? (
+                    <img src={lightboxItem.src} alt={lightboxItem.name || 'preview'} className="lightbox-img" />
+                  ) : lightboxItem.type === 'video' ? (
+                    <video src={lightboxItem.src} controls autoPlay style={{ maxWidth: '100%', maxHeight: '80vh' }} />
+                  ) : (
+                    <a href={lightboxItem.src} target="_blank" rel="noreferrer">Open file</a>
+                  )}
+                  {lightboxItem.name && <div style={{ marginTop: 8, color: 'var(--text-muted)' }}>{lightboxItem.name}</div>}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
-      <div className="conversation-history">
-        {enhancedHistory.length === 0 && !isThinking && (
-          <WelcomeMessage onExampleClick={onExamplePrompt} />
-        )}
-
-        {enhancedHistory.map((entry) => (
-          <React.Fragment key={entry.id}>
-            <UserMessage entry={entry} onEdit={onEditMessage} onSaveToIndex={onSaveToIndex} />
-            <AionMessage
-              entry={entry}
-              onRegenerate={onRegenerate}
-              onSpeak={onSpeak}
-              isSpeaking={false}
-              onFeedback={onFeedback}
-              sentimentScore={entry.sentiment || 0}
-              onSaveToIndex={onSaveToIndex}
-            />
-          </React.Fragment>
-        ))}
-
-        {(isStreaming || (reply && enhancedHistory.length > 0)) && (
-          <StreamingMessage
-            content={streamingResponse || reply || ''}
-            soulState={soulState}
-            onCancel={onCancel}
-            isStreaming={isStreaming}
-          />
-        )}
-
-        {isThinking && !reply && !isStreaming && <TypingIndicator />}
-      </div>
-
-      {/* Jump to latest button appears when user scrolls up */}
-      {!isAtBottom && (
-        <div className="jump-to-bottom-wrap">
-          <button className="jump-to-bottom" onClick={scrollToBottom} aria-label="Jump to latest messages">New messages</button>
+      {isDockedOpen && (
+        <div className="chat-right-pane-dock">
+          <div className="dock-header">
+            <div className="dock-title-select">
+              <span className="dock-icon">⚡</span>
+              <select 
+                value={dockedTab} 
+                onChange={(e) => setDockedTab(e.target.value)}
+                className="dock-selector"
+              >
+                <option value="neural">🧠 Neural Evolution</option>
+                <option value="quantum">✇ Quantum Circuit</option>
+                <option value="math">√ Math Solver</option>
+                <option value="goals">🎯 Goals & Objectives</option>
+                <option value="knowledge">▤ Knowledge Base</option>
+                <option value="procedures">⎔ Procedures Memory</option>
+                <option value="memories">▥ Memory Bank</option>
+                <option value="search">⌥ Web Search</option>
+              </select>
+            </div>
+            <button 
+              className="dock-close-btn" 
+              onClick={() => setIsDockedOpen(false)}
+              title="Close Panel"
+            >
+              ✕
+            </button>
+          </div>
+          <div className="dock-content-wrapper">
+            {renderDockedPanel()}
+          </div>
         </div>
       )}
 
-      <div className="chat-composer-area">
-        <div className="chat-composer">
-          <div className="composer-left" />
-          <div className="composer-middle">
-            <ComposerInput
-              value={composerText}
-              onChange={setComposerText}
-              onSubmit={(val) => { setComposerText(''); onSend({ text: val, attachments: [], feeling: selectedFeeling }); setSelectedFeeling(null); }}
-              onFileUpload={(files) => { handleLocalFileInput({ target: { files } }); }}
-              onTypingStart={() => {}}
-              onTypingEnd={() => {}}
-              mentionables={[]}
-              placeholder="Ask AION..."
-              disabled={false}
-              isTyping={false}
-              onFeelingChange={(f) => setSelectedFeeling(f?.key || null)}
-            />
-          </div>
-          <div className="composer-right">
-            <button className="primary-cta" onClick={handleSend} title="Send">Send</button>
-          </div>
-        </div>
-
-        <div className="chat-footer">
-          <div className="conversation-stats">
-            <span>{enhancedHistory.length} messages</span>
-            <span>Connection: {soulState?.connectionLevel || 0}%</span>
-          </div>
-        </div>
-      </div>
-      {/* Lightbox overlay for previewing media */}
-      {lightboxOpen && lightboxItem && (
-        <div className="lightbox-overlay" role="dialog" aria-modal="true" onClick={closeLightbox}>
-          <div className="lightbox-content" onClick={(e) => e.stopPropagation()}>
-            <button className="lightbox-close" onClick={closeLightbox} aria-label="Close">✖</button>
-            <div className="lightbox-media">
-              {lightboxItem.type === 'image' ? (
-                <img src={lightboxItem.src} alt={lightboxItem.name || 'preview'} className="lightbox-img" />
-              ) : lightboxItem.type === 'video' ? (
-                <video src={lightboxItem.src} controls autoPlay style={{ maxWidth: '100%', maxHeight: '80vh' }} />
-              ) : (
-                <a href={lightboxItem.src} target="_blank" rel="noreferrer">Open file</a>
-              )}
-              {lightboxItem.name && <div style={{ marginTop: 8, color: 'var(--text-muted)' }}>{lightboxItem.name}</div>}
-            </div>
-          </div>
-        </div>
+      {!isDockedOpen && (
+        <button 
+          className="dock-toggle-floating-btn"
+          onClick={() => setIsDockedOpen(true)}
+          title="Open Side Panel"
+        >
+          ⚡ Workspace Panel
+        </button>
       )}
     </div>
   );

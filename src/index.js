@@ -5,6 +5,7 @@ import ErrorBoundary from './ErrorBoundary';
 import "./App.css";
 import "./theme-compat.css";
 import "./styles/aion-production-ui.css";
+import "./styles/aion-enterprise-premium.css";
 import syncService from './services/syncService';
 import { enqueue } from './lib/offlineQueue';
 

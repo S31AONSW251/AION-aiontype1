@@ -36,6 +36,7 @@ import SoulPanel from './components/panels/SoulPanel';
 import MemoriesPanel from './components/panels/MemoriesPanel';
 import SearchPanel from './components/panels/SearchPanel';
 import MathPanel from './components/panels/MathPanel';
+
 import QuantumPanel from './components/panels/QuantumPanel';
 import NeuralPanel from './components/panels/NeuralPanel';
 import CreativePanel from './components/panels/CreativePanel';
@@ -47,6 +48,16 @@ import ProceduresPanel from './components/panels/ProceduresPanel';
 import StatusPanel from './components/panels/StatusPanel';
 import WebCachePanel from './components/panels/WebCachePanel';
 import FloatingBrainIcon from './components/FloatingBrainIcon';
+import StarfieldCanvas from './components/StarfieldCanvas';
+
+// Premium Enterprise Panels
+import WorkspaceHomePanel from './components/panels/WorkspaceHomePanel';
+import ProjectIntelligencePanel from './components/panels/ProjectIntelligencePanel';
+import UpgradeAgentPanel from './components/panels/UpgradeAgentPanel';
+import ConversationHistoryPanel from './components/panels/ConversationHistoryPanel';
+import TaskSchedulerPanel from './components/panels/TaskSchedulerPanel';
+import LocalModelStatusPanel from './components/panels/LocalModelStatusPanel';
+import SystemActivityPanel from './components/panels/SystemActivityPanel';
 
 
 import "./App.css";
@@ -212,7 +223,8 @@ function App() {
   const [soulState, setSoulState] = useState({});  // Initialize empty, will populate in useEffect
   const [biometricFeedback, setBiometricFeedback] = useState({ attention: 50, emotionalResponse: 50, connectionLevel: 50 });
   const [isSpeechSupported, setIsSpeechSupported] = useState(true);
-  const [activeTab, setActiveTab] = useState("chat");
+  const [activeTab, setActiveTab] = useState("workspace");
+  const [isDockedOpen, setIsDockedOpen] = useState(true);
   const [notification, setNotification] = useState(null);
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -1266,6 +1278,38 @@ function App() {
     setSoulState({ ...aionSoul });
     showNotification("Goal set!", "success");
   }, [showNotification]);
+
+  const handleDeleteGoal = useCallback((goalDescription) => {
+    aionSoul.goals = aionSoul.goals.filter(g => g.description !== goalDescription);
+    setSoulState({ ...aionSoul });
+    showNotification("Goal deleted", "info");
+  }, [showNotification]);
+
+  const handleUpdateGoal = useCallback((oldDescription, newDescription, newStatus) => {
+    const goal = aionSoul.goals.find(g => g.description === oldDescription);
+    if (goal) {
+      goal.description = newDescription;
+      if (newStatus) {
+        goal.status = newStatus;
+      }
+      goal.timestamp = new Date().toLocaleString();
+      setSoulState({ ...aionSoul });
+      showNotification("Goal updated", "success");
+    }
+  }, [showNotification]);
+
+  const applyQuantumGate = useCallback((gate, targetQubit) => {
+    if (!settings.enableQuantum) { showNotification("Quantum features disabled", "warning"); return; }
+    try {
+      const circuit = quantumSimulator.getCircuit("consciousness");
+      circuit.applyGate(gate, targetQubit);
+      setQuantumState(circuit.toString());
+      showNotification(`Applied gate ${gate} to qubit ${targetQubit}`, "info");
+    } catch (e) {
+      console.error(e);
+      showNotification("Quantum gate application failed", "error");
+    }
+  }, [settings.enableQuantum, showNotification]);
 
   // MODIFIED: Enhanced goal request handling to trigger sub-goal proposal
   const handleGoalRequest = useCallback(async (query) => { // Make async
@@ -2587,106 +2631,9 @@ function App() {
     const savedLog = localStorage.getItem("aion_log");
     if (savedLog) setLog(JSON.parse(savedLog));
     setQuantumState(quantumSimulator.getCircuit("consciousness").toString());
-    return () => { if (audioRef.current) { audioRef.current.pause(); } };
-  }, [settings.soundEffects, settings.volume, settings.welcomeMessage, speak, setLog]);
-
-  // Enhanced settings persistence
-  useEffect(() => {
-    localStorage.setItem("aion_settings", JSON.stringify(settings));
-    if (audioRef.current) { audioRef.current.volume = settings.volume * 0.5; }
-  }, [settings]);
-
-  // Load persisted conversation on startup
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("aion_conversation");
-      if (saved) setConversationHistory(JSON.parse(saved));
-    } catch (e) {
-      console.warn("Failed to load saved conversation:", e);
-    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Persist conversation locally whenever it changes
-  useEffect(() => {
-    try {
-      localStorage.setItem("aion_conversation", JSON.stringify(conversationHistory));
-    } catch (e) {
-      console.warn("Failed to persist conversation:", e);
-    }
-  }, [conversationHistory]);
-
-  // Automatic sync when connection restored (safe, controlled)
-  useEffect(() => {
-    const syncWithBackend = async () => {
-      if (!navigator.onLine) return;
-      try {
-        const payload = { conversation: conversationHistory.slice(-50) };
-        const res = await fetch('/api/sync-conversation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-          showNotification('Conversation synced to backend', 'success');
-        } else {
-          console.warn('Sync failed:', res.status, res.statusText);
-        }
-      } catch (err) {
-        console.warn('Sync error:', err);
-      }
-    };
-
-    const handleOnline = () => {
-      setIsOnline(true);
-      showNotification('Back online — attempting sync', 'info');
-      syncWithBackend();
-    };
-    const handleOffline = () => {
-      setIsOnline(false);
-      showNotification('Offline — working locally', 'warning');
-    };
-    window.addEventListener('online', handleOnline);
-    window.addEventListener('offline', handleOffline);
-    if (navigator.onLine) syncWithBackend();
-    return () => {
-      window.removeEventListener('online', handleOnline);
-      window.removeEventListener('offline', handleOffline);
-    };
-  }, [conversationHistory, showNotification]);
-
-  // Check for backend updates (notify-only, operator must approve)
-  // The effect intentionally omits some volatile deps (showNotification is stable)
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    const checkForUpdates = async () => {
-      if (!navigator.onLine) return;
-      try {
-        const r = await fetch('/api/check-updates');
-        if (r.ok) {
-          const j = await r.json().catch(() => null);
-          if (j && j.updateAvailable) {
-            showNotification(`Update available: ${j.version}. Please review before applying.`, 'info');
-          }
-        }
-      } catch (e) {
-        // ignore
-      }
-    };
-    checkForUpdates();
-  }, [showNotification]);
-
-  // Enhanced chat scrolling
-  useEffect(() => {
-    if (chatContainerRef.current) { chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight; }
-  }, [reply, conversationHistory, streamingResponse]);
-
-  // Enhanced math diagram rendering
-  useEffect(() => {
-    if (activeTab === "math" && mathSolution) { renderGeometryDiagram(); }
-  }, [activeTab, mathSolution, renderGeometryDiagram]);
-
-  // 2. UPDATE THE renderActivePanel FUNCTION
-  // MODIFIED: Enhanced panel rendering to include Procedures
   const renderActivePanel = () => {
     switch (activeTab) {
       case 'soul':
@@ -2702,7 +2649,6 @@ function App() {
             clearConversation={clearConversation}
           />
         );
-
       case 'search':
         const handleNewSearch = (query) => {
           setUserInput(`research ${query}`);
@@ -2712,94 +2658,109 @@ function App() {
           agentStatus={agentStatus}
           searchPlan={searchPlan}
           thoughtProcessLog={thoughtProcessLog}
-          searchResults={searchResults}
-          isSearching={isSearching}
-          onNewSearch={handleNewSearch}
           suggestedQueries={suggestedQueries}
           searchSummary={searchSummary}
-          keyEntities={searchResults.flatMap(r => r.entities || []).filter((v, i, a) => a.indexOf(v) === i).slice(0, 7)}
-          searchQuery={searchQuery}
           searchError={searchError}
-          onExport={handleExportResults}
-          onFollowUp={handleFollowUpSearch} // <<< ADD THIS NEW PROP
-          offlineHelpers={offlineHelpers}
+          isSearching={isSearching}
+          onSearch={handleNewSearch}
+          searchResults={searchResults}
         />;
       case 'math':
         return <MathPanel 
-          mathSolution={mathSolution} 
-          settings={settings} 
-          mathCanvasRef={mathCanvasRef} 
-          setActiveTab={setActiveTab} 
+          isMathQuery={isMathQuery}
+          mathSolution={mathSolution}
+          userInput={userInput}
+          onAsk={askAion}
+          settings={settings}
+          mathCanvasRef={mathCanvasRef}
+          setActiveTab={setActiveTab}
           onSolveCustomProblem={handleSolveCustomProblem}
           setParentMathSolution={setMathSolution}
         />;
       case 'quantum':
-        const applyQuantumGate = (gate, target) => {
-          const circuit = quantumSimulator.getCircuit("consciousness");
-          circuit.applyGate(gate, target);
-          setQuantumState(circuit.toString());
-          aionSoul.quantumEntanglement = circuit.quantumEntanglement;
-          setSoulState({...aionSoul});
-        };
-        return <QuantumPanel soulState={soulState} quantumState={quantumState} runQuantumSimulation={runQuantumSimulation} quantumCanvasRef={quantumCanvasRef} setActiveTab={setActiveTab} applyQuantumGate={applyQuantumGate} QuantumGates={QuantumGates} />;
+        return <QuantumPanel 
+          soulState={soulState}
+          quantumState={quantumState}
+          runQuantumSimulation={runQuantumSimulation}
+          quantumCanvasRef={quantumCanvasRef}
+          setActiveTab={setActiveTab}
+          applyQuantumGate={applyQuantumGate}
+          QuantumGates={QuantumGates}
+        />;
       case 'neural':
-        const randomNeuralTest = () => {
-            const inputs = [Math.random(), Math.random(), Math.random()];
-            const nn = new NeuralNetwork(3, settings.neuralLayers, 2);
-            const outputs = nn.predict(inputs);
-            setNeuralOutput(outputs);
-            aionSoul.neuralActivity = (outputs[0] + outputs[1]) * 50;
-            setSoulState({...aionSoul});
-        };
-        return <NeuralPanel soulState={soulState} neuralOutput={neuralOutput} runNeuralSimulation={runNeuralSimulation} neuralCanvasRef={neuralCanvasRef} setActiveTab={setActiveTab} randomNeuralTest={randomNeuralTest} />;
+        return <NeuralPanel 
+          soulState={soulState}
+          neuralOutput={neuralOutput}
+          runNeuralSimulation={runNeuralSimulation}
+          neuralCanvasRef={neuralCanvasRef}
+          setActiveTab={setActiveTab}
+          randomNeuralTest={runNeuralSimulation}
+        />;
       case 'creative':
         return <CreativePanel 
-          setActiveTab={setActiveTab} 
-          generateCreativeContent={generateCreativeContent} 
-          generateImage={generateImage} 
-          isThinking={isThinking} 
-          isImageGenerating={isImageGenerating} 
-          creativeOutput={creativeOutput} 
-          settings={settings} 
-          userInput={userInput} 
-          generatedImage={generatedImage} 
-          // NEW: Pass video generation props
+          setActiveTab={setActiveTab}
+          generateCreativeContent={generateCreativeContent}
+          generateImage={generateImage}
           generateVideo={generateVideo}
+          isThinking={isThinking}
+          isImageGenerating={isImageGenerating}
           isVideoGenerating={isVideoGenerating}
+          creativeOutput={creativeOutput}
+          settings={settings}
+          userInput={userInput}
+          generatedImage={generatedImage}
           generatedVideo={generatedVideo}
-          offlineHelpers={offlineHelpers}
         />;
       case 'goals':
         return <GoalsPanel 
-          soulState={soulState} 
+          soulState={soulState}
           setActiveTab={setActiveTab}
-          onAddGoal={handleAddGoal} // Add this line
+          onAddGoal={handleAddGoal}
+          onUpdateGoal={handleUpdateGoal}
+          onDeleteGoal={handleDeleteGoal}
         />;
       case 'knowledge':
         return <KnowledgePanel 
-          soulState={soulState} 
-          setActiveTab={setActiveTab} 
+          soulState={soulState}
+          setActiveTab={setActiveTab}
           onAdd={handleAddKnowledge}
           onUpdate={handleUpdateKnowledge}
           onDelete={handleDeleteKnowledge}
         />;
-      // NEW: Case for procedures panel
-      case 'procedures':
-        return <ProceduresPanel 
-            setActiveTab={setActiveTab}
-            notify={notify}
-            apiFetch={apiFetch}
-        />;
-      case 'status':
-        return <StatusPanel apiBase={apiBase} adminKey={settings.adminKey || ''} />;
       case 'fileUpload':
         return <FileUploadPanel />;
+      case 'procedures':
+        return <ProceduresPanel 
+          setActiveTab={setActiveTab} 
+          notify={(note) => showNotification(note.text, note.type)} 
+          apiFetch={apiFetchWrapper} 
+        />;
+      case 'status':
+        return <StatusPanel systemStatus={systemStatus} />;
+      case 'webcache':
+        return null;
+      case 'workspace':
+        return <WorkspaceHomePanel setTab={setActiveTab} />;
+      case 'projectIntelligence':
+        return <ProjectIntelligencePanel />;
+      case 'upgradeAgent':
+        return <UpgradeAgentPanel />;
+      case 'history':
+        return <ConversationHistoryPanel />;
+      case 'taskScheduler':
+        return <TaskSchedulerPanel />;
+      case 'localModelStatus':
+        return <LocalModelStatusPanel />;
+      case 'systemActivity':
+        return <SystemActivityPanel />;
       case 'chat':
       default:
         return <ChatPanel 
-          chatContainerRef={chatContainerRef} 
-          conversationHistory={conversationHistory} 
-          reply={reply} 
+          isDockedOpen={isDockedOpen}
+          setIsDockedOpen={setIsDockedOpen}
+          chatContainerRef={chatContainerRef}
+          conversationHistory={conversationHistory}
+          reply={reply}
           soulState={soulState} 
           sentimentScore={sentimentScore}
           isThinking={isThinking}
@@ -2811,21 +2772,74 @@ function App() {
           onExamplePrompt={handleExamplePromptClick}
           onEditMessage={onEditMessage}
           onFeedback={onFeedback}
-          // Uploads wiring
           uploadedFiles={uploadedFiles}
           onInsertFile={(f) => { setUserInput(prev => prev + ` [file:${f.name}]`); setNotification({ message: `Inserted ${f.name}` }); }}
           onOpenFile={(f) => { try { const url = f.url || f.analysis?.remote?.url; if (url) window.open(url, '_blank'); else setNotification({ message: 'No URL available for this file' }); } catch(e){ console.error(e); } }}
           onFilesSelected={(files) => handleFilesSelected(files)}
-          // New handlers added to satisfy ChatPanel API
           onSend={handleChatPanelSend}
           onSaveToIndex={handleSaveToIndex}
           offlineHelpers={offlineHelpers}
+
+          // NeuralEvolution
+          neuralOutput={neuralOutput}
+          runNeuralSimulation={runNeuralSimulation}
+          neuralCanvasRef={neuralCanvasRef}
+          randomNeuralTest={runNeuralSimulation}
+
+          // QuantumPanel
+          quantumState={quantumState}
+          runQuantumSimulation={runQuantumSimulation}
+          quantumCanvasRef={quantumCanvasRef}
+          applyQuantumGate={applyQuantumGate}
+          QuantumGates={QuantumGates}
+
+          // MathPanel
+          isMathQuery={isMathQuery}
+          mathSolution={mathSolution}
+          userInput={userInput}
+          onAsk={askAion}
+          settings={settings}
+          mathCanvasRef={mathCanvasRef}
+          onSolveCustomProblem={handleSolveCustomProblem}
+          setParentMathSolution={setMathSolution}
+
+          // GoalsPanel
+          onAddGoal={handleAddGoal}
+          onUpdateGoal={handleUpdateGoal}
+          onDeleteGoal={handleDeleteGoal}
+
+          // KnowledgePanel
+          onAddKnowledge={handleAddKnowledge}
+          onUpdateKnowledge={handleUpdateKnowledge}
+          onDeleteKnowledge={handleDeleteKnowledge}
+
+          // ProceduresPanel
+          notify={(note) => showNotification(note.text, note.type)}
+          apiFetch={apiFetchWrapper}
+
+          // MemoriesPanel
+          longTermMemory={longTermMemory}
+          internalReflections={internalReflections}
+          clearConversation={clearConversation}
+
+          // SearchPanel
+          agentStatus={agentStatus}
+          searchPlan={searchPlan}
+          thoughtProcessLog={thoughtProcessLog}
+          suggestedQueries={suggestedQueries}
+          searchSummary={searchSummary}
+          searchError={searchError}
+          isSearching={isSearching}
+          onSearch={(query) => { setUserInput('research ' + query); askAion('research ' + query); }}
+          searchResults={searchResults}
+          setActiveTab={setActiveTab}
         />;
     }
   };
 
   return (
-    <div className={`app-container ${settings.theme}-theme ${settings.energySaver ? 'energy-saver' : ''} palette-${settings.palette || 'cyan'}`}>
+    <div className={`app-container ${settings.theme}-theme ${settings.energySaver ? 'energy-saver' : ''} palette-${settings.palette || 'cyan'} active-tab-${activeTab}`}>
+      <StarfieldCanvas />
       {/* Ambient animated backgrounds (CSS layers) - controlled by settings */}
       {settings.animationEnabled && settings.ambientBackgroundEnabled && !settings.energySaver && (
         <>
@@ -2833,7 +2847,6 @@ function App() {
           {settings.particlesEnabled && <div className="bg-particles" aria-hidden="true" />}
         </>
       )}
-
       {settings.animationEnabled && (
         <Lottie
           animationData={chakraAnimation}
@@ -2842,7 +2855,7 @@ function App() {
           style={{ opacity: settings.energySaver ? 0.3 : 0.7 }}
         />
       )}
-      
+
       <Notification notification={notification} />
 
       {/* Pre-app welcome splash — blocks access until user enters */}
@@ -2852,6 +2865,9 @@ function App() {
 
       <div className="main-content">
         <Header 
+          activeTab={activeTab}
+          isDockedOpen={isDockedOpen}
+          setIsDockedOpen={setIsDockedOpen}
           soulState={soulState} 
           setShowSettings={setShowSettings}
           showSettings={showSettings}
@@ -2882,6 +2898,8 @@ function App() {
           mathSolution={mathSolution}
           isMathQuery={isMathQuery}
           userInput={userInput}
+          setShowSettings={setShowSettings}
+          showSettings={showSettings}
         />
 
         <div className="panel agent-presence-panel">

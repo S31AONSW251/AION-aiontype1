@@ -1,0 +1,58 @@
+const renderActivePanel = () => {
+2691:     switch (activeTab) {
+2692:       case 'soul':
+2693:         return <SoulPanel soulState={soulState} performMeditation={performMeditation} tellStory={tellStory} expressFeeling={expressFeeling} settings={settings} giveFeedback={giveFeedback} />;
+2694:       case 'memories':
+2695:         return (
+2696:           <MemoriesPanel 
+2697:             soulState={soulState}
+2698:             settings={settings}
+2699:             longTermMemory={longTermMemory}
+2700:             internalReflections={internalReflections}
+2701:             exportConversation={handleRegenerate}
+2702:             clearConversation={clearConversation}
+2703:           />
+2704:         );
+2705: 
+2706:       case 'search':
+2707:         const handleNewSearch = (query) => {
+2708:           setUserInput(`research ${query}`);
+2709:           askAion(`research ${query}`);
+2710:         };
+2711:         return <SearchPanel 
+2712:           agentStatus={agentStatus}
+2713:           searchPlan={searchPlan}
+2714:           thoughtProcess
+<truncated 10880 bytes>
+onst dtFiles = Array.from(e.dataTransfer.files || []);
+2921:                  if (dtFiles.length > 0) await handleFilesSelected(dtFiles);
+2922:                }}
+2923:           >
+2924:             <textarea
+2925:               ref={inputRef}
+2926:               className="chat-input"
+2927:               value={userInput}
+2928:               onChange={(e) => setUserInput(e.target.value)}
+2929:               placeholder={isListening ? "Listening..." : "Speak or type to AION... (try 'research web3')"}
+2930:               onKeyDown={handleKeyDown}
+2931:               disabled={isThinking || isImageGenerating || isVideoGenerating}
+2932:               rows="1"
+2933:             />
+2934:             <div className="input-actions">
+2935:               <button
+2936:                 className={`icon-button mic-button ${isListening ? 'active' : ''}`}
+2937:                 onClick={toggleSpeechRecognition}
+2938:                 disabled={isThinking || !isSpeechSupported || isImageGenerating || isVideoGenerating}
+2939:                 title={isSpeechSupported ? "Voice input" : "Speech not supported"}
+2940:               >
+2941:                 <i className={`icon-mic ${isListening ? 'pulse' : ''}`}></i>
+2942:               </button>
+2943:               {/* File upload button */}
+2944:               <input ref={fileInputRef} type="file" id="file-upload" style={{ display: 'none' }} multiple onChange={(e) => handleFilesSelected(Array.from(e.target.files || []), e.target)} />
+2945:               <button className="icon-button" title="Upload files" onClick={() => fileInputRef.current && fileInputRef.current.click()}>
+2946:                 <i className="icon-upload"></i>
+2947:               </button>
+2948:               <button
+2949:                 className="send-button"
+2950:                 onClick={async () => {
+The above content does NOT show the entire file contents. If you need to view any lines of the file which were not shown to complete your task, call this tool again to view those lines.

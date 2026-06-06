@@ -13,8 +13,6 @@ const Header = ({
   offlineEnabled = false,
   onToggleOffline = () => {}
 }) => {
-  // mood and energy values are available on soulState if needed for UI enhancements
-
   const [online, setOnline] = useState(navigator.onLine);
   const [queueCount, setQueueCount] = useState(0);
   const [providerStatus, setProviderStatus] = useState({});
@@ -53,7 +51,11 @@ const Header = ({
   return (
     <header className="app-header header-reordered">
       <div className="header-left">
-        {/* Online/offline icon moved to left per user request */}
+        <label htmlFor="mobile-sidebar-toggle" className="mobile-hamburger-btn" aria-label="Toggle Navigation">
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+          <span className="hamburger-line"></span>
+        </label>
         <button
           className={`icon-button left-online ${online ? 'online' : 'offline'}`}
           title={online ? 'Online' : 'Offline'}
@@ -71,7 +73,6 @@ const Header = ({
       </div>
 
       <div className="header-center">
-        {/* Centered AION wordmark */}
         <div className="brand-center">
           <span className="brand-logo" aria-hidden="false">AION</span>
           <h1 className="sr-only">AION</h1>

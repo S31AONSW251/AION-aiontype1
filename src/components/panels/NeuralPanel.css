@@ -188,5 +188,17 @@
   .neural-header h3 { font-size: 1.05rem; }
 }
 
+@media (max-width: 600px) {
+  .neural-output-container {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .neural-sim-button {
+    align-self: stretch !important;
+    text-align: center !important;
+  }
+}
+
 /* focus styles for accessibility */
 .neural-action-button:focus, .neural-sim-button:focus, .back-button:focus { outline: 3px solid rgba(2,100,210,0.08); }
