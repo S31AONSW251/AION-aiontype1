@@ -11,7 +11,10 @@ const Header = ({
   isOnline = true,
   onSync = () => {},
   offlineEnabled = false,
-  onToggleOffline = () => {}
+  onToggleOffline = () => {},
+  activeTab = 'workspace',
+  isDockedOpen = true,
+  setIsDockedOpen = () => {}
 }) => {
   const [online, setOnline] = useState(navigator.onLine);
   const [queueCount, setQueueCount] = useState(0);
@@ -80,6 +83,19 @@ const Header = ({
       </div>
 
       <div className="header-right">
+        {activeTab === 'chat' && (
+          <button
+            className={`icon-button workspace-toggle-btn ${isDockedOpen ? 'active' : ''}`}
+            onClick={() => setIsDockedOpen(!isDockedOpen)}
+            title={isDockedOpen ? 'Close Workspace Panel' : 'Open Workspace Panel'}
+            aria-pressed={isDockedOpen}
+            type="button"
+            style={{ marginRight: '8px' }}
+          >
+            <span style={{ marginRight: '6px' }}>⚡</span>
+            <span className="settings-label">Workspace</span>
+          </button>
+        )}
         <button
           className={`icon-button ${showSettings ? 'active' : ''}`}
           onClick={() => setShowSettings(!showSettings)}
