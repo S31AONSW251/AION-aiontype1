@@ -257,7 +257,7 @@ function App() {
   const [suggestedQueries, setSuggestedQueries] = useState([]);
   const [searchSummary, setSearchSummary] = useState("");
   const [searchError, setSearchError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  // const [searchQuery, setSearchQuery] = useState("");
 
   // New state for enhanced answer generation
   const [streamingResponse, setStreamingResponse] = useState("");
@@ -936,7 +936,7 @@ function App() {
     setSuggestedQueries([]);
     setSearchSummary("");
     setSearchError(null);
-    setSearchQuery(query);
+    // setSearchQuery(query);
     
     aionSoul.updateSystemHealth('warning', ['High cognitive load due to research task']);
     setSoulState({...aionSoul});
@@ -2027,6 +2027,7 @@ function App() {
     }
   }, [userInput, conversationHistory, log, lastActive, settings, speak, performWebSearch, solveMathProblem, updateBiometrics, showNotification, biometricFeedback, generateAffirmation, reply, searchResults, analyzeSentiment, longTermMemory, processLongTermMemory, performSelfReflection, soulState, internalReflections, handleGoalRequest, handleKnowledgeRequest, handleSystemCommand, findRelevantEpisodes, logEpisodicEvent, handleProceduralRequest, callOllamaGenerate, getMoodBasedResponse, streamingResponse]);
   
+  /*
   // You might need this helper function in App.js scope if it's not imported
   const getHostname = useCallback((url) => {
     try {
@@ -2061,6 +2062,7 @@ function App() {
     askAion(newPrompt);
 
   }, [askAion, showNotification, getHostname]); // Add getHostname helper or import it if needed
+  */
 
   // Placeholder handler for onFeedback
   const onFeedback = useCallback((feedbackType, messageId) => {
@@ -2311,6 +2313,7 @@ function App() {
     showNotification("Conversation exported", "success");
   }, [conversationHistory, searchResults, mathSolution, quantumState, neuralOutput, biometricFeedback, longTermMemory, internalReflections, showNotification, soulState, episodicMemory]);
 
+  /*
   // Enhanced search results export
   const handleExportResults = useCallback(() => {
     if (!searchSummary && searchResults.length === 0) {
@@ -2340,6 +2343,7 @@ function App() {
     showNotification("Results exported as Markdown!", "success");
 
   }, [searchQuery, searchSummary, searchResults, showNotification]);
+  */
 
   // Enhanced conversation clearing
   const clearConversation = useCallback(() => {
@@ -2445,6 +2449,7 @@ function App() {
 
   
 
+  /*
   // Enhanced geometry diagram rendering
   const renderGeometryDiagram = useCallback(() => {
     if (!mathSolution || !mathCanvasRef.current) return;
@@ -2471,6 +2476,7 @@ function App() {
       ctx.fillText('r', centerX + radius / 2 - 10, centerY - 5);
     }
   }, [mathSolution]);
+  */
 
   // Enhanced speech recognition setup
   useEffect(() => {
