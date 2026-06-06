@@ -1,9 +1,27 @@
 import React from 'react';
 
 const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, userInput, setShowSettings, showSettings }) => {
+  const handleTabClick = (tab) => {
+    setActiveTab(tab);
+    const cb = document.getElementById("mobile-sidebar-toggle");
+    if (cb) {
+      cb.checked = false;
+    }
+  };
+
+  const handleSettingsClick = () => {
+    setShowSettings(!showSettings);
+    const cb = document.getElementById("mobile-sidebar-toggle");
+    if (cb) {
+      cb.checked = false;
+    }
+  };
+
   return (
     <nav className="tab-container enterprise-sidebar" aria-label="AION workspace">
       <input type="checkbox" id="mobile-sidebar-toggle" className="mobile-sidebar-checkbox" style={{ display: 'none' }} />
+      <label htmlFor="mobile-sidebar-toggle" className="mobile-sidebar-backdrop" aria-label="Close menu"></label>
+      
       <div className="sidebar-brand-block">
         <div className="brand-logo-container">
           <span className="brand-logo-text">AION</span>
@@ -21,14 +39,14 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           <div className="sidebar-section-title">Home</div>
           <button
             className={`tab-button ${activeTab === "workspace" ? 'active' : ''}`}
-            onClick={() => setActiveTab("workspace")}
+            onClick={() => handleTabClick("workspace")}
           >
             <span className="tab-icon">⌂</span>
             <span className="tab-label">Workspace</span>
           </button>
           <button
             className={`tab-button ${activeTab === "chat" ? 'active' : ''}`}
-            onClick={() => setActiveTab("chat")}
+            onClick={() => handleTabClick("chat")}
           >
             <span className="tab-icon">⚡</span>
             <span className="tab-label">Chat Interface</span>
@@ -39,14 +57,14 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           <div className="sidebar-section-title">Intelligence</div>
           <button
             className={`tab-button ${activeTab === "projectIntelligence" ? 'active' : ''}`}
-            onClick={() => setActiveTab("projectIntelligence")}
+            onClick={() => handleTabClick("projectIntelligence")}
           >
             <span className="tab-icon">◈</span>
             <span className="tab-label">Project Intelligence</span>
           </button>
           <button
             className={`tab-button ${activeTab === "upgradeAgent" ? 'active' : ''}`}
-            onClick={() => setActiveTab("upgradeAgent")}
+            onClick={() => handleTabClick("upgradeAgent")}
           >
             <span className="tab-icon">▲</span>
             <span className="tab-label">Upgrade Agent</span>
@@ -54,7 +72,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           {settings.enableWebSearch && (
             <button
               className={`tab-button ${activeTab === "search" ? 'active' : ''}`}
-              onClick={() => setActiveTab("search")}
+              onClick={() => handleTabClick("search")}
             >
               <span className="tab-icon">⌥</span>
               <span className="tab-label">Web Search</span>
@@ -66,28 +84,28 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           <div className="sidebar-section-title">System & Agents</div>
           <button
             className={`tab-button ${activeTab === "taskScheduler" ? 'active' : ''}`}
-            onClick={() => setActiveTab("taskScheduler")}
+            onClick={() => handleTabClick("taskScheduler")}
           >
             <span className="tab-icon">⏰</span>
             <span className="tab-label">Task Scheduler</span>
           </button>
           <button
             className={`tab-button ${activeTab === "localModelStatus" ? 'active' : ''}`}
-            onClick={() => setActiveTab("localModelStatus")}
+            onClick={() => handleTabClick("localModelStatus")}
           >
             <span className="tab-icon">⚙</span>
             <span className="tab-label">Local Models</span>
           </button>
           <button
             className={`tab-button ${activeTab === "systemActivity" ? 'active' : ''}`}
-            onClick={() => setActiveTab("systemActivity")}
+            onClick={() => handleTabClick("systemActivity")}
           >
             <span className="tab-icon">☱</span>
             <span className="tab-label">System Activity</span>
           </button>
           <button
             className={`tab-button ${activeTab === "history" ? 'active' : ''}`}
-            onClick={() => setActiveTab("history")}
+            onClick={() => handleTabClick("history")}
           >
             <span className="tab-icon">⎋</span>
             <span className="tab-label">History</span>
@@ -98,14 +116,14 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           <div className="sidebar-section-title">Legacy / Core</div>
           <button
             className={`tab-button ${activeTab === "soul" ? 'active' : ''}`}
-            onClick={() => setActiveTab("soul")}
+            onClick={() => handleTabClick("soul")}
           >
             <span className="tab-icon">⚛</span>
             <span className="tab-label">Soul</span>
           </button>
           <button
             className={`tab-button ${activeTab === "memories" ? 'active' : ''}`}
-            onClick={() => setActiveTab("memories")}
+            onClick={() => handleTabClick("memories")}
           >
             <span className="tab-icon">▥</span>
             <span className="tab-label">Memories</span>
@@ -114,7 +132,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
             <button
               className={`tab-button ${activeTab === "math" ? 'active' : ''}`}
               onClick={() => {
-                setActiveTab("math");
+                handleTabClick("math");
               }}
               disabled={!mathSolution && !isMathQuery(userInput)}
             >
@@ -125,7 +143,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           {settings.enableQuantum && (
             <button
               className={`tab-button ${activeTab === "quantum" ? 'active' : ''}`}
-              onClick={() => setActiveTab("quantum")}
+              onClick={() => handleTabClick("quantum")}
             >
               <span className="tab-icon">✇</span>
               <span className="tab-label">Quantum</span>
@@ -134,7 +152,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           {settings.enableNeural && (
             <button
               className={`tab-button ${activeTab === "neural" ? 'active' : ''}`}
-              onClick={() => setActiveTab("neural")}
+              onClick={() => handleTabClick("neural")}
             >
               <span className="tab-icon">🧠</span>
               <span className="tab-label">Neural</span>
@@ -143,7 +161,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           {settings.enableCreativeGeneration && (
             <button
               className={`tab-button ${activeTab === "creative" ? 'active' : ''}`}
-              onClick={() => setActiveTab("creative")}
+              onClick={() => handleTabClick("creative")}
             >
               <span className="tab-icon">✦</span>
               <span className="tab-label">Creative</span>
@@ -152,7 +170,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           {settings.goalTracking && (
             <button
               className={`tab-button ${activeTab === "goals" ? 'active' : ''}`}
-              onClick={() => setActiveTab("goals")}
+              onClick={() => handleTabClick("goals")}
             >
               <span className="tab-icon">🎯</span>
               <span className="tab-label">Goals</span>
@@ -161,7 +179,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           {settings.knowledgeBase && (
             <button
               className={`tab-button ${activeTab === "knowledge" ? 'active' : ''}`}
-              onClick={() => setActiveTab("knowledge")}
+              onClick={() => handleTabClick("knowledge")}
             >
               <span className="tab-icon">▤</span>
               <span className="tab-label">Knowledge</span>
@@ -169,7 +187,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           )}
           <button
             className={`tab-button ${activeTab === "fileUpload" ? 'active' : ''}`}
-            onClick={() => setActiveTab("fileUpload")}
+            onClick={() => handleTabClick("fileUpload")}
           >
             <span className="tab-icon">📁</span>
             <span className="tab-label">File Analysis</span>
@@ -177,7 +195,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
           {settings.enableProceduralMemory && (
             <button
               className={`tab-button ${activeTab === 'procedures' ? 'active' : ''}`}
-              onClick={() => setActiveTab('procedures')}
+              onClick={() => handleTabClick('procedures')}
             >
               <span className="tab-icon">⎔</span>
               <span className="tab-label">Procedures</span>
@@ -187,7 +205,7 @@ const Tabs = ({ activeTab, setActiveTab, settings, mathSolution, isMathQuery, us
         <div className="sidebar-group settings-group" style={{ marginTop: 'auto', borderTop: '1px solid var(--enterprise-border)', paddingTop: '12px' }}>
           <button
             className={`tab-button ${showSettings ? 'active' : ''}`}
-            onClick={() => setShowSettings(!showSettings)}
+            onClick={handleSettingsClick}
           >
             <span className="tab-icon">⚙</span>
             <span className="tab-label">Settings</span>

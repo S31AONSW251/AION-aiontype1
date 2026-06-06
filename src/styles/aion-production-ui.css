@@ -961,6 +961,7 @@ select,
 }
 
 @media (max-width: 860px) {
+  /* Commented out to prevent breaking the premium slide-over drawer layout on smartphones
   .main-content {
     display: flex !important;
     flex-direction: column;
@@ -987,11 +988,13 @@ select,
   .brand-center::after {
     display: none !important;
   }
+  */
 
   .brand-logo {
     font-size: 22px !important;
   }
 
+  /* Commented out to preserve the premium sidebar drawer on smartphones
   .tab-container {
     position: relative !important;
     top: auto;
@@ -1016,6 +1019,7 @@ select,
     overflow: hidden;
     text-overflow: ellipsis;
   }
+  */
 
   .power-toggle {
     position: static !important;
@@ -1078,9 +1082,11 @@ select,
     grid-template-columns: 1fr;
   }
 
+  /* Commented out to prevent breaking the premium sidebar drawer on small smartphones
   .tab-container {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
+  */
 
   .message-wrapper,
   .message-wrapper.user {

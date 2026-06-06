@@ -551,17 +551,23 @@
     width: 100%;
     flex-direction: row;
     overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-right: none;
     border-bottom: 1px solid var(--border-light);
-    padding: var(--spacing-2);
+    padding: var(--spacing-2) var(--spacing-4) !important;
     gap: var(--spacing-2);
     white-space: nowrap;
+  }
+
+  .settings-sidebar::-webkit-scrollbar {
+    display: none !important;
   }
 
   .settings-tab-button {
     width: auto;
     display: inline-flex;
     padding: var(--spacing-2) var(--spacing-4);
+    flex-shrink: 0 !important; /* Prevent tab text from compressing/truncating */
   }
 
   .settings-tab-button.active::before {
@@ -578,14 +584,36 @@
   }
   
   .settings-item {
-    flex-direction: column;
-    align-items: flex-start;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: var(--spacing-3) var(--spacing-4) !important;
+    gap: var(--spacing-4) !important;
+  }
+
+  /* Stacking layout only for sliders, dropdowns, and text inputs */
+  .settings-item:has(.settings-slider),
+  .settings-item:has(.settings-select),
+  .settings-item:has(.settings-input),
+  .settings-item:has(textarea),
+  .settings-item:has(select),
+  .settings-item:has(input[type="range"]),
+  .settings-item:has(input[type="text"]) {
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
   
-  .settings-item-control {
-    width: 100%;
-    margin-left: 0;
-    margin-top: var(--spacing-4);
+  .settings-item:has(.settings-slider) .settings-item-control,
+  .settings-item:has(.settings-select) .settings-item-control,
+  .settings-item:has(.settings-input) .settings-item-control,
+  .settings-item:has(textarea) .settings-item-control,
+  .settings-item:has(select) .settings-item-control,
+  .settings-item:has(input[type="range"]) .settings-item-control,
+  .settings-item:has(input[type="text"]) .settings-item-control {
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-top: var(--spacing-2) !important;
   }
   
   .settings-select,

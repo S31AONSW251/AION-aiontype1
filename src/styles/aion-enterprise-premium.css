@@ -913,13 +913,14 @@ body {
    ========================================================================== */
 
 @media (max-width: 960px) {
-  /* Restructure main-content to single column */
+  /* Restructure main-content to single column with fixed height */
   .main-content {
     display: flex !important;
     flex-direction: column !important;
-    gap: 12px !important;
-    height: auto !important;
-    overflow: visible !important;
+    gap: 0 !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    overflow: hidden !important;
   }
 
   /* Show Hamburger in header */
@@ -929,6 +930,7 @@ body {
 
   .app-header {
     display: flex !important; /* Make sure header is visible on mobile */
+    flex-shrink: 0 !important;
   }
 
   .brand-center .brand-logo {
@@ -962,56 +964,120 @@ body {
     box-shadow: 10px 0 50px rgba(0, 0, 0, 0.9) !important;
   }
 
-  /* Optional backdrop on mobile when sidebar is open */
-  .main-content:has(#mobile-sidebar-toggle:checked)::after {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 9998;
-    pointer-events: auto;
+  /* Backdrop label fallback - default hidden */
+  .mobile-sidebar-backdrop {
+    display: none;
   }
 
-  /* Adjust panel containers */
+  /* Clickable backdrop overlay on mobile when sidebar is open */
+  .main-content:has(#mobile-sidebar-toggle:checked) .mobile-sidebar-backdrop {
+    display: block !important;
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: -1 !important;
+    background: rgba(0, 0, 0, 0.55) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    cursor: pointer !important;
+    pointer-events: auto !important;
+  }
+
+  /* Adjust panel containers to fill remaining space and scroll internally */
   .workspace-home-panel,
   .enterprise-panel {
-    height: auto !important;
-    max-height: none !important;
-    overflow-y: visible !important;
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow-y: auto !important;
     padding: 16px 12px !important;
+    box-sizing: border-box !important;
+  }
+
+  .chat-workstation-wrapper {
+    flex: 1 !important;
+    min-height: 0 !important;
+    height: 100% !important;
+    overflow: hidden !important;
+  }
+
+  .chat-left-pane {
+    height: 100% !important;
   }
 
   .chat-container.enterprise-chat-override {
-    height: calc(100vh - 100px) !important;
+    height: 100% !important;
+    max-height: 100% !important;
     border: none !important;
     border-radius: 0 !important;
+    margin: 0 !important;
   }
 
   .chat-container.enterprise-chat-override .conversation-history {
-    padding: 16px 12px 140px 12px !important;
+    padding: 16px 12px 12px 12px !important;
+    flex: 1 !important;
+    overflow-y: auto !important;
   }
 
-  /* Floating composer optimized for mobile */
+  /* Sticky composer at the bottom instead of absolutely floating */
   .chat-container.enterprise-chat-override .chat-composer-area {
-    padding: 10px 12px !important;
+    position: relative !important;
+    bottom: auto !important;
+    left: auto !important;
+    right: auto !important;
+    padding: 10px 12px 12px 12px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    background: #050608 !important;
+    border-top: 1px solid var(--enterprise-border) !important;
   }
 
-  .chat-container.enterprise-chat-override .chat-composer {
-    border-radius: 20px !important;
-    padding: 6px 10px 6px 16px !important;
+  .chat-container.enterprise-chat-override .chat-composer-wrapper-card {
+    max-width: 100% !important;
+    border-radius: 12px !important;
   }
 
+  /* Typography adjustments for mobile */
   .welcome-hero-title {
-    font-size: 22px !important;
+    font-size: 20px !important;
+    text-align: center !important;
+  }
+
+  .welcome-hero-subtitle {
+    font-size: 12px !important;
+    text-align: center !important;
+    margin: 0 auto !important;
   }
 
   .welcome-actions-grid {
     grid-template-columns: 1fr !important;
     gap: 8px !important;
+    margin-top: 16px !important;
   }
 
   .welcome-action-card {
-    padding: 12px !important;
+    padding: 10px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .action-card-icon {
+    font-size: 16px !important;
+    margin-bottom: 0 !important;
+  }
+
+  .action-card-title {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .action-card-desc {
+    display: none !important; /* Hide description on mobile to save vertical space */
   }
 
   .stat-card {
